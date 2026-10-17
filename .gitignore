@@ -1,2 +1,7 @@
 node_modules/
 .claude/worktrees/
+
+# secrets and tool state (Eve scaffold ignores the same)
+.env*
+.vercel/
+.eve/
