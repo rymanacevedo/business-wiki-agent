@@ -23,3 +23,9 @@ Packages are deep modules: read [packages/README.md](./packages/README.md) befor
 ## Run log
 
 End every session by adding a run entry under `docs/runs/`: format and template in `docs/runs/README.md`. The human retells the build from these at the interview.
+
+## Integration reviews
+
+When running `implement-spec` or preparing its integration PR for review, follow
+[the Codex review handoff](docs/agents/integration-review.md). Use the local
+`code-review` skill for review and `pr` skill for PR descriptions.

@@ -27,3 +27,11 @@ Run `bun run lint` to check or `bun run lint:fix` to apply available fixes.
 Next.js build output and `next-env.d.ts` are excluded. Update the migrated rules
 when upgrading the Next.js preset version; simply enabling Oxlint's `nextjs`
 plugin does not select the full recommended preset.
+
+## Independent spec review
+
+Run `bun run review:spec --base <starting-sha> --spec <path> --ticket <number>`
+for a completed integration branch. This is an explicit model-backed review,
+separate from `check` and Git hooks. See the
+[agent handoff](agents/integration-review.md) for prerequisites, result codes,
+repair rounds, and readiness verification.
