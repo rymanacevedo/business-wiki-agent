@@ -1,0 +1,21 @@
+{
+  "name": "business-wiki-agent",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --types node packages/example/index.ts packages/example/tests/example.test.ts",
+    "test": "bun test",
+    "lint:boundaries": "depcruise packages",
+    "check": "bun run lint:boundaries && bun run typecheck && bun run test",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.16.18",
+    "@types/node": "^26.6.5",
+    "dependency-cruiser": "^18.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2"
+  }
+}
