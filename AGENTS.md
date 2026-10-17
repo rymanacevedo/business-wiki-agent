@@ -19,3 +19,7 @@ Default triage vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `rea
 Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
 Packages are deep modules: read [packages/README.md](./packages/README.md) before adding or importing one.
+
+## Run log
+
+End every session by adding a run entry under `docs/runs/`: format and template in `docs/runs/README.md`. The human retells the build from these at the interview.
