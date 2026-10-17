@@ -21,6 +21,10 @@ report only for unchanged inputs. The workflow limits automatic repairs to two.
 Used the TDD skill at the human-approved command interface with temporary Git
 repos and fake Codex/GitHub executables. Regression tests caught old output being
 reused after an empty retry and specs changing during a review; both were fixed.
+Independent Standards review found no issues. Spec review found two races:
+concurrent reviews could overwrite model output, and readiness could reuse an
+old SHA after ticket fetching changed HEAD. Added per-run outputs, exclusive
+review locks, and final state checks, with regression tests for both findings.
 
 ## Findings worth remembering
 

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   chmodSync,
+  existsSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -40,6 +41,8 @@ const prompt = fs.readFileSync(0, 'utf8');
 if (!prompt.includes('AC: display a greeting.') || !args.includes('read-only')) process.exit(9);
 if (process.env.REVIEW_MUTATE_SPEC) fs.appendFileSync(process.env.REVIEW_MUTATE_SPEC, ' New AC');
 if (process.env.REVIEW_RESPONSE !== 'NO_OUTPUT') fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], process.env.REVIEW_RESPONSE);
+if (process.env.REVIEW_STARTED) fs.writeFileSync(process.env.REVIEW_STARTED, 'ready');
+if (process.env.REVIEW_RELEASE) while (!fs.existsSync(process.env.REVIEW_RELEASE)) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
 process.exit(Number(process.env.REVIEW_EXIT || 0));
 `
   );
@@ -48,6 +51,7 @@ process.exit(Number(process.env.REVIEW_EXIT || 0));
     join(bin, "gh"),
     `#!/usr/bin/env node
 if (process.env.ISSUE_FAIL) process.exit(1);
+if (process.env.ISSUE_HEAD) require('node:fs').writeFileSync('.git/HEAD', process.env.ISSUE_HEAD);
 require('node:fs').writeSync(1, JSON.stringify({ number: 42, title: 'Greeting', body: process.env.ISSUE_BODY || 'AC: display a greeting.', comments: [], labels: [] }));
 `
   );
@@ -72,6 +76,7 @@ require('node:fs').writeSync(1, JSON.stringify({ number: 42, title: 'Greeting', 
     });
   return {
     cwd,
+    bin,
     git,
     base,
     review,
@@ -245,6 +250,80 @@ test("GitHub ticket AC is reviewed, and edits or fetch errors invalidate readine
       2
     );
   } finally {
+    f.cleanup();
+  }
+});
+
+test("readiness rejects HEAD changes while fetching ticket contents", () => {
+  const f = fixture();
+  try {
+    assert.equal(f.review(clean, ["--ticket", "42"]).status, 0);
+    const result = f.review(clean, ["--ticket", "42", "--status"], "0", {
+      ISSUE_HEAD: f.base,
+    });
+    assert.equal(f.git("rev-parse", "HEAD"), f.base);
+    assert.equal(result.status, 2, result.stdout);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("concurrent reviews cannot replace the active review's blocking result", async () => {
+  const f = fixture();
+  const started = join(f.cwd, ".git", "started");
+  const release = join(f.cwd, ".git", "release");
+  const blocking = {
+    ...clean,
+    spec: {
+      ...clean.spec,
+      findings: [
+        {
+          blocking: true,
+          summary: "Missing greeting",
+          evidence: "greeting.txt:1",
+          reference: "spec.md:1",
+        },
+      ],
+    },
+  };
+  const child = spawn("bun", [command, "--base", f.base, "--spec", "spec.md"], {
+    cwd: f.cwd,
+    env: {
+      ...process.env,
+      PATH: `${f.bin}:${process.env.PATH}`,
+      REVIEW_RESPONSE: JSON.stringify(blocking),
+      REVIEW_STARTED: started,
+      REVIEW_RELEASE: release,
+    },
+  });
+  let output = "";
+  child.stdout.on("data", (data) => {
+    output += data.toString();
+  });
+  const finished = new Promise<number | null>((resolve) => {
+    child.on("close", resolve);
+  });
+  try {
+    const deadline = Date.now() + 5000;
+    while (!existsSync(started) && Date.now() < deadline)
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.ok(existsSync(started), "first reviewer started");
+    assert.equal(
+      f.review(clean).status,
+      2,
+      "a duplicate review must not run concurrently"
+    );
+    assert.equal(
+      f.review(clean, ["--status"]).status,
+      2,
+      "readiness waits for the active review"
+    );
+    writeFileSync(release, "continue");
+    assert.equal(await finished, 1, output);
+    assert.equal(JSON.parse(output).status, "findings");
+  } finally {
+    writeFileSync(release, "continue");
+    await finished;
     f.cleanup();
   }
 });

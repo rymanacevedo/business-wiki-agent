@@ -34,7 +34,11 @@ and actual test evidence; preserve the originating spec and ticket links.
    The JSON printed on a completed invocation includes separate reports, findings,
    the reviewed SHA, and an artifact path under the worktree's Git directory.
    Invocation/preflight failures explain the problem on stderr instead. Codex has
-   a ten-minute timeout; failures never count as a pass.
+   a ten-minute timeout; failures never count as a pass. Duplicate invocations
+   with identical inputs are rejected while a review is active. Each run has its
+   own output directory. If the wrapper is forcibly killed, its `.lock` directory
+   may remain beside the report; remove it only after confirming that review is
+   no longer running, then rerun the command.
 5. Give blockers to one implementer subagent. It repairs them, reruns checks,
    updates its run log, and commits. Rerun the same review command with the
    original base. Allow at most two automatic repair rounds; then report unresolved

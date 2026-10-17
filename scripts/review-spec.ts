@@ -1,6 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
@@ -144,20 +151,45 @@ function main() {
     .digest("hex");
   const directory = resolve(git("rev-parse", "--git-path", "review-spec"));
   const artifact = join(directory, `${fingerprint}.json`);
+  const lock = join(directory, `${fingerprint}.lock`);
+  const assertStable = () => {
+    if (
+      (values.spec || []).some(
+        (file, index) =>
+          readFileSync(resolve(file), "utf8") !== specs[index].content
+      )
+    )
+      throw new Error("Spec changed during review; result is stale");
+    if (
+      git("rev-parse", "HEAD") !== head ||
+      git("status", "--porcelain", "--untracked-files=all")
+    )
+      throw new Error("Repository changed during review; result is stale");
+  };
   if (values.status) {
+    if (existsSync(lock)) throw new Error("Review is still running");
     const stored = JSON.parse(readFileSync(artifact, "utf8"));
     if (stored.fingerprint !== fingerprint) throw new Error("Review is stale");
     validate(stored.review);
+    assertStable();
+    if (existsSync(lock)) throw new Error("Review is still running");
     console.log(JSON.stringify(stored));
     process.exitCode =
       stored.status === "passed" ? 0 : stored.status === "findings" ? 1 : 2;
     return;
   }
   mkdirSync(directory, { recursive: true });
-  const schemaFile = join(directory, `${fingerprint}.schema.json`);
-  const output = join(directory, `${fingerprint}.output.json`);
-  writeFileSync(schemaFile, JSON.stringify(schema));
-  const prompt = `Use $code-review, with the full skill below, to review this completed integration branch.
+  try {
+    mkdirSync(lock);
+  } catch {
+    throw new Error(`Review already running, or lock unavailable: ${lock}`);
+  }
+  try {
+    const runDirectory = mkdtempSync(join(directory, `${fingerprint}-`));
+    const schemaFile = join(runDirectory, "schema.json");
+    const output = join(runDirectory, "output.json");
+    writeFileSync(schemaFile, JSON.stringify(schema));
+    const prompt = `Use $code-review, with the full skill below, to review this completed integration branch.
 Fixed point: ${mergeBase}. Reviewed HEAD: ${head}. Diff: git diff ${mergeBase}...${head}.
 Commits: ${git("log", "--oneline", `${mergeBase}..${head}`)}
 Run the Standards and Spec subagents independently in parallel, as the skill requires.
@@ -170,80 +202,81 @@ Keep the two axis reports separate in the structured response. Do not merge or r
 Spec and ticket sources (all supplied sources apply):
 ${JSON.stringify(specs)}
 Skill:\n${skill}`;
-  writeFileSync(join(directory, `${fingerprint}.prompt.txt`), prompt);
-  // Persist an incomplete state before starting, so a failed retry cannot reuse approval.
-  const metadata = {
-    fingerprint,
-    head,
-    base,
-    mergeBase,
-    artifact,
-    sources: specs.map(({ source }) => source),
-  };
-  const persist = (result: object) => {
-    const report = { ...metadata, ...result };
-    writeFileSync(artifact, JSON.stringify(report, null, 2) + "\n");
-    console.log(JSON.stringify(report));
-  };
-  writeFileSync(
-    artifact,
-    JSON.stringify({ ...metadata, status: "incomplete" })
-  );
-  try {
-    rmSync(output, { force: true });
-    const result = spawnSync(
-      "codex",
-      [
-        "exec",
-        "--enable",
-        "multi_agent",
-        "--sandbox",
-        "read-only",
-        "--ephemeral",
-        "--cd",
-        process.cwd(),
-        "--output-schema",
-        schemaFile,
-        "--output-last-message",
-        output,
-        "-",
-      ],
-      {
-        encoding: "utf8",
-        input: prompt,
-        timeout: 600_000,
-        maxBuffer: 16 * 1024 * 1024,
-      }
+    writeFileSync(join(runDirectory, "prompt.txt"), prompt);
+    // Persist an incomplete state before starting, so a failed retry cannot reuse approval.
+    const metadata = {
+      fingerprint,
+      head,
+      base,
+      mergeBase,
+      artifact,
+      runDirectory,
+      sources: specs.map(({ source }) => source),
+    };
+    const persist = (result: object) => {
+      const report = { ...metadata, ...result };
+      writeFileSync(artifact, JSON.stringify(report, null, 2) + "\n");
+      console.log(JSON.stringify(report));
+    };
+    writeFileSync(
+      artifact,
+      JSON.stringify({ ...metadata, status: "incomplete" })
     );
-    if (result.error || result.status !== 0)
-      throw new Error(
-        `Codex review failed: ${result.error?.message || result.stderr || result.status}`
+    try {
+      rmSync(output, { force: true });
+      const result = spawnSync(
+        "codex",
+        [
+          "exec",
+          "--enable",
+          "multi_agent",
+          "--sandbox",
+          "read-only",
+          "--ephemeral",
+          "--cd",
+          process.cwd(),
+          "--output-schema",
+          schemaFile,
+          "--output-last-message",
+          output,
+          "-",
+        ],
+        {
+          encoding: "utf8",
+          input: prompt,
+          timeout: 600_000,
+          maxBuffer: 16 * 1024 * 1024,
+        }
       );
-    const review: unknown = JSON.parse(readFileSync(output, "utf8"));
-    validate(review);
-    if (
-      git("rev-parse", "HEAD") !== head ||
-      git("status", "--porcelain", "--untracked-files=all")
-    )
-      throw new Error("Repository changed during review; result is stale");
-    if (JSON.stringify(collectSpecs()) !== JSON.stringify(specs))
-      throw new Error("Spec changed during review; result is stale");
-    const status =
-      !review.standards.complete || !review.spec.complete
-        ? "incomplete"
-        : [...review.standards.findings, ...review.spec.findings].some(
-              (finding) => finding.blocking
-            )
-          ? "findings"
-          : "passed";
-    persist({ status, review });
-    process.exitCode = status === "passed" ? 0 : status === "findings" ? 1 : 2;
-  } catch (error) {
-    persist({
-      status: "incomplete",
-      error: error instanceof Error ? error.message : String(error),
-    });
-    process.exitCode = 2;
+      if (result.error || result.status !== 0)
+        throw new Error(
+          `Codex review failed: ${result.error?.message || result.stderr || result.status}`
+        );
+      const review: unknown = JSON.parse(readFileSync(output, "utf8"));
+      validate(review);
+      if (JSON.stringify(collectSpecs()) !== JSON.stringify(specs))
+        throw new Error("Spec changed during review; result is stale");
+      assertStable();
+      const status =
+        !review.standards.complete || !review.spec.complete
+          ? "incomplete"
+          : [...review.standards.findings, ...review.spec.findings].some(
+                (finding) => finding.blocking
+              )
+            ? "findings"
+            : "passed";
+      persist({ status, review });
+      process.exitCode =
+        status === "passed" ? 0 : status === "findings" ? 1 : 2;
+    } catch (error) {
+      persist({
+        status: "incomplete",
+        error: error instanceof Error ? error.message : String(error),
+      });
+      process.exitCode = 2;
+    }
+  } finally {
+    rmSync(lock, { recursive: true, force: true });
   }
 }
 try {
