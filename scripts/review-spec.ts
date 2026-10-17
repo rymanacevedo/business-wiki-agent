@@ -232,7 +232,8 @@ Skill:\n${skill}`;
           "multi_agent",
           "--sandbox",
           "read-only",
-          "--ephemeral",
+          // Not --ephemeral: Codex 0.163 subagents load the parent rollout, and
+          // ephemeral sessions have none ("no rollout found"), so both axes fail.
           "--cd",
           process.cwd(),
           "--output-schema",

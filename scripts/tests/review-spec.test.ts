@@ -38,7 +38,7 @@ function fixture() {
 const fs = require('node:fs');
 const args = process.argv.slice(2);
 const prompt = fs.readFileSync(0, 'utf8');
-if (!prompt.includes('AC: display a greeting.') || !args.includes('read-only')) process.exit(9);
+if (!prompt.includes('AC: display a greeting.') || !args.includes('read-only') || args.includes('--ephemeral')) process.exit(9);
 if (process.env.REVIEW_MUTATE_SPEC) fs.appendFileSync(process.env.REVIEW_MUTATE_SPEC, ' New AC');
 if (process.env.REVIEW_RESPONSE !== 'NO_OUTPUT') fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], process.env.REVIEW_RESPONSE);
 if (process.env.REVIEW_STARTED) fs.writeFileSync(process.env.REVIEW_STARTED, 'ready');

@@ -29,6 +29,8 @@ and actual test evidence; preserve the originating spec and ticket links.
    and AC/standard citations. Repository changes and issue/PR writes are forbidden
    in the review prompt. Shell sandboxing does not restrict connected app tools;
    run with an account/configuration appropriate for review-only work.
+   The session is not ephemeral: Codex subagents load the parent session's
+   rollout, so the review session persists under `~/.codex` like any other.
 4. Exit `0` means both axes finished without blockers. Exit `1` means blocking
    findings. Exit `2` means incomplete, invalid, failed, missing, or stale review.
    The JSON printed on a completed invocation includes separate reports, findings,
