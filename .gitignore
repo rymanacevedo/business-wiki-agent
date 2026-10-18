@@ -1,6 +1,9 @@
 node_modules/
 .claude/worktrees/
 
+# local WikiStore backend (bun run wiki:seed)
+.wiki-store/
+
 # secrets and tool state (Eve scaffold ignores the same)
 .env*
 .vercel/
