@@ -61,7 +61,7 @@ The derived Page for one expense category listing every Allocation to it, each r
 _Avoid_: Report, rollup, summary table, spreadsheet
 
 **Established Fact**:
-A fact on the Profile or an Obligation Page, which Approval protects from change. Established means protected from unapproved change, never verified as true.
+A fact on the Profile or an Obligation Page, or the payment block of an Expense Record, which Approval protects from change. Established means protected from unapproved change, never verified as true.
 _Avoid_: Verified fact, confirmed fact, canonical value, truth
 
 **Schema**:
@@ -83,7 +83,7 @@ A health check of the Wiki for contradictions, stale facts, orphan Pages, and up
 _Avoid_: Audit, review, scan, check
 
 **Approval**:
-The Owner's explicit yes, requested before Clerk changes an established fact on the Profile or an Obligation Page, or overwrites one side of a contradiction.
+The Owner's explicit yes, requested before Clerk changes an Established Fact: a Profile or Obligation fact, an Expense Record's payment status, or one side of a Contradiction.
 _Avoid_: Confirmation, permission, sign-off, consent
 
 **Citation**:
