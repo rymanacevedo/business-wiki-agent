@@ -3,7 +3,7 @@ title: Cascade Appliance Parts invoice 4471
 kind: summary
 sources: [2026-09-12-invoice-cascade-parts-4471]
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-18
 status: active
 flags: []
 expense:
@@ -11,7 +11,13 @@ expense:
   date: 2026-09-12
   amount: 212.48
   currency: USD
-  category: supplies
+  document: "4471"
+  allocations:
+    - { category: supplies, amount: 212.48 }
+  payment:
+    status: unknown
+    due: 2026-10-12
+    evidence: []
 ---
 
 # Cascade Appliance Parts invoice 4471
@@ -22,8 +28,9 @@ expense:
 
 - Vendor: [Cascade Appliance Parts](../entities/cascade-appliance-parts.md)
 - Date 2026-09-12, total **$212.48** (subtotal $195.50, tax $15.64, shipping $1.34) (src: 2026-09-12-invoice-cascade-parts-4471)
-- Category: `supplies`. Repair parts for customer jobs; none is a durable tool, so not `equipment`.
-- Terms net 30, due 2026-10-12; payment status not in the wiki (src: 2026-09-12-invoice-cascade-parts-4471)
+- Allocation: `supplies` $212.48. Repair parts for customer jobs; none is a durable tool, so not `equipment`.
+- Payment: **unknown**. Terms net 30, due 2026-10-12 (src: 2026-09-12-invoice-cascade-parts-4471). An invoice is not evidence of payment; see [Pay invoice 4471](../obligations/2026-10-12-pay-invoice-cascade-4471.md).
+- Duplicate check: no existing Record for this vendor on 2026-09-12; document number 4471 is new.
 
 ## Line items
 
@@ -44,6 +51,7 @@ expense:
 ## Pages touched
 
 - [Cascade Appliance Parts](../entities/cascade-appliance-parts.md): created
+- [Pay invoice 4471 Obligation](../obligations/2026-10-12-pay-invoice-cascade-4471.md): created
 - [supplies ledger](../expenses/supplies.md): row added
 
 ## Also seen in

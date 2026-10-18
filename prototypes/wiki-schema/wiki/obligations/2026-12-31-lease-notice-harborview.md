@@ -7,7 +7,7 @@ counterparty: harborview-properties
 recurs: none
 sources: [2025-04-01-lease-harborview]
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-18
 status: active
 flags: []
 ---
@@ -18,7 +18,7 @@ flags: []
 - **Kind**: lease-notice, one-off
 - **Counterparty**: [Harborview Properties LLC](../entities/harborview-properties.md)
 - **What the Source says**: without written non-renewal notice from either party by this date the lease renews for 12 months on the same terms (src: 2025-04-01-lease-harborview)
-- **Status**: active. Against the Demo Date 2026-10-17 this is 75 days out, so neither missed nor due soon.
+- **Status**: active
 
 ## How this closes
 

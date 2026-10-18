@@ -7,7 +7,7 @@ counterparty: null
 recurs: yearly
 sources: [2025-10-01-permit-city-clerk]
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-18
 status: active
 flags: []
 ---
@@ -18,7 +18,7 @@ flags: []
 - **Kind**: permit-expiry, recurs yearly
 - **Agency**: Office of the City Clerk (src: 2025-10-01-permit-city-clerk)
 - **What the Source says**: renew before expiry; renewals accepted up to 60 days before; permit must be displayed; operating without it may carry penalties (src: 2025-10-01-permit-city-clerk)
-- **Status**: active. Against the Demo Date 2026-10-17 this is **missed** (Lint derives this; it is not stored).
+- **Status**: active
 
 ## How this closes
 

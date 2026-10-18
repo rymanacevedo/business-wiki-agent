@@ -1,5 +1,8 @@
 # PROTOTYPE: wiki schema (throwaway)
 
+> **Status**: reviewed and resolved on 2026-10-18; see the resolution on the ticket. The
+> `wiki/` directory reflects the chosen conventions.
+
 This directory is a **prototype**, not production. It answers one question from the
 wayfinder ticket [Prototype: wiki schema with a handful of seed documents](https://github.com/rymanacevedo/business-wiki-agent/issues/10):
 
@@ -29,9 +32,9 @@ alternative exists, with the alternative shown, so the Owner can pick.
 |---|---|
 | EIN letter | formation facts into the Profile, a MILESTONE, a non-Obligation (undated filing) |
 | Commercial lease | entity Page (landlord), a one-off `lease-notice` Obligation outside the 30-day window |
-| City operating permit | a `permit-expiry` Obligation that is **missed** against the Demo Date |
+| City operating permit | a `permit-expiry` Obligation that Lint reports **missed**; the stated fee makes it an Expense Record too |
 | Insurance certificate | an `insurance-renewal` Obligation **due within 30 days**; the Suite 210/201 **Contradiction** with the lease |
-| Parts invoice | an **Expense Record** (summary Page with `expense` frontmatter), a vendor entity, the `supplies` ledger, **Masking** of ACH numbers |
+| Parts invoice | an **Expense Record** with Allocation and `payment: unknown`, a payment-deadline Obligation, a vendor entity, the `supplies` ledger, **Masking** of ACH numbers |
 
 Not shown: Supersession, Suspicious Content, duplicate, `personal`. The Schema describes
 each; the eval-design ticket turns them into cases.

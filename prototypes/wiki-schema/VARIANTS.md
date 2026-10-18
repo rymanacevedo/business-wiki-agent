@@ -1,5 +1,9 @@
 # Variants: conventions with a live alternative
 
+> **Outcome (2026-10-18)**: the Owner chose **A** for 1, 2, 4, 5, 6, 7 and **B** for 3
+> (Contradictions). `wiki/` has been updated to match, including the five gap fixes
+> recorded on the ticket. The text below is the original side-by-side.
+
 The wiki in `wiki/` commits to one option for each. The alternative is shown so the
 Owner can react to both. **A** is always what the prototype uses.
 

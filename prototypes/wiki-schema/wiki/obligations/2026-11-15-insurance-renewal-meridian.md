@@ -7,7 +7,7 @@ counterparty: null
 recurs: yearly
 sources: [2025-11-15-insurance-cert-meridian, 2025-04-01-lease-harborview]
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-18
 status: active
 flags: []
 ---
@@ -19,7 +19,7 @@ flags: []
 - **Insurer**: Meridian Mutual Insurance Company, through Bayline Insurance Agency, 42 Pier Rd, Portside (src: 2025-11-15-insurance-cert-meridian)
 - **Coverage**: commercial general liability, $1,000,000 per occurrence, $2,000,000 aggregate, premium $1,284/yr (src: 2025-11-15-insurance-cert-meridian)
 - **Why it matters**: the lease requires at least $1,000,000 per occurrence naming Harborview Properties LLC as additional insured (src: 2025-04-01-lease-harborview)
-- **Status**: active. Against the Demo Date 2026-10-17 this is **due within 30 days**.
+- **Status**: active
 
 ## How this closes
 

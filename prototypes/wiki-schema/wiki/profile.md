@@ -7,7 +7,7 @@ sources:
   - 2025-10-01-permit-city-clerk
   - 2025-11-15-insurance-cert-meridian
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-18
 status: active
 flags: [conflict]
 ---
@@ -31,8 +31,9 @@ Who the Business is. Every fact here is established: changing one needs Approval
 
 ## Addresses
 
-- **Premises**: 1480 Harbor Ave, Suite 210, Portside (src: 2025-04-01-lease-harborview)
-  - ⚠ **Conflict**: the insurance certificate gives Suite 201 (src: 2025-11-15-insurance-cert-meridian). Unresolved since 2026-10-17. The lease value is shown because it was established first.
+- **Premises**: 1480 Harbor Ave, Portside (src: 2025-04-01-lease-harborview)
+- **Premises suite**: ⚠ **Conflict**, unresolved since 2026-10-17: Suite 210 (src: 2025-04-01-lease-harborview) or Suite 201 (src: 2025-11-15-insurance-cert-meridian)
+  - First recorded: Suite 210 from the lease on 2026-10-17. Resolving needs Approval.
 - **Mailing address**: 1480 Harbor Ave Ste 210, Portside (src: 2024-10-21-ein-letter)
 
 ## Licenses, permits, and registrations
