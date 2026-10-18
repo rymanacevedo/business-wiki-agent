@@ -1,0 +1,44 @@
+import { defineTool } from "eve/tools";
+import { never } from "eve/tools/approval";
+import { z } from "zod";
+import {
+  applyEdits,
+  guardPageEdit,
+  validatePage,
+} from "../../packages/page-edits";
+import { wiki } from "../lib/config";
+import { LOG, SCHEMA, pagePath, touch } from "../lib/pages";
+
+export default defineTool({
+  description:
+    "Edit an existing Wiki Page with find-and-replace edits: add a Ledger row, an Index line, an `## Also seen in` entry, a new fact, a History line. Each find must be exact text from the Page (read_page first) and match once; an empty find appends to the end. It cannot alter an Established Fact (a Profile or Obligation fact line or frontmatter field, or a Record's expense.payment block): use change_fact for those. Append to the Log with append_log.",
+  inputSchema: z.object({
+    path: z.string().describe("Page path relative to the Wiki root, with .md"),
+    edits: z
+      .array(
+        z.object({
+          find: z.string().describe("Exact current text; empty string appends"),
+          replace: z.string().describe("Replacement text"),
+        })
+      )
+      .min(1),
+  }),
+  approval: never(),
+  label: { start: ({ path }) => `Update ${path}` },
+  async execute({ path, edits }) {
+    const clean = pagePath(path);
+    if (clean === LOG)
+      throw new Error("The Log is append-only: use append_log.");
+    if (clean === SCHEMA)
+      throw new Error("SCHEMA.md is maintained by the Owner, not by Ingest.");
+    const store = wiki();
+    const page = await store.read(clean);
+    if (!page)
+      throw new Error(`No Page at ${clean}. Create it with create_page.`);
+    const next = touch(applyEdits(page.body, edits));
+    guardPageEdit(clean, page.body, next);
+    validatePage(clean, next);
+    await store.write(clean, next, { etag: page.etag });
+    return `Updated ${clean}.`;
+  },
+});

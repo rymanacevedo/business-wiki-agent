@@ -1,7 +1,8 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { frameSource } from "../../packages/source-masking";
-import { SOURCES, wiki } from "../lib/config";
+import { SOURCES, SUMMARIES, wiki } from "../lib/config";
+import { sourcesReadThisTurn } from "../lib/sequence";
 
 export default defineTool({
   description:
@@ -13,8 +14,20 @@ export default defineTool({
       .describe("Source id, e.g. 2024-10-21-ein-letter"),
   }),
   label: { start: ({ id }) => `Read Source ${id}` },
-  async execute({ id }) {
+  async execute({ id }, ctx) {
     const store = wiki();
+    // Ingest one Source at a time: an earlier Source read this turn must have
+    // its summary before the next one is opened.
+    const previous = sourcesReadThisTurn(ctx.messages).filter((s) => s !== id);
+    for (const earlier of previous)
+      if (
+        (await store.read(`${SOURCES}${earlier}.md`)) ||
+        (await store.read(`${SOURCES}${earlier}.txt`))
+      )
+        if (!(await store.read(`${SUMMARIES}${earlier}.md`)))
+          throw new Error(
+            `Finish Ingesting ${earlier} first (summary, Pages, Index, INGEST line), then read ${id}.`
+          );
     for (const extension of [".md", ".txt"]) {
       const source = await store.read(`${SOURCES}${id}${extension}`);
       if (source) return frameSource(id, source.body);
