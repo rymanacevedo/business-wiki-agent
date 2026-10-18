@@ -22,6 +22,10 @@ _Avoid_: Raw doc, upload, file, attachment
 The single legal entity whose records the wiki holds.
 _Avoid_: Company, org, tenant
 
+**Reviewer**:
+The person evaluating the submission, who reads the README, opens traces, and runs the quickstart; never a user of Clerk.
+_Avoid_: Grader, interviewer, evaluator
+
 ### The wiki
 
 **Wiki**:
