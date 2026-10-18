@@ -49,8 +49,20 @@ A dated thing the Business must do, with a deadline and a Source: a license or p
 _Avoid_: Deadline, compliance item, task, reminder, due date
 
 **Expense Record**:
-A categorized receipt or invoice in the Wiki: vendor, amount, date, and category, citing its Source.
+The summary Page of a Source that evidences a business expense: vendor, date, total, one or more Allocations, and payment status with its evidence, citing its Source.
 _Avoid_: Receipt page, transaction, expense, line item
+
+**Allocation**:
+The share of an Expense Record's total assigned to one expense category. A Record has one or more Allocations and they sum to its total.
+_Avoid_: Split, portion, category share, line
+
+**Ledger**:
+The derived Page for one expense category listing every Allocation to it, each row linking back to its Expense Record. The Record is authoritative; the Ledger is a view.
+_Avoid_: Report, rollup, summary table, spreadsheet
+
+**Established Fact**:
+A fact on the Profile or an Obligation Page, which Approval protects from change. Established means protected from unapproved change, never verified as true.
+_Avoid_: Verified fact, confirmed fact, canonical value, truth
 
 **Schema**:
 The conventions document that tells Clerk how the Wiki is structured and maintained.
