@@ -108,6 +108,10 @@ _Avoid_: Edge case, adversarial example, tricky document
 The machine-readable record of what each Source in the Corpus should contribute to the Wiki, which deterministic checks read as ground truth.
 _Avoid_: Ground truth, labels, expected outputs, answer key
 
+**Inbox**:
+The Sources Clerk has been given but has not yet Ingested.
+_Avoid_: Queue, pending documents, new documents, uploads
+
 **Demo Date**:
 The frozen date Clerk treats as today, against which an Obligation is upcoming or missed.
 _Avoid_: Now, current date, wall clock
