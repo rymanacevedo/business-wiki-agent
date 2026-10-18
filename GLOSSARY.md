@@ -99,3 +99,21 @@ _Avoid_: Ground truth, labels, expected outputs, answer key
 **Demo Date**:
 The frozen date Clerk treats as today, against which an Obligation is upcoming or missed.
 _Avoid_: Now, current date, wall clock
+
+### Trust
+
+**Contradiction**:
+Two Sources asserting different values for one established fact, recorded on the Page with both values and both Citations until the Owner resolves it.
+_Avoid_: Conflict, discrepancy, mismatch
+
+**Supersession**:
+A newer Source of the same kind that legitimately replaces an established fact, such as a renewed certificate or policy.
+_Avoid_: Update, renewal, replacement, overwrite
+
+**Masking**:
+Reducing an SSN or financial account number to a non-identifying form before Clerk ever reads it, so the full value exists only in the Source.
+_Avoid_: Redaction, scrubbing, anonymisation, PII filter
+
+**Suspicious Content**:
+Instruction-like text found inside a Source, flagged on its Page and in the Log and never followed.
+_Avoid_: Injection, attack, malicious document, payload
