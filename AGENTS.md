@@ -29,3 +29,12 @@ End every session by adding a run entry under `docs/runs/`: format and template 
 When running `implement-spec` or preparing its integration PR for review, follow
 [the Codex review handoff](docs/agents/integration-review.md). Use the local
 `code-review` skill for review and `pr` skill for PR descriptions.
+
+## Eve
+
+Clerk is an Eve `0.80.1` agent under `agent/` (pinned exactly; do not upgrade
+mid-build). Before writing tools, channels, evals, or deployment code, read
+`node_modules/eve/docs/README.md`: it maps each task to the page for the
+installed version. `npx eve info --json` lists discovered tools and diagnostics.
+Run locally with Node 24 and `AI_GATEWAY_API_KEY` in `.env.local`:
+`bun run wiki:seed --ns demo --fixture prototype --force`, then `bun run dev`.

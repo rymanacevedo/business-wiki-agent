@@ -3,9 +3,16 @@
     "strict": true,
     "noEmit": true,
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "types": ["node"]
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node", "eve/workflow-modules"],
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
-  "include": ["packages/**/*.ts", "scripts/**/*.ts"]
+  "include": [
+    "agent/**/*.ts",
+    "evals/**/*.ts",
+    "packages/**/*.ts",
+    "scripts/**/*.ts"
+  ]
 }

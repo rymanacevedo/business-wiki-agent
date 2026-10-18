@@ -151,7 +151,12 @@ that says "Fee paid: $85.00"). Document kind alone never includes or excludes on
   `change_fact` that sets `payment.status: paid` with the Source in `evidence` and,
   if a payment Obligation exists, marks it `done`. One Approval covers both. Until
   approved, the Record stays as it was and the evidence Source is listed under
-  `## Also seen in` with "payment evidence, pending Approval".
+  `## Also seen in` with "payment evidence, pending Approval". Only evidence that
+  moves a Record from `unpaid` or `unknown` to `paid` goes through Approval.
+- **Corroboration**: a Source that shows payment of a Record already `paid` (a
+  statement line matching a receipt) is noted under `## Also seen in` with
+  `update_page` ("corroborates payment") and is never added to the frontmatter
+  `evidence` list, so it proposes no `change_fact`.
 - **Duplicates**: same vendor, amount, and date marks a _candidate_ only. It is a
   duplicate when the document number matches (or neither has one) **and** the
   substantive content matches: payee, total, date, line items. A duplicate adds no
@@ -195,9 +200,9 @@ offending text in a `## Flags` section on the summary, and log a FLAG entry. Nev
 
 - Append only, newest at the bottom, one line per entry:
   `- YYYY-MM-DD TYPE [subject]: detail`.
-- TYPE is one of `INGEST` (subject: source id), `QUERY` (subject: the question in
-  quotes), `LINT`, `APPROVAL` (subject: approved or denied), `FLAG` (subject: conflict,
-  suspicious-content, or needs-owner), `MILESTONE` (subject: the event date).
+- TYPE is one of `INGEST` (subject: source id), `LINT`, `APPROVAL` (subject: approved
+  or denied), `FLAG` (subject: conflict, suspicious-content, or needs-owner), `MILESTONE`
+  (subject: the event date). A Query writes nothing, not even a Log line.
 - The date is the Demo Date on which the entry was written. A MILESTONE carries the
   event's own date as its subject, so the Timeline is every MILESTONE line sorted by subject.
 
