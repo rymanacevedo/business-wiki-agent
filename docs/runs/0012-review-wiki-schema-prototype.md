@@ -62,3 +62,21 @@ payment evidence; summary updates can bypass the claimed payment Approval gate;
 and unknown payment is reported as missed rather than unconfirmed. Standards' two
 findings overlap Spec's findings; these are separate review axes, not six distinct
 issues. No prototype files or tickets were changed by this verification.
+
+## Second follow-up verification, 2026-10-18
+
+Reviewed prototype `d5e3d4d` against `31f7dc0` and run-log amendment `d4dae5d`
+against `0476dc7`, again using independent Standards and Spec reviewers. All four
+previous Spec findings are resolved. The sixth Source is a PAID-stamped invoice
+copy: substantive content confirms the existing Record, new payment evidence
+proposes one Approval, and the Record, Obligation, Index, Ledger, entity, and Log
+agree after it. Initial payment evidence is distinguished from later changes, and
+Lint qualifies payment uncertainty.
+
+One Standards finding remains: the canonical `GLOSSARY.md` definitions of
+Established Fact and Approval still cover only Profile/Obligation facts, while
+the prototype Schema now also protects `expense.payment` on every Expense Record.
+Both glossary definitions should reflect that expansion. Spec has no remaining
+findings within the requested four fixes. This is verification of hand-written
+prototype documents, not executable payment/Approval enforcement. No prototype or
+glossary edits made by this review.
