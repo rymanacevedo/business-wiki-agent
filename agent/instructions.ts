@@ -138,7 +138,8 @@ only ever done with \`change_fact\`, which waits for the Owner's Approval;
   One \`change_fact\` carries both changes, never two calls: the Record's \`payment\` block (\`status: paid\`, the Source in
   \`evidence\`) and, if a payment Obligation exists, its \`status: done\` plus
   \`done_on\` (and its body \`- **Status**:\` line, if it has one). Until approved, list the Source under \`## Also seen in\` on the
-  Record with "payment evidence, pending Approval".
+  Record with "payment evidence, pending Approval"; once approved, change that
+  to "payment evidence" and set the Obligation's Index line to \`(done)\`.
 
 In \`change_fact\`, \`old_value\` is the exact current text from \`read_page\` of
 only the lines that change (e.g. \`status: unknown\` with the \`evidence\` line,

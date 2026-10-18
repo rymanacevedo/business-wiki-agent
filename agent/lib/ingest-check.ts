@@ -5,7 +5,6 @@ import { LOG, SCHEMA } from "./pages";
 const INDEX = "index.md";
 const SUMMARY_LINK = /summaries\/([a-z0-9][a-z0-9-]*)\.md/g;
 const EXPENSE = /^expense\s*:/m;
-const OBLIGATION_LINE = /^- \d{4}-\d{2}-\d{2} [a-z-]+ \([a-z]+\): /;
 
 /** Every Page but the Index, Log, Schema, and Sources, by path. */
 async function readPages(store: WikiStore): Promise<Map<string, string>> {
@@ -21,8 +20,8 @@ async function readPages(store: WikiStore): Promise<Map<string, string>> {
 
 /**
  * What still stands between Source `id` and its one INGEST line: every Page
- * citing the Source in its `sources` has an Index line, and an Obligation's
- * line starts `<due> <kind> (<status>)`. A summary without an \`expense\`
+ * citing the Source in its `sources` has an Index line, and every
+ * Obligation's line starts with its current `<due> <kind> (<status>)`. A summary without an \`expense\`
  * block that links a Record (a duplicate, or a statement corroborating a
  * receipt) is listed under that Record's \`## Also seen in\`, and no Ledger
  * row counts it.
@@ -35,18 +34,24 @@ export async function ingestProblems(
   const pages = await readPages(store);
   const problems: string[] = [];
   for (const [path, body] of pages) {
-    if (!pageSources(body).includes(id)) continue;
+    const cites = pageSources(body).includes(id);
+    const obligation = path.startsWith("obligations/");
+    if (!cites && !obligation) continue;
     const line = indexLines.find((l) => l.includes(`](${path})`));
     if (!line) {
-      problems.push(
-        `${path} has no Index line: add one to its section of index.md.`
-      );
-    } else if (path.startsWith("obligations/") && !OBLIGATION_LINE.test(line)) {
-      const shape = `${pageField(body, "due")} ${pageField(body, "obligation")} (${pageField(body, "status")})`;
-      problems.push(
-        `The Index line for ${path} must start "- ${shape}: [title](${path})".`
-      );
+      if (cites)
+        problems.push(
+          `${path} has no Index line: add one to its section of index.md.`
+        );
+      continue;
     }
+    // An Obligation's line leads with its current due date, kind, and status,
+    // so a Supersession or a payment that closed it shows on the Index.
+    const shape = `- ${pageField(body, "due")} ${pageField(body, "obligation")} (${pageField(body, "status")}): `;
+    if (obligation && !line.startsWith(shape))
+      problems.push(
+        `The Index line for ${path} must start "${shape}[title](${path})".`
+      );
   }
   const summaryPath = `summaries/${id}.md`;
   const summary = pages.get(summaryPath);

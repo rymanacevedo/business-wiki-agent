@@ -182,3 +182,20 @@ test("a duplicate adds no Ledger row", async () => {
   assert.match(result, /^refused: /);
   assert.match(result, /expenses\/supplies\.md/);
 });
+
+test("the INGEST line waits until a closed Obligation's Index line shows its new status", async () => {
+  await write(
+    OBLIGATION,
+    obligation.replace("status: active", "status: done\ndone_on: 2026-10-14")
+  );
+  await write("index.md", indexWith(fullIndex));
+  const refused = await ingest(INVOICE);
+  assert.match(refused, /^refused: /);
+  assert.match(refused, /2026-10-12 other \(done\)/);
+
+  await write(
+    "index.md",
+    indexWith(fullIndex.replace("other (active)", "other (done)"))
+  );
+  assert.match(await ingest(INVOICE), /^Logged: /);
+});

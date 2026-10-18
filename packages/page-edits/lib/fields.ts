@@ -29,3 +29,25 @@ export function pageSources(page: string): string[] {
     .map((id) => id.replace(/^-\s*/, "").replace(/^["']|["']$/g, ""))
     .filter((id) => id && id !== "-");
 }
+
+/**
+ * A Record's scalar `expense` fields (vendor, date, amount, currency,
+ * document), unquoted, or null when the Page has no expense block.
+ */
+export function expenseFields(page: string): Record<string, string> | null {
+  const { frontmatter } = splitPage(page);
+  const start = frontmatter.findIndex((line) => /^expense\s*:/.test(line));
+  if (start === -1) return null;
+  const fields: Record<string, string> = {};
+  let child = -1;
+  for (const line of frontmatter.slice(start + 1)) {
+    if (!line.trim()) continue;
+    const indent = line.length - line.trimStart().length;
+    if (indent === 0) break;
+    if (child === -1) child = indent;
+    const match = /^([a-z_]+):\s*(\S.*)$/.exec(line.trim());
+    if (indent === child && match)
+      fields[match[1]] = match[2].replace(/^["']|["']$/g, "");
+  }
+  return fields;
+}

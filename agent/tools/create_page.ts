@@ -5,6 +5,7 @@ import { validatePage } from "../../packages/page-edits";
 import { WikiConflictError } from "../../packages/wiki-store";
 import { wiki } from "../lib/config";
 import { pagePath } from "../lib/pages";
+import { refuseDuplicateRecord } from "../lib/duplicates";
 import { declinedPaths } from "../lib/sequence";
 
 export default defineTool({
@@ -30,8 +31,10 @@ export default defineTool({
       throw new Error(
         `The Owner declined the change_fact that proposed ${clean}; it is not created. Do not retry the change.`
       );
+    const store = wiki();
+    await refuseDuplicateRecord(store, clean, null, content);
     try {
-      await wiki().write(
+      await store.write(
         clean,
         content.endsWith("\n") ? content : `${content}\n`,
         {

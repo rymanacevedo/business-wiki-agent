@@ -7,6 +7,7 @@ import {
   validatePage,
 } from "../../packages/page-edits";
 import { wiki } from "../lib/config";
+import { refuseDuplicateRecord } from "../lib/duplicates";
 import { LOG, SCHEMA, pagePath, touch } from "../lib/pages";
 
 export default defineTool({
@@ -38,6 +39,7 @@ export default defineTool({
     const next = touch(applyEdits(page.body, edits));
     guardPageEdit(clean, page.body, next);
     validatePage(clean, next);
+    await refuseDuplicateRecord(store, clean, page.body, next);
     await store.write(clean, next, { etag: page.etag });
     return `Updated ${clean}.`;
   },

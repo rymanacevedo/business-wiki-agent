@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { pageField, pageSources, paymentStatus } from "../index";
+import { expenseFields, pageField, pageSources, paymentStatus } from "../index";
 import { obligation, profile, record } from "./fixtures";
 
 test("reads a top-level frontmatter field", () => {
@@ -34,4 +34,13 @@ test("lists a Page's Sources in flow or block YAML, empty without any", () => {
     pageSources(record.replace(/sources: .*/, "sources: []")),
     []
   );
+});
+
+test("reads a Record's scalar expense fields, or null without an expense block", () => {
+  const fields = expenseFields(record);
+  assert.equal(fields?.vendor, "cascade-appliance-parts");
+  assert.equal(fields?.date, "2026-09-12");
+  assert.equal(fields?.amount, "212.48");
+  assert.equal(fields?.document, "4471");
+  assert.equal(expenseFields(profile), null);
 });
