@@ -27,6 +27,14 @@ test("rejects an expense block written in the body instead of the frontmatter", 
   invalid(RECORD, `---\n${moved}---\n${body}\n${expense}`, /frontmatter/);
 });
 
+test("rejects frontmatter fields written into the body, such as a second frontmatter block", () => {
+  invalid(
+    OBLIGATION,
+    `${obligation}\n---\ntitle: x\nstatus: done\ndone_on: 2026-10-14\n---\n`,
+    /body/
+  );
+});
+
 test("rejects a Page without frontmatter or required fields", () => {
   invalid(RECORD, "# Just a body\n", /frontmatter/);
   invalid(OBLIGATION, obligation.replace("status: active\n", ""), /status/);

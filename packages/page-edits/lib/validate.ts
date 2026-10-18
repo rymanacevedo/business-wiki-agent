@@ -35,6 +35,10 @@ const FOLDER_KINDS: [RegExp, string][] = [
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** A frontmatter field at the start of a body line: the YAML went in the wrong place. */
+const FIELD =
+  /^(title|kind|sources|created|updated|status|flags|expense|payment|allocations|entity|obligation|due|counterparty|recurs|superseded_by|done_on|category):/;
+
 const fail = (path: string, problem: string): never => {
   throw new PageEditError(
     `${path} is not a valid Page: ${problem} (see SCHEMA.md, Frontmatter).`
@@ -100,8 +104,12 @@ export function validatePage(path: string, page: string): void {
   const expected = FOLDER_KINDS.find(([pattern]) => pattern.test(path))?.[1];
   if (expected && kind !== expected)
     fail(path, `kind is ${kind}, but Pages here are kind: ${expected}`);
-  if (body.some((line) => /^(expense|payment|allocations):/.test(line)))
-    fail(path, "the expense block belongs in the frontmatter, not the body");
+  const stray = body.find((line) => FIELD.test(line));
+  if (stray)
+    fail(
+      path,
+      `frontmatter fields belong in the frontmatter, not the body (found "${stray.trim()}")`
+    );
   if (kind === "obligation") {
     if (!OBLIGATION_KINDS.includes(keys.get("obligation") ?? ""))
       fail(

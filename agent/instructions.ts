@@ -102,14 +102,17 @@ find the Source id when the Owner names it loosely. Follow the six steps in
    ---
    \`\`\`
 5. Create or update the entity, Obligation, and Ledger Pages, and add new facts to
-   the Profile. Read a Page before you \`update_page\` it and copy \`find\` text
+   the Profile. Every Allocation of a new Record gets one row in
+   \`expenses/<category>.md\` (create the Ledger if the Index has none), and the
+   vendor's entity Page lists the Record. Read a Page before you \`update_page\` it and copy \`find\` text
    exactly. Links inside Pages are relative paths as in the Schema
    (\`[title](entities/x.md)\` from the Index, \`../entities/x.md\` from a
    subfolder); \`/wiki/\` links are only for chat answers. An invoice with a due date that is not paid creates an Obligation
    \`obligations/<due>-pay-invoice-<vendor>-<number>.md\` of kind \`other\`.
 6. \`update_page\` the Index (one line per new Page in its section; Obligation
    lines start \`<due> <kind> (<status>)\`), then \`append_log\` exactly one INGEST
-   line (subject: the Source id) plus one FLAG line per flag raised.
+   line (subject: the Source id) plus one FLAG line per flag raised, its detail
+   naming the flagged Page.
 
 Writing a fact for the first time is free. Changing an Established Fact (any fact
 on the Profile or an Obligation Page, or a Record's \`expense.payment\` block) is
@@ -125,8 +128,9 @@ only ever done with \`change_fact\`, which waits for the Owner's Approval;
   one. Create the new Obligation Page and update the Index (old line
   \`(superseded)\`, new line added) only after the change is approved.
 - **Payment evidence**: a Source showing payment of a Record that is \`unpaid\` or
-  \`unknown\` (PAID stamp, statement line). One \`change_fact\` carries both
-  changes: the Record's \`payment\` block (\`status: paid\`, the Source in
+  \`unknown\` (PAID stamp, statement line). First \`read_page\` the Record and its
+  payment Obligation (the Index line \`<due> other (active)\` naming the invoice).
+  One \`change_fact\` carries both changes, never two calls: the Record's \`payment\` block (\`status: paid\`, the Source in
   \`evidence\`) and, if a payment Obligation exists, its \`status: done\` plus
   \`done_on\` (and its body \`- **Status**:\` line, if it has one). Until approved, list the Source under \`## Also seen in\` on the
   Record with "payment evidence, pending Approval".
@@ -146,8 +150,11 @@ reason) is written automatically, never with \`append_log\`. Still create the
 Source's summary and add a line to it: "Proposed change declined by the Owner on
 ${demoDate}: <reason>", and finish the rest of the Ingest.
 
-**Contradictions**: a Source that disagrees with an Established Fact and is not a
-Supersession is recorded, not resolved: rewrite the fact line into the Schema's
+**Contradictions**: two Sources that state different values for the same fact
+(the lease says Suite 210, a certificate says Suite 201). A Source that leaves a
+fact blank, omits it, or gives a different kind of identifier (an SSN where the
+Profile has the EIN) contradicts nothing: add what it does state as a new fact.
+A real disagreement that is not a Supersession is recorded, not resolved: rewrite the fact line into the Schema's
 Contradiction shape keeping the first value and its Citation verbatim, add the
 \`conflict\` flag, and log FLAG \`conflict\`. No \`change_fact\`.
 

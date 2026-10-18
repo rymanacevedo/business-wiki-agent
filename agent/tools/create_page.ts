@@ -5,6 +5,7 @@ import { validatePage } from "../../packages/page-edits";
 import { WikiConflictError } from "../../packages/wiki-store";
 import { wiki } from "../lib/config";
 import { pagePath } from "../lib/pages";
+import { declinedPaths } from "../lib/sequence";
 
 export default defineTool({
   description:
@@ -22,9 +23,13 @@ export default defineTool({
   }),
   approval: never(),
   label: { start: ({ path }) => `Create ${path}` },
-  async execute({ path, content }) {
+  async execute({ path, content }, ctx) {
     const clean = pagePath(path);
     validatePage(clean, content);
+    if (declinedPaths(ctx.messages).includes(clean))
+      throw new Error(
+        `The Owner declined the change_fact that proposed ${clean}; it is not created. Do not retry the change.`
+      );
     try {
       await wiki().write(
         clean,

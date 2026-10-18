@@ -2,6 +2,7 @@ import { defineTool } from "eve/tools";
 import { never } from "eve/tools/approval";
 import { z } from "zod";
 import { SOURCES, wiki } from "../lib/config";
+import { pageField } from "../../packages/page-edits";
 import { appendLog, LOG, logLine } from "../lib/pages";
 
 const SUBJECTS: Record<string, RegExp> = {
@@ -11,7 +12,7 @@ const SUBJECTS: Record<string, RegExp> = {
 
 export default defineTool({
   description:
-    "Append one line to the Log (log.md), dated with the Demo Date: `- <date> TYPE [subject]: detail`. Subject is the Source id for INGEST, conflict/suspicious-content/needs-owner for FLAG, the event's own date for MILESTONE; LINT has none. Exactly one INGEST line per Source. APPROVAL lines are written automatically, never with this tool.",
+    "Append one line to the Log (log.md), dated with the Demo Date: `- <date> TYPE [subject]: detail`. Subject is the Source id for INGEST, conflict/suspicious-content/needs-owner for FLAG (the detail names the flagged Page), the event's own date for MILESTONE; LINT has none. Exactly one INGEST line per Source. APPROVAL lines are written automatically, never with this tool.",
   inputSchema: z.object({
     type: z.enum(["INGEST", "LINT", "FLAG", "MILESTONE"]),
     subject: z.string().optional(),
@@ -26,6 +27,15 @@ export default defineTool({
     const rule = SUBJECTS[type];
     if (rule && !rule.test(subject ?? ""))
       throw new Error(`${type} needs a subject matching ${rule}.`);
+    if (type === "FLAG") {
+      // A FLAG line records a flag set on a Page, so it must name that Page.
+      const path = /\b(profile\.md|[a-z]+\/[a-z0-9-]+\.md)\b/.exec(detail)?.[1];
+      const page = path ? await store.read(path) : null;
+      if (!path || !page || !pageField(page.body, "flags")?.includes(subject!))
+        throw new Error(
+          `A FLAG line needs the path of the Page whose flags include ${subject} in its detail (set the flag on the Page first). Raise flags only for the Schema's cases.`
+        );
+    }
     if (type === "INGEST") {
       const id = subject ?? "";
       if (!/^[a-z0-9][a-z0-9-]*$/.test(id))
