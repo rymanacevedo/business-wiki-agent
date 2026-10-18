@@ -37,7 +37,7 @@ The catalog Page listing every Page with a one-line summary. Clerk reads it firs
 _Avoid_: Table of contents, sitemap, catalog
 
 **Log**:
-The append-only chronological Page recording every Ingest, Query, and Lint, and the Business's milestones.
+The append-only chronological Page recording every Ingest, Lint, Approval, and denial, and the Business's milestones. Queries read the Wiki and leave no Log entry.
 _Avoid_: History, audit trail, changelog, timeline
 
 **Profile**:
