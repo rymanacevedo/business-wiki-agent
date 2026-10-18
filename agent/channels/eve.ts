@@ -1,5 +1,6 @@
-import { eveChannel } from "eve/channels/eve";
+import { defaultEveAuth, eveChannel } from "eve/channels/eve";
 import { localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+import { withEvalCase } from "../../packages/langsmith-tracing";
 
 export default eveChannel({
   auth: [
@@ -12,4 +13,9 @@ export default eveChannel({
     // or use none() for a public demo.
     placeholderAuth(),
   ],
+  // Evals send `x-eval-case-id`; it rides on the session auth so traces can
+  // carry the case id (see agent/instrumentation/langsmith.ts).
+  onMessage: (ctx) => ({
+    auth: withEvalCase(defaultEveAuth(ctx), ctx.eve.request.headers),
+  }),
 });
