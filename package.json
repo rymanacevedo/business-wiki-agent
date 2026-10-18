@@ -3,14 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --types node packages/example/index.ts packages/example/tests/example.test.ts scripts/review-spec.ts scripts/tests/review-spec.test.ts",
+    "typecheck": "tsc -p tsconfig.json",
     "test": "bun test",
     "lint:boundaries": "depcruise packages",
     "check": "bun run lint && bun run lint:boundaries && bun run typecheck && bun run test",
     "prepare": "husky",
     "lint": "oxlint --deny-warnings",
     "lint:fix": "oxlint --fix",
-    "review:spec": "bun scripts/review-spec.ts"
+    "review:spec": "bun scripts/review-spec.ts",
+    "wiki:seed": "bun scripts/wiki-seed.ts"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "16.4.2",
