@@ -8,7 +8,11 @@ End every agent session by adding a run file, before reporting back. Codex and C
 
 ## File
 
-`docs/runs/NNNN-<slug>.md`, numbered from `0001` in the order the sessions started. Take the next free number; if two sessions collide, the later one renumbers.
+`docs/runs/NNNN-<slug>.md`, numbered from `0001` in the order the entries are **committed**, not the order the sessions started. Sessions run concurrently, so:
+
+- Pick the number at the moment you write the file, not at session start: fetch `origin/main`, then take one higher than the highest number present in the working tree, the index, and `origin/main` combined (`git fetch -q && ls docs/runs/ && git ls-tree --name-only origin/main docs/runs/`).
+- The entry that lands on `main` first keeps its number. If your entry is still uncommitted when another one with the same number appears, renumber yours before committing.
+- Never rename, edit, or commit another session's uncommitted entry. If you find a collision you did not cause, mention it in your report and leave the file alone.
 
 ## Template
 
