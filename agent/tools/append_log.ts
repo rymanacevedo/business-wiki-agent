@@ -3,6 +3,7 @@ import { never } from "eve/tools/approval";
 import { z } from "zod";
 import { SOURCES, wiki } from "../lib/config";
 import { pageField } from "../../packages/page-edits";
+import { ingestProblems } from "../lib/ingest-check";
 import { appendLog, LOG, logLine } from "../lib/pages";
 
 const SUBJECTS: Record<string, RegExp> = {
@@ -52,6 +53,11 @@ export default defineTool({
       if (ingests.at(-1) === ` INGEST [${id}]:`)
         throw new Error(
           `${id} already has its INGEST line; each Source gets exactly one.`
+        );
+      const problems = await ingestProblems(store, id);
+      if (problems.length)
+        throw new Error(
+          `Not logged: finish the Ingest of ${id} first, then append the INGEST line again.\n- ${problems.join("\n- ")}`
         );
     }
     const line = logLine(type, subject, detail);

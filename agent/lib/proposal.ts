@@ -1,6 +1,7 @@
 import {
   applyEdits,
   pageField,
+  pageSources,
   paymentStatus,
   validatePage,
 } from "../../packages/page-edits";
@@ -70,10 +71,16 @@ export async function proposalProblems(
   for (const [path, { before, next }] of applied) {
     if (paymentStatus(before) === "paid" || paymentStatus(next) !== "paid")
       continue;
+    const recordSources = pageSources(before);
     for (const obligation of await store.list("obligations/")) {
       const page = await store.read(obligation);
       if (!page || pageField(page.body, "status") !== "active") continue;
-      if (!page.body.includes(path)) continue;
+      // Its payment Obligation links the Record, or is an `other` Obligation
+      // citing the same invoice.
+      const cites =
+        pageField(page.body, "obligation") === "other" &&
+        pageSources(page.body).some((id) => recordSources.includes(id));
+      if (!page.body.includes(path) && !cites) continue;
       const after = applied.get(obligation)?.next;
       if (!after || pageField(after, "status") !== "done")
         problems.push(

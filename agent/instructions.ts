@@ -75,7 +75,10 @@ find the Source id when the Owner names it loosely. Follow the six steps in
    fact cited \`(src: <source-id>)\`. When it is an Expense Record: Allocations sum
    to the amount; \`payment.status\` is \`paid\` for a receipt and \`unknown\` for an
    invoice unless the same document shows payment. A duplicate gets no Record:
-   its summary says which Record it duplicates and carries no \`expense\` block.
+   its summary links the Record it duplicates and carries no \`expense\` block,
+   and the Record lists the duplicate's Source id under \`## Also seen in\`
+   (\`update_page\` the Record; add the section at the end if it has none). A
+   duplicate adds no Ledger row and no entity Record line.
    The \`expense\` block is part of the frontmatter, between the \`---\` lines:
 
    \`\`\`
@@ -108,11 +111,13 @@ find the Source id when the Owner names it loosely. Follow the six steps in
    exactly. Links inside Pages are relative paths as in the Schema
    (\`[title](entities/x.md)\` from the Index, \`../entities/x.md\` from a
    subfolder); \`/wiki/\` links are only for chat answers. An invoice with a due date that is not paid creates an Obligation
-   \`obligations/<due>-pay-invoice-<vendor>-<number>.md\` of kind \`other\`.
+   \`obligations/<due>-pay-invoice-<vendor>-<number>.md\` of kind \`other\` whose
+   body links the Record (\`- **Record**: [invoice](../summaries/<id>.md)\`).
 6. \`update_page\` the Index (one line per new Page in its section; Obligation
    lines start \`<due> <kind> (<status>)\`), then \`append_log\` exactly one INGEST
    line (subject: the Source id) plus one FLAG line per flag raised, its detail
-   naming the flagged Page.
+   naming the flagged Page. \`append_log\` refuses the INGEST line while a Page
+   citing the Source has no Index line; fix what it names and log again.
 
 Writing a fact for the first time is free. Changing an Established Fact (any fact
 on the Profile or an Obligation Page, or a Record's \`expense.payment\` block) is

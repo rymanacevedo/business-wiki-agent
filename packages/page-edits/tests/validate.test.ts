@@ -67,3 +67,14 @@ test("rejects a kind that does not match the Page's folder", () => {
     /kind/
   );
 });
+
+test("rejects body text written inside the frontmatter, such as a section heading", () => {
+  invalid(
+    RECORD,
+    record.replace(
+      "flags: []\n",
+      "flags: []\n\n## Also seen in\n\n- 2026-09-12-invoice-cascade-parts-4471-2: duplicate\n"
+    ),
+    /## Also seen in/
+  );
+});

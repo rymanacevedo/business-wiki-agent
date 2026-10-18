@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { pageField, paymentStatus } from "../index";
+import { pageField, pageSources, paymentStatus } from "../index";
 import { obligation, profile, record } from "./fixtures";
 
 test("reads a top-level frontmatter field", () => {
@@ -16,4 +16,22 @@ test("reads a Record's payment status, or null without an expense block", () => 
     "paid"
   );
   assert.equal(paymentStatus(profile), null);
+});
+
+test("lists a Page's Sources in flow or block YAML, empty without any", () => {
+  assert.deepEqual(pageSources(record), [
+    "2026-09-12-invoice-cascade-parts-4471",
+  ]);
+  const block = record.replace(
+    "sources: [2026-09-12-invoice-cascade-parts-4471]",
+    "sources:\n  [\n    2026-09-12-invoice-cascade-parts-4471,\n    2026-09-12-invoice-cascade-parts-4471-2,\n  ]"
+  );
+  assert.deepEqual(pageSources(block), [
+    "2026-09-12-invoice-cascade-parts-4471",
+    "2026-09-12-invoice-cascade-parts-4471-2",
+  ]);
+  assert.deepEqual(
+    pageSources(record.replace(/sources: .*/, "sources: []")),
+    []
+  );
 });

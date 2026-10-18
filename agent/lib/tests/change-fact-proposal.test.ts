@@ -117,3 +117,15 @@ test("a change to a Page that does not exist is sent back to Clerk", async () =>
   const [problem] = await check([{ ...markPaid, page: "summaries/nope.md" }]);
   assert.match(problem, /No Page at summaries\/nope\.md/);
 });
+
+test("a payment Obligation that cites the invoice but does not link the Record still has to close", async () => {
+  const store = createWikiStore({ namespace: "t" });
+  const current = await store.read(OBLIGATION);
+  await store.write(
+    OBLIGATION,
+    obligation.replace(`- **Record**: [invoice 4471](../${RECORD})\n`, ""),
+    { etag: current!.etag }
+  );
+  const [problem] = await check([markPaid]);
+  assert.match(problem ?? "", /stays active/);
+});

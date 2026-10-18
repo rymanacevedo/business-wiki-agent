@@ -97,6 +97,16 @@ export function validatePage(path: string, page: string): void {
   if (!page.startsWith("---\n"))
     fail(path, "it must start with YAML frontmatter");
   const { frontmatter, body } = splitPage(page);
+  // Unindented frontmatter lines are `key: value`; anything else is body
+  // text that landed above the closing `---`.
+  const misplaced = frontmatter.find(
+    (line) => line.trim() && !/^\s/.test(line) && !/^[A-Za-z_]+\s*:/.test(line)
+  );
+  if (misplaced)
+    fail(
+      path,
+      `body text belongs below the closing ---, not in the frontmatter (found "${misplaced.trim()}")`
+    );
   const keys = topLevelKeys(frontmatter);
   for (const key of REQUIRED)
     if (!keys.has(key)) fail(path, `frontmatter has no ${key}`);
