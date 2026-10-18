@@ -2,7 +2,7 @@
 title: Cascade Appliance Parts
 kind: entity
 entity: vendor
-sources: [2026-09-12-invoice-cascade-parts-4471]
+sources: [2026-09-12-invoice-cascade-parts-4471, 2026-09-12-invoice-cascade-parts-4471-2]
 created: 2026-10-17
 updated: 2026-10-18
 status: active
@@ -23,10 +23,10 @@ Wholesale appliance parts supplier.
 
 | Date | Document | Allocations | Amount | Paid |
 |---|---|---|---|---|
-| 2026-09-12 | [invoice 4471](../summaries/2026-09-12-invoice-cascade-parts-4471.md) | supplies 212.48 | 212.48 | unknown |
+| 2026-09-12 | [invoice 4471](../summaries/2026-09-12-invoice-cascade-parts-4471.md) | supplies 212.48 | 212.48 | paid |
 
 **Total**: $212.48 across 1 record.
 
 ## Obligations
 
-- [Pay invoice 4471, due 2026-10-12](../obligations/2026-10-12-pay-invoice-cascade-4471.md)
+- [Pay invoice 4471, due 2026-10-12](../obligations/2026-10-12-pay-invoice-cascade-4471.md): done 2026-10-14
