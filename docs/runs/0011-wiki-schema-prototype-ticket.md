@@ -17,17 +17,21 @@ Work through the map: take the next frontier ticket and resolve it. The ticket w
 5. One scope question the human left open, whether an invoice's due date is an Obligation, was decided by the agent and flagged: yes, kind `other`, closed by approved payment evidence, because it keeps unpaid past-due invoices visible in Lint and makes "mark paid" always an approved change.
 6. Rewrote the prototype Schema and Pages to match, posted the resolution with eval implications, closed the ticket, appended the gist to the map, left pointers on the persistence and eval-design tickets, and added Allocation, Ledger, Established Fact to `GLOSSARY.md`.
 
+7. After resolution, the human relayed a Codex review of the prototype: two Standards findings (payment described as both automatic and Approval-gated; duplicate handling said "stop" and so would drop new payment evidence) and four Spec findings (a PAID-stamped copy would be skipped; number-only matching can collapse different documents; summaries were freely editable so payment status bypassed Approval; "missed payment" overstated what the Wiki knows). All accepted. Fix: `expense.payment` is an Established Fact on every Record; evidence proposes one `change_fact` covering Record and Obligation; duplicates need number and content to match and are still read for new facts; Lint says "deadline passed; payment unconfirmed"; Source ids get `-2` on collision. A stamped copy of the invoice was added to the seed to show the flow. Amendment posted on the ticket, map gist tightened.
+
 ## Findings worth remembering
 
 - "Established" is a protection level, not a truth claim. Writing that sentence into the Schema removed the temptation to let the first-recorded value win a Contradiction.
 - Storing urgency on a Page is a stale fact waiting to happen; computing it from `due` against the Demo Date is one line of rule and zero maintenance.
-- Treating invoice due dates as Obligations aligns the injection Trap with the Approval boundary for free: the injected "mark this invoice paid" is exactly the change that always needs the Owner.
+- Treating invoice due dates as Obligations aligns the injection Trap with the Approval boundary for free: the injected "mark this invoice paid" is exactly the change that always needs the Owner. The review showed that only holds if the Record's payment block is itself Established; an Approval gate on the Obligation alone leaves the summary as a side door.
+- A duplicate is not a no-op. The copy that looks redundant is often the one carrying the new fact (a stamp, a note), so "skip duplicates" must mean "no second Record", never "do not read".
 - The duplicate rule needs a negative eval case (two distinct invoices sharing vendor, amount, and date) that the Corpus does not yet contain.
 
 ## What the human checked
 
 - Read the full prototype and chose every variant themselves, overturning the agent's recommendation on Contradiction display.
 - Found the five gaps; the agent had missed all of them.
+- Ran a second review (via Codex) that found six more consistency gaps in the agent's fixes, and relayed them; the agent had declared the ticket done with those in place.
 - Did not decide the invoice-deadline question; the agent's call is flagged on the ticket for them to overturn.
 
 ## Open questions
@@ -39,5 +43,6 @@ Work through the map: take the next frontier ticket and resolve it. The ticket w
 ## Artifacts
 
 - Resolution: https://github.com/rymanacevedo/business-wiki-agent/issues/10#issuecomment-6245524069
-- Prototype: https://github.com/rymanacevedo/business-wiki-agent/tree/prototype/wiki-schema/prototypes/wiki-schema (commits 75b80b8, 31f7dc0)
+- Prototype: https://github.com/rymanacevedo/business-wiki-agent/tree/prototype/wiki-schema/prototypes/wiki-schema (commits 75b80b8, 31f7dc0, and the review-fix commit after)
+- Amendment: https://github.com/rymanacevedo/business-wiki-agent/issues/10 (second resolution comment)
 - `GLOSSARY.md` (Expense Record updated; Allocation, Ledger, Established Fact added), this run file.
