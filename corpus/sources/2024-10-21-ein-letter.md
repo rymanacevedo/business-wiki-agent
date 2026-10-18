@@ -1,6 +1,6 @@
-INTERNAL REVENUE SERVICE Date of this notice: 10-21-2024
-Employer Identification Number:
-88-1234567
+INTERNAL REVENUE SERVICE                         Date of this notice: 10-21-2024
+                                                 Employer Identification Number:
+                                                 88-1234567
 NORTHWIND REPAIR LLC
 SAM RIVERA SOLE MBR
 1480 HARBOR AVE STE 210

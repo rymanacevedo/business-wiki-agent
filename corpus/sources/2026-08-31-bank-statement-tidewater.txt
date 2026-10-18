@@ -1,0 +1,26 @@
+TIDEWATER COMMUNITY BANK
+200 Harbor Ave, Portside
+
+BUSINESS CHECKING STATEMENT
+NORTHWIND REPAIR LLC
+1480 HARBOR AVE STE 210
+PORTSIDE
+
+Account: ****6615
+Statement period: 08/01/2026 - 08/31/2026
+
+Beginning balance                       6,412.55
+Total deposits (2)                      1,820.00
+Total withdrawals (4)                     448.02
+Ending balance                          7,784.53
+
+DATE   DESCRIPTION                                        WITHDRAWALS    DEPOSITS     BALANCE
+08/03  DEBIT CARD PURCHASE 4417 HARBOR HARDWARE                 23.13                6,389.42
+08/05  MOBILE DEPOSIT                                                      640.00    7,029.42
+08/11  DEBIT CARD PURCHASE 4417 PORTSIDE FUEL STOP              71.75                6,957.67
+08/14  DEBIT CARD PURCHASE 4417 PAPER TRAIL OFFICE              41.02                6,916.65
+08/18  ACH CREDIT BAYVIEW RESIDENTIAL                                    1,180.00    8,096.65
+08/20  DEBIT CARD PURCHASE 4417 RIDGELINE TOOL SUPPLY          312.12                7,784.53
+
+Card 4417 is the business debit card on this account.
+Thank you for banking with Tidewater Community Bank.

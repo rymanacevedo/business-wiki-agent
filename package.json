@@ -11,7 +11,8 @@
     "lint": "oxlint --deny-warnings",
     "lint:fix": "oxlint --fix",
     "review:spec": "bun scripts/review-spec.ts",
-    "wiki:seed": "bun scripts/wiki-seed.ts"
+    "wiki:seed": "bun scripts/wiki-seed.ts",
+    "corpus:generate": "bun scripts/corpus-generate.ts"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "16.4.2",

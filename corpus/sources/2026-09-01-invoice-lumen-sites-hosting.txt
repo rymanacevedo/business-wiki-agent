@@ -1,0 +1,18 @@
+Lumen Sites
+billing@lumensites.example
+
+INVOICE LS-2609-0388
+Invoice date: September 1, 2026
+Bill to: Northwind Repair LLC, 1480 Harbor Ave Ste 210, Portside
+Terms: Autopay
+
+Description                                      Qty     Amount
+Business hosting plan (monthly)                    1      16.00
+Domain email, 1 mailbox                            1       4.00
+
+Subtotal                                                  20.00
+Total                                                     20.00
+
+Charged to card ending 4417 on 09/01/2026 (autopay). Amount due: $0.00
+
+Questions about this invoice? Contact billing@lumensites.example.

@@ -1,0 +1,28 @@
+TIDEWATER COMMUNITY BANK
+200 Harbor Ave, Portside
+
+BUSINESS CHECKING STATEMENT
+NORTHWIND REPAIR LLC
+1480 HARBOR AVE STE 210
+PORTSIDE
+
+Account number: 000483726615        Routing number: 021000089
+Statement period: 09/01/2026 - 09/30/2026
+
+Beginning balance                       7,784.53
+Total deposits (2)                      2,335.00
+Total withdrawals (6)                     396.98
+Ending balance                          9,722.55
+
+DATE   DESCRIPTION                                        WITHDRAWALS    DEPOSITS     BALANCE
+09/01  RECURRING CARD PMT 4417 LUMEN SITES HOSTING              20.00                7,764.53
+09/02  DEBIT CARD PURCHASE 4417 PORTSIDE FUEL STOP              65.41                7,699.12
+09/04  MOBILE DEPOSIT                                                      925.00    8,624.12
+09/09  DEBIT CARD PURCHASE 4417 VALLEY ELECTRIC SUPPLY          68.80                8,555.32
+09/15  DEBIT CARD PURCHASE 4417 PORTSIDE POWER LIGHT           118.36                8,436.96
+09/18  DEBIT CARD PURCHASE 4417 HARBOR HARDWARE                110.64                8,326.32
+09/22  ACH CREDIT BAYVIEW RESIDENTIAL                                    1,410.00    9,736.32
+09/24  DEBIT CARD PURCHASE 4417 DOCKSIDE DELI                   13.77                9,722.55
+
+Card 4417 is the business debit card on this account.
+Thank you for banking with Tidewater Community Bank.

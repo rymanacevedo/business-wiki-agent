@@ -1,0 +1,9 @@
+PORTSIDE FUEL STOP
+09/02/2026 08:02  REG 2  TRN 020802
+--------------------------------
+UNLD 16.950 GAL @ 3.859    65.41
+SUBTOTAL                   65.41
+TOTAL                      65.41
+DEBIT ************4417     65.41
+AUTH 2JNL  APPROVFD
+TNANK YOU DR1VE SAFE
