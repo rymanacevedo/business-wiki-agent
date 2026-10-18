@@ -77,3 +77,25 @@ _Avoid_: Confirmation, permission, sign-off, consent
 **Citation**:
 A reference from a Page or an answer back to the Source or Page it came from.
 _Avoid_: Reference, link, footnote
+
+### The seed corpus
+
+**Corpus**:
+The fixed set of Sources the demo and evals Ingest.
+_Avoid_: Dataset, fixtures, raw docs, seed documents
+
+**Bible**:
+The table of canonical facts about the Business from which every Source in the Corpus is generated.
+_Avoid_: Fact sheet, seed data, business config
+
+**Trap**:
+A Source planted in the Corpus to provoke a specific failure Clerk must handle correctly.
+_Avoid_: Edge case, adversarial example, tricky document
+
+**Manifest**:
+The machine-readable record of what each Source in the Corpus should contribute to the Wiki, which deterministic checks read as ground truth.
+_Avoid_: Ground truth, labels, expected outputs, answer key
+
+**Demo Date**:
+The frozen date Clerk treats as today, against which an Obligation is upcoming or missed.
+_Avoid_: Now, current date, wall clock
