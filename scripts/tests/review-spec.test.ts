@@ -48,11 +48,12 @@ function fixture() {
 const fs = require('node:fs');
 const args = process.argv.slice(2);
 const prompt = fs.readFileSync(0, 'utf8');
-if (!prompt.includes('AC: display a greeting.') || !args.includes('read-only') || args.includes('--ephemeral')) process.exit(9);
+if (!prompt.includes('AC: display a greeting.') || !args.includes('read-only') || args.includes('--ephemeral') || !args.includes('model_reasoning_effort="high"')) process.exit(9);
 if (process.env.REVIEW_MUTATE_SPEC) fs.appendFileSync(process.env.REVIEW_MUTATE_SPEC, ' New AC');
 if (process.env.REVIEW_RESPONSE !== 'NO_OUTPUT') fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], process.env.REVIEW_RESPONSE);
 if (process.env.REVIEW_STARTED) fs.writeFileSync(process.env.REVIEW_STARTED, 'ready');
 if (process.env.REVIEW_RELEASE) while (!fs.existsSync(process.env.REVIEW_RELEASE)) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+if (process.env.REVIEW_EXIT !== '0') process.stderr.write('Reading prompt from stdin...\\nERROR: stream disconnected\\nnoise\\nERROR: retry limit reached\\n');
 process.exit(Number(process.env.REVIEW_EXIT || 0));
 `
   );
@@ -115,6 +116,22 @@ test("a complete clean review approves only the captured commit", () => {
       "passed"
     );
     assert.equal(f.review(clean, ["--status"]).status, 0);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("a failed run reports only Codex's ERROR lines", () => {
+  const f = fixture();
+  try {
+    const result = f.review(clean, [], "1");
+    assert.equal(result.status, 2, result.stdout);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, "incomplete");
+    assert.equal(
+      report.error,
+      "Codex review failed: ERROR: stream disconnected\nERROR: retry limit reached"
+    );
   } finally {
     f.cleanup();
   }

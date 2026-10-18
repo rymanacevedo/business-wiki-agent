@@ -23,8 +23,8 @@ and actual test evidence; preserve the originating spec and ticket links.
    `gh` must be authenticated when fetching issues; `codex` must be authenticated
    and available on PATH. Activate Node 24 with `nvm use` first.
 
-3. The command launches a fresh Codex session with read-only shell access,
-   enables subagents, and supplies the repo's `code-review` skill. It asks for
+3. The command launches a fresh Codex session at high reasoning effort with
+   read-only shell access, enables subagents, and supplies the repo's `code-review` skill. It asks for
    independent Standards and Spec reviews, concrete failure cases, code locations,
    and AC/standard citations. Repository changes and issue/PR writes are forbidden
    in the review prompt. Shell sandboxing does not restrict connected app tools;
@@ -35,7 +35,8 @@ and actual test evidence; preserve the originating spec and ticket links.
    findings. Exit `2` means incomplete, invalid, failed, missing, or stale review.
    The JSON printed on a completed invocation includes separate reports, findings,
    the reviewed SHA, and an artifact path under the worktree's Git directory.
-   Invocation/preflight failures explain the problem on stderr instead. Codex has
+   Invocation/preflight failures explain the problem on stderr instead. A failed
+   Codex run records only Codex's `ERROR:` lines in the report's `error` field. Codex has
    a ten-minute timeout; failures never count as a pass. Duplicate invocations
    with identical inputs are rejected while a review is active. Each run has its
    own output directory. If the wrapper is forcibly killed, its `.lock` directory
