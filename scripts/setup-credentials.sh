@@ -275,7 +275,7 @@ pause
 
 # ── 4 ─────────────────────────────────────────────────────────────────────
 stage "Vercel AI Gateway: API key"
-say "One Gateway key serves the agent model (anthropic/claude-sonnet-5.5) and the eval judge."
+say "One Gateway key serves the agent model (openai/gpt-5-mini) and the eval judge."
 say "It never expires unless revoked, so it beats the 12-hour OIDC token for a 3-day build."
 open_url "https://vercel.com/dashboard"
 step "In the top navigation pick 'AI Gateway', then the 'API Keys' tab."
