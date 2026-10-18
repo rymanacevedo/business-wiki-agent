@@ -1,0 +1,9 @@
+PORTSIDE FUEL STOP
+08/11/2026 07:48  RFG 2  TRN 110748
+--------------------------------
+UN1D 18.402 GAL @ 3.899    71.75
+SUBTOTAL                   71.75
+TOTAL                      71.75
+DEBIT ************4417     71.75
+AVTH 21BO  APPR0VED
+THANK Y0U DR1VF  SAFE

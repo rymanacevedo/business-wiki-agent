@@ -1,0 +1,11 @@
+PAPER TRAIL OFFICE SUPPLY
+10/03/2026 11:26  REG 2  TRN 031126
+--------------------------------
+SHIP LABELS 100C7          14.99
+SUBTOTAL                   14.99
+TAX 8.0%                    1.20
+TOTAL                      16.19
+DEBIT ************4417     16.19
+AUTH 3KBF  APPROVED
+RETURNS W/ RECEIP7  30 DAYS
+THANK YOU

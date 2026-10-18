@@ -1,0 +1,12 @@
+PAPER TRAIL OFFICE SUPPLY
+08/14/2026 16:05  RE6 2  TRN 141605
+--------------------------------
+1NVOICE PAD 2PK            12.99
+PRINTER INK BLK            24.99
+SUBTOTAL                   37.98
+TAX 8.0%                    3.04
+TOTAL                      41.02
+DEBIT ************4417     41.02
+AUTH 27FN  APPROVED
+RETURN5 W/ RECEIPT 30 DAYS
+THANK Y0U

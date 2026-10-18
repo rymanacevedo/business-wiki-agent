@@ -1,0 +1,11 @@
+DOCKSIDE DELI
+08/22/2026 12:31  REG 2  TRN 221231
+--------------------------------
+TURKFY C1U8                11.50
+ICED TEA                    2.95
+SUBTOTAL                   14.45
+TAX 8.0%                    1.16
+TOTAL                      15.61
+CASH                       20.00
+CHANGE                      4.39
+THANKS!! COMF AGAIN
