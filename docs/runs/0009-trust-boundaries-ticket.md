@@ -1,4 +1,4 @@
-# 0008: Resolve the trust boundaries ticket
+# 0009: Resolve the trust boundaries ticket
 
 - **When**: 2026-10-17
 - **Agent**: Claude Code, Claude Fable 5.1
