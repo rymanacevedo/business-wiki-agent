@@ -42,3 +42,23 @@ prototype ticket is closed. No issue comments, closures, or prototype edits made
 
 - [Prototype ticket](https://github.com/rymanacevedo/business-wiki-agent/issues/10)
 - [Prototype branch](https://github.com/rymanacevedo/business-wiki-agent/tree/prototype/wiki-schema/prototypes/wiki-schema)
+
+## Follow-up verification, 2026-10-18
+
+At the human's request, committed this entry as `66bd6dd` (renumbered from 0010
+because Claude's 0011 had landed), then reviewed Claude's prototype update
+`31f7dc0` against `75b80b8` and main's glossary/run update `8343d0e` against
+`0ce9728`. Independent Standards and Spec subagents checked the committed diffs.
+
+Most earlier requests are reflected: equal Contradiction claims, lifecycle status
+in the Index, Allocations, permit payment evidence, absolute-date Pages, and
+Source-faithful business-start/lease-commencement wording. The added invoice
+Obligation was an agent decision, explicitly flagged in Claude's run.
+
+Standards found two internal inconsistencies: the payment/Approval rules disagree,
+and the duplicate-stop rule can discard payment evidence. Spec found four gaps:
+matching numbers bypass content checks; duplicate handling drops newly supplied
+payment evidence; summary updates can bypass the claimed payment Approval gate;
+and unknown payment is reported as missed rather than unconfirmed. Standards' two
+findings overlap Spec's findings; these are separate review axes, not six distinct
+issues. No prototype files or tickets were changed by this verification.
