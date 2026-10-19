@@ -54,10 +54,11 @@ export default ingestCases(corpus.manifest, baseIngested).map((c) =>
       }
 
       const after = await sessionWiki(t.context, turn.sessionId);
-      const result = checkIngest(c.entry, {
-        before: await seedWiki(t.context),
-        after,
-      });
+      const result = checkIngest(
+        c.entry,
+        { before: await seedWiki(t.context), after },
+        { parked: c.expectsApproval }
+      );
       for (const gate of result.gates)
         t.score({ score: gate.passed ? 1 : 0, message: gate.detail })
           .label(gate.name)

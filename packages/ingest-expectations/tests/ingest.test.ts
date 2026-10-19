@@ -232,3 +232,24 @@ test("a Profile fact already stated before the Ingest, under another Citation, c
   assert.equal(owner(asIs), false);
   assert.equal(owner(known), true);
 });
+
+test("an Ingest parked on its Approval is not scored on what comes after the Owner answers", async () => {
+  // The renewed certificate parks on its Supersession: the new Obligation and
+  // the INGEST line are written only once the Owner answers.
+  const [base, , corpus] = await wikis;
+  const entry = corpus.manifest.sources.find(
+    (s) => s.id === "2026-10-14-insurance-cert-meridian-renewal"
+  )!;
+  const names = (r: IngestResult) => r.extraction.checks.map((c) => c.name);
+
+  assert.deepEqual(names(checkIngest(entry, { before: base, after: base })), [
+    "obligation insurance-renewal 2027-11-15",
+    "profile insurer",
+    "one INGEST line",
+    "no urgency words",
+  ]);
+  assert.deepEqual(
+    names(checkIngest(entry, { before: base, after: base }, { parked: true })),
+    ["profile insurer", "no urgency words"]
+  );
+});

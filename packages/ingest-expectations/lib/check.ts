@@ -35,10 +35,14 @@ const check = (name: string, passed: boolean, detail?: string): Check =>
  * What one Ingest of `entry` should have left in the Wiki, derived from the
  * Manifest: `before` is the seeded Wiki, `after` the session's Wiki once the
  * turn settled. Trap kinds switch the expectations (eval design item 8).
+ * `parked`: the turn is expected to stop at an Approval nobody answers, so
+ * what is written only after the Owner answers (the new Obligations and the
+ * INGEST line) is left out of `extraction`.
  */
 export function checkIngest(
   entry: ManifestEntry,
-  { before, after }: { before: Wiki; after: Wiki }
+  { before, after }: { before: Wiki; after: Wiki },
+  { parked = false }: { parked?: boolean } = {}
 ): IngestResult {
   const summary = summaryOf(entry.id, after);
   const page = summary ? after.get(summary)! : null;
@@ -58,11 +62,12 @@ export function checkIngest(
     found.push(
       ...["vendor", "date", "sum", "payment status"].map((n) => check(n, false))
     );
-  for (const obligation of entry.obligations)
-    found.push(obligationCheck(entry.id, obligation, after));
+  if (!parked)
+    for (const obligation of entry.obligations)
+      found.push(obligationCheck(entry.id, obligation, after));
   for (const fact of entry.profile)
     found.push(profileCheck(entry.id, fact, { before, after }));
-  found.push(...logChecks(entry, before, after));
+  if (!parked) found.push(...logChecks(entry, before, after));
   for (const record of [
     ...entry.corroborates,
     ...(entry.duplicateOf ? [entry.duplicateOf] : []),
