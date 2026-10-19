@@ -59,8 +59,10 @@ EVAL_RUN_LABEL=mine WIKI_SEED=full bun run eval query lint safety/approvals safe
 Results land in `docs/evals/runs/mine/`, and
 `bun run eval:diff before mine` compares them with the baseline (it also
 rewrites the table below, so revert `README.md` afterwards). On the free
-tier the two invocations take about 16 and 9 minutes. Pass ids to run a few
-cases, for example `bun run eval ingest/sources/0009 query/questions/0000`.
+tier the two invocations take about 16 and 9 minutes. To try a few cases,
+pass their ids with the matching seed, for example
+`WIKI_SEED=full bun run eval query/questions/0000 lint/checks/0001`
+(`bun run eval --list` shows every id).
 LangSmith tracing is optional: set `LANGSMITH_API_KEY` in `.env.local`, and
 the eval traces go to `business-wiki-agent-evals`.
 [`scripts/setup-credentials.sh`](scripts/setup-credentials.sh) walks through
