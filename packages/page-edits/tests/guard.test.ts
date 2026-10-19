@@ -126,6 +126,44 @@ test("rejects a Contradiction that drops the first recorded value", () => {
   );
 });
 
+test("accepts a Contradiction that keeps the first value's numbers and Citation but trims its wording", () => {
+  const before = edit(
+    profile,
+    "- **Premises suite**: Suite 210 (src: 2025-04-01-lease-harborview)",
+    "- **Premises suite**: 1480 Harbor Avenue, Suite 210, Portside (src: 2025-04-01-lease-harborview)"
+  );
+  const after = edit(
+    before,
+    "- **Premises suite**: 1480 Harbor Avenue, Suite 210, Portside (src: 2025-04-01-lease-harborview)",
+    "- **Premises suite**: ⚠ **Conflict**, unresolved since 2026-10-17: 1480 Harbor Avenue, Suite 210 (src: 2025-04-01-lease-harborview) or 1480 Harbor Avenue, Suite 201 (src: 2026-03-02-insurance-cert-meridian-bayview)"
+  );
+  guardPageEdit("profile.md", before, after);
+});
+
+test("rejects a Contradiction that changes the first value's number", () => {
+  rejects(
+    "profile.md",
+    profile,
+    edit(
+      profile,
+      "- **Premises suite**: Suite 210 (src: 2025-04-01-lease-harborview)",
+      "- **Premises suite**: ⚠ **Conflict**, unresolved since 2026-10-17: Suite 211 (src: 2025-04-01-lease-harborview) or Suite 201 (src: 2026-03-02-insurance-cert-meridian-bayview)"
+    )
+  );
+});
+
+test("the refusal explains how to record a Contradiction without Approval", () => {
+  assert.throws(
+    () =>
+      guardPageEdit(
+        "profile.md",
+        profile,
+        edit(profile, "Suite 210 (src", "Suite 201 (src")
+      ),
+    /Contradiction.*Conflict/
+  );
+});
+
 test("protects Profile and Obligation Pages by path even if kind is edited", () => {
   const relabel = (body: string, kind: string) =>
     edit(body, `kind: ${kind}`, "kind: summary");

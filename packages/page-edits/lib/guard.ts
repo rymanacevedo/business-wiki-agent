@@ -5,7 +5,9 @@ export class EstablishedFactError extends Error {
   constructor(path: string, what: string) {
     super(
       `update_page cannot change ${what} on ${path}: it is an Established Fact. ` +
-        "Propose the change with change_fact (page, old value, new value, Source, reason) and wait for the Owner's Approval."
+        "Propose the change with change_fact (page, old value, new value, Source, reason) and wait for the Owner's Approval. " +
+        "If a new Source disagrees with this fact (a Contradiction, not a Supersession), do not use change_fact: rewrite the line in the Schema's Conflict shape, same label, keeping the current value and its Citation: " +
+        "`- **Label**: ⚠ **Conflict**, unresolved since <Demo Date>: <current value> (src: <its source>) or <new value> (src: <new source>)`; that needs no Approval."
     );
     this.name = "EstablishedFactError";
   }
@@ -88,19 +90,33 @@ const PLACEHOLDER = /not in the wiki/i;
 
 /**
  * A Contradiction may replace a fact line when the new line keeps the same
- * label, is marked `**Conflict**`, and still carries the first recorded value
- * with its Citation verbatim.
+ * label, is marked `**Conflict**`, and still carries the first recorded value:
+ * its Citations, and its numbers (or, with none, its text verbatim).
  */
 function keptInConflict(line: string, body: string[]): boolean {
   const match = /^- (\*\*[^*]+\*\*):\s*(.+)$/.exec(line);
   if (!match) return false;
   const [, label, value] = match;
+  const citations = value.match(/\(src: [^)]+\)/g) ?? [];
+  const text = value.replace(/\(src: [^)]+\)/g, "");
+  const numbers =
+    text.match(/[\w$.,-]*\d[\w$.,-]*/g)?.map((n) => n.replace(/[.,]+$/, "")) ??
+    [];
+  const keeps = (next: string) =>
+    numbers.length
+      ? numbers.every((n) =>
+          new RegExp(`(^|[^\\w])${n.replace(/[.$]/g, "\\$&")}(?!\\w)`).test(
+            next
+          )
+        )
+      : next.includes(value);
   return body
     .map((next) => next.trim())
     .some(
       (next) =>
         next.startsWith(`- ${label}:`) &&
         next.includes("**Conflict**") &&
-        next.includes(value)
+        citations.every((c) => next.includes(c)) &&
+        keeps(next)
     );
 }
