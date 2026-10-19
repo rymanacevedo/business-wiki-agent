@@ -23,7 +23,8 @@
     "review:spec": "bun scripts/review-spec.ts",
     "wiki:seed": "bun scripts/wiki-seed.ts",
     "wiki:build-fixture": "bun scripts/wiki-build-fixture.ts",
-    "corpus:generate": "bun scripts/corpus-generate.ts"
+    "corpus:generate": "bun scripts/corpus-generate.ts",
+    "eval:diff": "bun scripts/eval-diff.ts"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "16.4.2",
