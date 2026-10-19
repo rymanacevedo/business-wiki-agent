@@ -264,3 +264,137 @@ test("a Source that states an expiry waits for an Obligation due that day", asyn
   );
   assert.match(await ingest(CERT), /^Logged: /);
 });
+
+test("a lease's end date is tracked by the notice Obligation counted from it, not a second one", async () => {
+  const LEASE = "2025-04-01-lease-harborview";
+  const SUMMARY = `summaries/${LEASE}.md`;
+  const NOTICE = "obligations/2026-12-31-lease-notice-harborview.md";
+  writeFileSync(join(root, "t", "sources", `${LEASE}.md`), "LEASE\n");
+  await write(
+    SUMMARY,
+    page("summary", LEASE, "", `\n- Expiration: 2027-03-31 (src: ${LEASE})\n`)
+  );
+  await write(
+    NOTICE,
+    page(
+      "obligation",
+      LEASE,
+      "obligation: lease-notice\ndue: 2026-12-31\ncounterparty: harborview-properties\nrecurs: none\n",
+      `\n- **Deadline**: 90 days before the term ends on 2027-03-31 (src: ${LEASE})\n`
+    )
+  );
+  await write(
+    "index.md",
+    indexWith(
+      `${fullIndex}\n- 2026-12-31 lease-notice (active): [Lease notice](${NOTICE})\n- 2025-04-01 lease: [Lease](${SUMMARY}): Suite 210.`
+    )
+  );
+  assert.match(await ingest(LEASE), /^Logged: /);
+});
+
+test("a Source that states a filing due date waits for an Obligation due that day", async () => {
+  const REG = "2024-11-04-sales-tax-registration";
+  const SUMMARY = `summaries/${REG}.md`;
+  const RETURN = "obligations/2027-01-31-tax-filing-sales-tax-return.md";
+  writeFileSync(join(root, "t", "sources", `${REG}.md`), "REGISTRATION\n");
+  await write(
+    SUMMARY,
+    page(
+      "summary",
+      REG,
+      "",
+      `\n- **Filing frequency**: annual; returns due January 31. Next return due 2027-01-31 (src: ${REG})\n`
+    )
+  );
+  const regLine = `- 2024-11-04 registration: [Sales-tax registration](${SUMMARY}): ST-24-558201.`;
+  await write("index.md", indexWith(`${fullIndex}\n${regLine}`));
+  const refused = await ingest(REG);
+  assert.match(refused, /^refused: /);
+  assert.match(refused, /due 2027-01-31/);
+  assert.match(refused, /tax-filing/);
+
+  await write(
+    RETURN,
+    page(
+      "obligation",
+      REG,
+      "obligation: tax-filing\ndue: 2027-01-31\ncounterparty: null\nrecurs: yearly\n"
+    )
+  );
+  await write(
+    "index.md",
+    indexWith(
+      `${fullIndex}\n${regLine}\n- 2027-01-31 tax-filing (active): [File the sales-tax return](${RETURN})`
+    )
+  );
+  assert.match(await ingest(REG), /^Logged: /);
+});
+
+test("a Source with no Record waits until the Profile cites it or its summary says it adds no Business facts", async () => {
+  const LEASE = "2025-04-01-lease-harborview";
+  const SUMMARY = `summaries/${LEASE}.md`;
+  writeFileSync(join(root, "t", "sources", `${LEASE}.md`), "LEASE\n");
+  const profile = (facts: string) =>
+    page("profile", facts ? LEASE : "", "", `\n## Premises lease\n${facts}`);
+  await write("profile.md", profile(""));
+  await write(
+    SUMMARY,
+    page("summary", LEASE, "", `\n- Rent $1,450 (src: ${LEASE})\n`)
+  );
+  const lines = `${fullIndex}\n- [Northwind Repair LLC](profile.md): the Business.\n- 2025-04-01 lease: [Lease](${SUMMARY}): Suite 210.`;
+  await write("index.md", indexWith(lines));
+  const refused = await ingest(LEASE);
+  assert.match(refused, /^refused: /);
+  assert.match(refused, /Profile/);
+  assert.match(refused, /Business facts\*\*: none new/);
+
+  await write(
+    "profile.md",
+    profile(`\n- **Landlord**: Harborview Properties LLC (src: ${LEASE})\n`)
+  );
+  assert.match(await ingest(LEASE), /^Logged: /);
+});
+
+test("a Source whose summary says it adds no Business facts needs no Profile Citation", async () => {
+  await write("profile.md", page("profile", "", "", "\n## Identity\n"));
+  await write(
+    "index.md",
+    indexWith(
+      `${fullIndex}\n- [Northwind Repair LLC](profile.md): the Business.\n- 2026-09-12 invoice: [Copy](summaries/${COPY}.md): PAID copy.`
+    )
+  );
+  await write(
+    `summaries/${COPY}.md`,
+    copy.replace(
+      "Duplicate of",
+      "- **Business facts**: none new\n\nDuplicate of"
+    )
+  );
+  await write(
+    RECORD,
+    `${record}\n## Also seen in\n\n- ${COPY}: duplicate (src: ${COPY})\n`
+  );
+  assert.match(await ingest(COPY), /^Logged: /);
+});
+
+test("a Citation's Source id date is not a stated due date or expiry", async () => {
+  const REG = "2024-11-04-sales-tax-registration";
+  const SUMMARY = `summaries/${REG}.md`;
+  writeFileSync(join(root, "t", "sources", `${REG}.md`), "REGISTRATION\n");
+  await write(
+    SUMMARY,
+    page(
+      "summary",
+      REG,
+      "",
+      `\n- **Filing frequency**: annual; returns due January 31 following each calendar year (src: ${REG})\n- **Expires**: see the registration terms (src: ${REG})\n`
+    )
+  );
+  await write(
+    "index.md",
+    indexWith(
+      `${fullIndex}\n- 2024-11-04 registration: [Registration](${SUMMARY}): ST-24-558201.`
+    )
+  );
+  assert.match(await ingest(REG), /^Logged: /);
+});

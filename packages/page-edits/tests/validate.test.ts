@@ -173,3 +173,111 @@ test("rejects urgency stored in a Page body; the Log and Schema may name it", ()
       .replace("## Profile", "- 2026-10-17 LINT: 1 missed")
   );
 });
+
+test("rejects an Allocation category outside the Schema's closed list", () => {
+  invalid(
+    RECORD,
+    record.replace(
+      "{ category: supplies, amount: 212.48 }",
+      "{ category: licenses, amount: 212.48 }"
+    ),
+    /category "licenses"/
+  );
+});
+
+test("rejects a Ledger for a category outside the Schema's closed list", () => {
+  const ledger = `---
+title: Licenses
+kind: ledger
+sources: []
+created: 2026-10-17
+updated: 2026-10-17
+status: active
+flags: []
+category: licenses
+---
+
+# Licenses
+`;
+  invalid("expenses/licenses.md", ledger, /category "licenses"/);
+  validatePage(
+    "expenses/other.md",
+    ledger.replace("category: licenses", "category: other")
+  );
+});
+
+const LEASE = "obligations/2026-12-31-lease-notice-harborview-properties.md";
+const leaseNotice = (due: string, computed: string) => `---
+title: Lease non-renewal notice due ${due}
+kind: obligation
+obligation: lease-notice
+due: ${due}
+counterparty: harborview-properties
+recurs: none
+sources: [2025-04-01-lease-harborview]
+created: 2026-10-17
+updated: 2026-10-17
+status: active
+flags: []
+---
+
+# Lease non-renewal notice
+
+- **Deadline**: ${computed} (src: 2025-04-01-lease-harborview)
+`;
+
+test("accepts a lease notice due the stated number of calendar days before the term ends", () => {
+  validatePage(
+    LEASE,
+    leaseNotice("2026-12-31", "90 days before the term ends on 2027-03-31")
+  );
+  validatePage(
+    LEASE,
+    leaseNotice("2026-12-31", "computed as 2027-03-31 minus 90 days")
+  );
+});
+
+test("rejects a lease notice whose due date is not the counted day, naming the right one", () => {
+  invalid(
+    LEASE,
+    leaseNotice(
+      "2027-01-01",
+      "90 days before lease term end; computed as 2027-03-31 minus 90 days = 2027-01-01"
+    ),
+    /90 calendar days before 2027-03-31 is 2026-12-31/
+  );
+});
+
+test("rejects a lease notice that does not say how its due date was computed", () => {
+  invalid(
+    LEASE,
+    leaseNotice("2026-12-31", "Give notice of non-renewal"),
+    /how/
+  );
+});
+
+test("an Also seen in section lists at least one Source, once per Page", () => {
+  const seen =
+    "- 2026-09-30-bank-statement-tidewater (corroborates payment) (src: 2026-09-30-bank-statement-tidewater)";
+  validatePage(RECORD, `${record}\n## Also seen in\n\n${seen}\n`);
+  invalid(RECORD, `${record}\n## Also seen in\n\nNone.\n`, /Also seen in/);
+  invalid(RECORD, `${record}\n## Also seen in\n`, /Also seen in/);
+  invalid(
+    RECORD,
+    `${record}\n## Also seen in\n\nNone.\n\n## Also seen in\n\n${seen}\n`,
+    /Also seen in/
+  );
+});
+
+test("rejects an Obligation due on or before the date of the document that states it", () => {
+  invalid(
+    OBLIGATION,
+    obligation.replace("due: 2026-11-15", "due: 2025-11-15"),
+    /due after/
+  );
+  invalid(
+    OBLIGATION,
+    obligation.replace("due: 2026-11-15", "due: 2025-10-01"),
+    /due after/
+  );
+});

@@ -12,7 +12,7 @@ import { INDEX, LOG, SCHEMA, pagePath, tidyIndex, touch } from "../lib/pages";
 
 export default defineTool({
   description:
-    "Edit an existing Wiki Page with find-and-replace edits: add a Ledger row, an Index line, an `## Also seen in` entry, a new fact, a History line. Each find must be exact text from the Page (read_page first) and match once; an empty find appends to the end. It cannot alter an Established Fact (a Profile or Obligation fact line or frontmatter field, or a Record's expense.payment block): use change_fact for those. Append to the Log with append_log.",
+    "Edit an existing Wiki Page with find-and-replace edits: add a Ledger row, edit an Index line, add a new fact or a History line (list a Source under `## Also seen in` with note_also_seen_in; create_page adds a new Page's Index line). Each find must be exact text from the Page (read_page first) and match once; an empty find appends to the end. It cannot alter an Established Fact (a Profile or Obligation fact line or frontmatter field, or a Record's expense.payment block): use change_fact for those. Append to the Log with append_log.",
   inputSchema: z.object({
     path: z.string().describe("Page path relative to the Wiki root, with .md"),
     edits: z

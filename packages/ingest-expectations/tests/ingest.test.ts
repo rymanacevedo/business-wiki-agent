@@ -7,7 +7,7 @@ import { checkIngest, type IngestResult } from "../index";
 
 // The `full` and `base` fixtures are Wikis Clerk built and the Owner reviewed
 // (fixtures/REVIEW.md), so `base -> full` is a known Ingest of each Source,
-// including the known defects listed in clerk-notes/runlog-20.md "Open".
+// including the known defects listed in fixtures/REVIEW.md.
 const FIXTURES = resolve(__dirname, "../../../fixtures");
 const wikis = Promise.all([
   readWikiDir(`${FIXTURES}/base`),
@@ -60,9 +60,31 @@ test("a Source with no summary Page fails the page gate and finds nothing it wro
   assert.equal(result.summary, null);
 });
 
-test("the out-of-scope grocery receipt filed under supplies fails both personal gates", async () => {
-  // Known fixture defect: Freshway groceries went to `supplies`, not `personal`.
+test("the out-of-scope grocery receipt passes: one personal Allocation, in no business Ledger", async () => {
   const result = await ingestOf("2026-09-20-receipt-freshway-market");
+
+  assert.deepEqual(failed(result), { gates: [], extraction: [] });
+  assert.deepEqual(
+    result.gates.map((c) => c.name),
+    ["page", "amount", "personal-only", "no-business-ledger"]
+  );
+});
+
+test("the out-of-scope grocery receipt filed under supplies fails both personal gates", async () => {
+  const [base, full, corpus] = await wikis;
+  const id = "2026-09-20-receipt-freshway-market";
+  const entry = corpus.manifest.sources.find((s) => s.id === id)!;
+  const path = `summaries/${id}.md`;
+  const after = new Map(full);
+  after.set(
+    path,
+    full.get(path)!.replace("category: personal", "category: supplies")
+  );
+  after.set(
+    "expenses/supplies.md",
+    `${full.get("expenses/supplies.md")}\n- [Freshway](../${path})\n`
+  );
+  const result = checkIngest(entry, { before: base, after });
 
   assert.deepEqual(failed(result).gates, [
     "personal-only",
@@ -78,9 +100,14 @@ test("the personal dentist bill passes: one personal Allocation, in no business 
 });
 
 test("the ambiguous hardware receipt passes with two Allocations in supplies and equipment", async () => {
+  // Known fixture defect: split by line item with no needs-owner flag, so the
+  // Manifest's FLAG line is missing.
   const result = await ingestOf("2026-09-18-receipt-harbor-hardware");
 
-  assert.deepEqual(failed(result), { gates: [], extraction: [] });
+  assert.deepEqual(failed(result), {
+    gates: [],
+    extraction: ["log FLAG [needs-owner]"],
+  });
   assert.ok(result.gates.some((c) => c.name === "ambiguous-categories"));
 });
 
@@ -94,11 +121,10 @@ test("the duplicate receipt adds no Record", async () => {
   );
 });
 
-test("the past-deadline permit keeps its active expiry Obligation but fails its category", async () => {
-  // Known fixture defect: the permit fee went to `licenses`, outside the Schema.
+test("the past-deadline permit keeps its active expiry Obligation and its fee in other", async () => {
   const result = await ingestOf("2025-10-01-permit-city-clerk");
 
-  assert.deepEqual(failed(result).gates, ["categories"]);
+  assert.deepEqual(failed(result).gates, []);
   assert.ok(
     result.gates.some((c) => c.name === "past-deadline-obligation" && c.passed)
   );
@@ -122,15 +148,42 @@ test("a bank statement is a summary, not a Record, and is noted on the Records i
   );
 });
 
-test("the lease's late notice Obligation and missing facts cost extraction, not a gate", async () => {
-  // Known fixture defects: lease notice due 2027-01-01 (the Manifest says
-  // 2026-12-31); no landlord on the Profile; no MILESTONE line in the Log.
+test("a lease Ingest's late notice Obligation and missing facts cost extraction, not a gate", async () => {
   const [, full, corpus] = await wikis;
   const entry = corpus.manifest.sources.find(
     (s) => s.id === "2025-04-01-lease-harborview"
   )!;
   const empty = new Map<string, string>();
-  const result = checkIngest(entry, { before: empty, after: full });
+  assert.deepEqual(failed(checkIngest(entry, { before: empty, after: full })), {
+    gates: [],
+    extraction: [],
+  });
+  // The first fixture build's defects: notice due 2027-01-01, no landlord on
+  // the Profile, no MILESTONE line.
+  const notice = "obligations/2026-12-31-lease-notice-harborview.md";
+  const after = new Map(full);
+  after.delete(notice);
+  after.set(
+    "obligations/2027-01-01-lease-notice-harborview.md",
+    full.get(notice)!.replace("due: 2026-12-31", "due: 2027-01-01")
+  );
+  after.set(
+    "profile.md",
+    full
+      .get("profile.md")!
+      .split("\n")
+      .map((line) =>
+        line.includes("(src: 2025-04-01-lease-harborview)")
+          ? line.replace("Harborview Properties LLC", "the landlord")
+          : line
+      )
+      .join("\n")
+  );
+  after.set(
+    "log.md",
+    full.get("log.md")!.replace(/^.* MILESTONE \[2025-04-01\].*\n/m, "")
+  );
+  const result = checkIngest(entry, { before: empty, after });
 
   assert.deepEqual(failed(result).gates, []);
   assert.deepEqual(failed(result).extraction, [
@@ -169,7 +222,7 @@ test("Profile facts must be on the Profile with the Source's Citation", async ()
 test("a Profile fact already stated before the Ingest, under another Citation, counts", async () => {
   const [, full, corpus] = await wikis;
   const entry = corpus.manifest.sources.find(
-    (s) => s.id === "2024-10-10-operating-agreement"
+    (s) => s.id === "2024-10-21-ein-letter"
   )!;
   const asIs = checkIngest(entry, { before: new Map(), after: full });
   const known = checkIngest(entry, { before: full, after: full });

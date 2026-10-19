@@ -24,7 +24,7 @@ export async function refuseDuplicateRecord(
     const existing = page && expenseFields(page.body);
     if (existing && KEY.every((key) => existing[key] === fields[key]))
       throw new Error(
-        `${other} already records ${fields.vendor} document ${fields.document} (${fields.date}, ${fields.amount}): this Source is a duplicate and adds no Record. Write its summary without an expense block, list its Source id under that Record's "## Also seen in", and add no Ledger row.`
+        `${other} already records ${fields.vendor} document ${fields.document} (${fields.date}, ${fields.amount}): this Source is a duplicate and adds no Record. Write its summary without an expense block, list it under that Record's "## Also seen in" with note_also_seen_in, and add no Ledger row.`
       );
   }
 }

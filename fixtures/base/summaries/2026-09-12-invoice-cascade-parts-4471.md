@@ -20,16 +20,20 @@ expense:
     evidence: []
 ---
 
-Invoice #4471 from Cascade Appliance Parts to Northwind Repair LLC (src: 2026-09-12-invoice-cascade-parts-4471).
+- **Vendor**: Cascade Appliance Parts (src: 2026-09-12-invoice-cascade-parts-4471)
+- **Bill to**: Northwind Repair LLC, 1480 Harbor Ave Ste 210 (src: 2026-09-12-invoice-cascade-parts-4471)
+- **Invoice number**: 4471 (src: 2026-09-12-invoice-cascade-parts-4471)
+- **Terms**: Net 30; **Due**: 2026-10-12 (src: 2026-09-12-invoice-cascade-parts-4471)
+- **Payment instructions**: ACH Routing ****0021 Account ****6789; pay by check or ACH (src: 2026-09-12-invoice-cascade-parts-4471)
 
-- Invoice date: 2026-09-12 (src: 2026-09-12-invoice-cascade-parts-4471).
-- Bill to: Northwind Repair LLC, 1480 Harbor Ave Ste 210 (src: 2026-09-12-invoice-cascade-parts-4471).
-- Terms: Net 30; Due: 2026-10-12 (src: 2026-09-12-invoice-cascade-parts-4471).
-- Document number: 4471 (src: 2026-09-12-invoice-cascade-parts-4471).
-- Line items: compressor start relay (2) 37.50; refrigerator door gasket kit 64.20; dryer drum roller (4) 47.80; washer inlet valve 46.00 (src: 2026-09-12-invoice-cascade-parts-4471).
-- Subtotal 195.50; Tax 15.64; Shipping 1.34; Total 212.48 (src: 2026-09-12-invoice-cascade-parts-4471).
-- Payment instructions: Pay by check or ACH; ACH Routing ****0021 Account ****6789 (src: 2026-09-12-invoice-cascade-parts-4471).
+### Items
 
-## Also seen in
+- 2 × Compressor start relay (univ.) — 37.50 (src: 2026-09-12-invoice-cascade-parts-4471)
+- 1 × Refrigerator door gasket kit, 30" — 64.20 (src: 2026-09-12-invoice-cascade-parts-4471)
+- 4 × Dryer drum roller (pk of 2) — 47.80 (src: 2026-09-12-invoice-cascade-parts-4471)
+- 1 × Washer inlet valve, dual — 46.00 (src: 2026-09-12-invoice-cascade-parts-4471)
 
-None.
+- **Subtotal**: 195.50 (src: 2026-09-12-invoice-cascade-parts-4471)
+- **Tax**: 15.64 (8.0%) (src: 2026-09-12-invoice-cascade-parts-4471)
+- **Shipping**: 1.34 (src: 2026-09-12-invoice-cascade-parts-4471)
+- **Total**: 212.48 USD (src: 2026-09-12-invoice-cascade-parts-4471)

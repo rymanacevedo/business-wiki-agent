@@ -20,16 +20,13 @@ expense:
     evidence: [2026-08-11-receipt-portside-fuel]
 ---
 
-# Portside Fuel Stop receipt 2026-08-11
+PORTSIDE FUEL STOP (src: 2026-08-11-receipt-portside-fuel)
 
-- **Vendor**: Portside Fuel Stop (src: 2026-08-11-receipt-portside-fuel)
 - **Date**: 2026-08-11 (src: 2026-08-11-receipt-portside-fuel)
-- **Amount**: 71.75 USD (src: 2026-08-11-receipt-portside-fuel)
-- **Payment**: DEBIT ************4417 (src: 2026-08-11-receipt-portside-fuel)
-
-## Notes
-
-Receipt shows 18.402 gallons at 3.899 per gallon; subtotal and total 71.75 (src: 2026-08-11-receipt-portside-fuel).
+- **Quantity and price**: 18.402 GAL @ 3.899 (src: 2026-08-11-receipt-portside-fuel)
+- **Total**: $71.75 (src: 2026-08-11-receipt-portside-fuel)
+- **Payment method**: DEBIT ************4417 (src: 2026-08-11-receipt-portside-fuel)
 
 ## Also seen in
-- [Tidewater Community Bank statement 2026-08-31](summaries/2026-08-31-bank-statement-tidewater.md): corroborates payment (src: 2026-08-31-bank-statement-tidewater)
+
+- 2026-08-31-bank-statement-tidewater: corroborates payment (src: 2026-08-31-bank-statement-tidewater)

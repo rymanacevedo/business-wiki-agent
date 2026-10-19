@@ -2,7 +2,12 @@ import type { EveEvalContext, EveEvalStreamEvent } from "eve/evals";
 import type { Check } from "../../packages/answer-checks";
 
 /** The tools a Query or Lint must never call: they write the Wiki. */
-export const WRITE_TOOLS = ["create_page", "update_page", "change_fact"];
+export const WRITE_TOOLS = [
+  "create_page",
+  "update_page",
+  "change_fact",
+  "note_also_seen_in",
+];
 
 /** Record each deterministic check as a named gate. */
 export function gateChecks(t: EveEvalContext<unknown>, checks: Check[]) {

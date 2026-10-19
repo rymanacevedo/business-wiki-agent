@@ -20,19 +20,15 @@ expense:
     evidence: [2026-08-14-receipt-paper-trail-office]
 ---
 
-Paper Trail Office Supply receipt dated 2026-08-14 showing items and payment (src: 2026-08-14-receipt-paper-trail-office).
+Paper Trail Office Supply point-of-sale receipt showing items and payment. (src: 2026-08-14-receipt-paper-trail-office)
 
-Items:
-- INVOICE PAD 2PK — 12.99 (src: 2026-08-14-receipt-paper-trail-office)
-- PRINTER INK BLK — 24.99 (src: 2026-08-14-receipt-paper-trail-office)
-- TAX 8.0% — 3.04 (src: 2026-08-14-receipt-paper-trail-office)
-
-Totals:
-- SUBTOTAL 37.98 (src: 2026-08-14-receipt-paper-trail-office)
-- TOTAL 41.02 (src: 2026-08-14-receipt-paper-trail-office)
-
-Payment:
-- Debit card ending in 4417 as printed: "DEBIT ************4417" (src: 2026-08-14-receipt-paper-trail-office). Receipt indicates payment at point of sale (src: 2026-08-14-receipt-paper-trail-office).
+- Items: 1NVOICE PAD 2PK — 12.99 (src: 2026-08-14-receipt-paper-trail-office)
+- Items: PRINTER INK BLK — 24.99 (src: 2026-08-14-receipt-paper-trail-office)
+- Subtotal: 37.98 (src: 2026-08-14-receipt-paper-trail-office)
+- Tax 8.0%: 3.04 (src: 2026-08-14-receipt-paper-trail-office)
+- Total: 41.02 (src: 2026-08-14-receipt-paper-trail-office)
+- Payment: DEBIT ************4417 (src: 2026-08-14-receipt-paper-trail-office)
 
 ## Also seen in
-- [Tidewater Community Bank statement 2026-08-31](summaries/2026-08-31-bank-statement-tidewater.md): corroborates payment (src: 2026-08-31-bank-statement-tidewater)
+
+- 2026-08-31-bank-statement-tidewater: corroborates payment (src: 2026-08-31-bank-statement-tidewater)

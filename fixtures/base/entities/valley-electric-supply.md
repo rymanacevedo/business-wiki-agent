@@ -9,8 +9,6 @@ flags: []
 entity: vendor
 ---
 
-402 C4NAL S7 PORTSIDE (src: 2026-09-09-receipt-valley-electric).
-
 ## Records
 
-- [Valley Electric Supply receipt 2026-09-09](../summaries/2026-09-09-receipt-valley-electric.md)
+- 2026-09-09 receipt: [Valley Electric Supply receipt 2026-09-09](../summaries/2026-09-09-receipt-valley-electric.md): $68.80 (src: 2026-09-09-receipt-valley-electric)

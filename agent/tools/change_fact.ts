@@ -4,6 +4,7 @@ import { z } from "zod";
 import { wiki } from "../lib/config";
 import { appendLog, changedLines, logLine, touch } from "../lib/pages";
 import { applyChanges, proposalProblems, type Change } from "../lib/proposal";
+import { editIndex, withObligationLines } from "../lib/index-lines";
 
 const change = z.object({
   page: z
@@ -74,6 +75,17 @@ export default defineTool({
         `change_fact ${summary} (src: ${source}). ${reason}`
       )
     );
-    return `Approved and applied to ${[...applied.keys()].join(", ")}; logged APPROVAL approved.`;
+    // An Obligation's Index line leads with its status: keep it in step.
+    const obligations = new Map(
+      [...applied]
+        .filter(([path]) => path.startsWith("obligations/"))
+        .map(([path, { next }]) => [path, next])
+    );
+    const indexed =
+      obligations.size > 0 &&
+      (await editIndex(store, (body) =>
+        withObligationLines(body, obligations)
+      ));
+    return `Approved and applied to ${[...applied.keys()].join(", ")}${indexed ? "; their Index lines now show the new status" : ""}; logged APPROVAL approved.`;
   },
 });

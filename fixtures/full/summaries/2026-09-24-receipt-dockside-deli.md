@@ -20,11 +20,23 @@ expense:
     evidence: [2026-09-24-receipt-dockside-deli]
 ---
 
-Dockside Deli receipt dated 2026-09-24 showing BLT $10.25, COFFEE $2.50, tax 8.0% $1.02, total $13.77. Payment shown as DEBIT ************4417 (src: 2026-09-24-receipt-dockside-deli)
+DOCKSIDE DELI (src: 2026-09-24-receipt-dockside-deli)
 
-Vendor: [Dockside Deli](../entities/dockside-deli.md) (src: 2026-09-24-receipt-dockside-deli)
+- **Date**: 2026-09-24 (src: 2026-09-24-receipt-dockside-deli)
+- **Time**: 12:12 (src: 2026-09-24-receipt-dockside-deli)
 
+Items:
+- BLT — 10.25 (src: 2026-09-24-receipt-dockside-deli)
+- COFFEE — 2.50 (src: 2026-09-24-receipt-dockside-deli)
+
+- **Subtotal**: 12.75 (src: 2026-09-24-receipt-dockside-deli)
+- **Tax**: 8.0% — 1.02 (src: 2026-09-24-receipt-dockside-deli)
+- **Total**: 13.77 (src: 2026-09-24-receipt-dockside-deli)
+
+- **Payment**: DEBIT ************4417 — 13.77 (src: 2026-09-24-receipt-dockside-deli)
+
+Receipt transcribed in full in the Source.
 
 ## Also seen in
 
-- 2026-09-30-bank-statement-tidewater (corroborates payment) (src: 2026-09-30-bank-statement-tidewater)
+- 2026-09-30-bank-statement-tidewater: corroborates payment (src: 2026-09-30-bank-statement-tidewater)

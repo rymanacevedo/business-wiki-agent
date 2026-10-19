@@ -20,6 +20,19 @@ expense:
     evidence: [2026-08-22-receipt-dockside-deli]
 ---
 
-Dockside Deli receipt dated 2026-08-22 showing TURKFY $11.50, ICED TEA $2.95, tax 8.0% $1.16, total $15.61. (src: 2026-08-22-receipt-dockside-deli)
+DOCKSIDE DELI (src: 2026-08-22-receipt-dockside-deli)
 
-Vendor: [Dockside Deli](../entities/dockside-deli.md) (src: 2026-08-22-receipt-dockside-deli)
+- **Date**: 2026-08-22 (src: 2026-08-22-receipt-dockside-deli)
+- **Time**: 12:31 (src: 2026-08-22-receipt-dockside-deli)
+
+Items:
+- TURKFY — 11.50 (src: 2026-08-22-receipt-dockside-deli)
+- ICED TEA — 2.95 (src: 2026-08-22-receipt-dockside-deli)
+
+- **Subtotal**: 14.45 (src: 2026-08-22-receipt-dockside-deli)
+- **Tax**: 8.0% — 1.16 (src: 2026-08-22-receipt-dockside-deli)
+- **Total**: 15.61 (src: 2026-08-22-receipt-dockside-deli)
+
+- **Payment**: CASH 20.00; CHANGE 4.39 (src: 2026-08-22-receipt-dockside-deli)
+
+Receipt transcribed in full in the Source.

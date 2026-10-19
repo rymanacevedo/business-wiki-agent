@@ -37,6 +37,8 @@ type Report = {
   followUps: string[];
   approvals: string[];
   done: boolean;
+  /** The session's input tokens (cached included), as eve counts them for its cap. */
+  inputTokens: number;
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -160,6 +162,7 @@ async function ingest(base: string, store: WikiStore, id: string) {
     followUps: [],
     approvals: [],
     done: false,
+    inputTokens: 0,
   };
   const session = new Session(base);
   await session.send(
@@ -168,6 +171,11 @@ async function ingest(base: string, store: WikiStore, id: string) {
   report.sessions.push(session.id);
   for (let followUps = 0; ;) {
     const { events, input } = await session.drain();
+    for (const event of events) {
+      const usage = event.data?.usage as { inputTokens?: number } | undefined;
+      if (event.type === "session.waiting" || event.type === "turn.waiting")
+        report.inputTokens = usage?.inputTokens ?? report.inputTokens;
+    }
     for (const event of events)
       if (event.type === "actions.requested")
         for (const action of (event.data?.actions ?? []) as {
@@ -298,7 +306,9 @@ async function main(): Promise<number> {
       log(`${id}: Ingesting`);
       const report = await ingest(`http://127.0.0.1:${port}/eve/v1`, store, id);
       reports.push(report);
-      log(`${id}: ${report.done ? "done" : "NOT FINISHED"}`);
+      log(
+        `${id}: ${report.done ? "done" : "NOT FINISHED"} (${report.inputTokens} input tokens)`
+      );
     }
   } finally {
     stopEve(eve);
