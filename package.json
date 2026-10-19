@@ -25,6 +25,7 @@
     "wiki:build-fixture": "bun scripts/wiki-build-fixture.ts",
     "corpus:generate": "bun scripts/corpus-generate.ts",
     "eval:diff": "bun scripts/eval-diff.ts",
+    "eval:calibration": "bun scripts/eval-calibration-report.ts",
     "dev:web": "next dev apps/web",
     "build:web": "next build apps/web"
   },
