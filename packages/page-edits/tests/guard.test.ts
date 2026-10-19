@@ -191,3 +191,57 @@ test("allows new lines on an Obligation, such as History and Related", () => {
     edit(after, "flags: []", "flags: [needs-owner]")
   );
 });
+
+const BLOCK_PAYMENT =
+  "  payment:\n    status: unknown\n    due: 2026-10-12\n    evidence: []\n";
+
+/** The fixture Record with its payment block written another way. */
+const withPayment = (payment: string) => edit(record, BLOCK_PAYMENT, payment);
+
+test("rejects a payment status change in an inline expense mapping", () => {
+  const inline = (status: string) =>
+    edit(
+      edit(record, /^expense:[\s\S]*?(?=^---)/m.exec(record)![0], ""),
+      "flags: []\n",
+      `flags: []\nexpense: { vendor: cascade-appliance-parts, date: 2026-09-12, amount: 212.48, currency: USD, document: "4471", allocations: [{ category: supplies, amount: 212.48 }], payment: { status: ${status}, due: 2026-10-12, evidence: [] } }\n`
+    );
+  rejects(RECORD, inline("unknown"), inline("paid"));
+});
+
+test("rejects a payment status change in a flow-style payment mapping", () => {
+  const flow = (status: string) =>
+    withPayment(
+      `  payment: { status: ${status}, due: 2026-10-12, evidence: [] }\n`
+    );
+  rejects(RECORD, flow("unknown"), flow("paid"));
+});
+
+test("rejects a payment status change under quoted keys", () => {
+  const quoted = (status: string) =>
+    withPayment(
+      `  "payment":\n    'status': ${status}\n    due: 2026-10-12\n    evidence: []\n`
+    );
+  rejects(RECORD, quoted("unknown"), quoted("paid"));
+});
+
+test("rejects a payment status change made through an anchor the payment aliases", () => {
+  const aliased = (status: string) =>
+    edit(
+      withPayment("  payment: *p\n"),
+      "flags: []\n",
+      `flags: []\nnote: &p { status: ${status}, due: 2026-10-12, evidence: [] }\n`
+    );
+  rejects(RECORD, aliased("unknown"), aliased("paid"));
+});
+
+test("rejects an edit that leaves a Record's payment unreadable as YAML", () => {
+  rejects(RECORD, record, edit(record, "flags: []", "flags: [needs-owner"));
+});
+
+test("rejects rewriting a block payment as an inline mapping that marks it paid", () => {
+  rejects(
+    RECORD,
+    record,
+    withPayment("  payment: { status: paid, due: 2026-10-12, evidence: [] }\n")
+  );
+});

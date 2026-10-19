@@ -281,3 +281,44 @@ test("rejects an Obligation due on or before the date of the document that state
     /due after/
   );
 });
+
+const BLOCK_PAYMENT =
+  "  payment:\n    status: unknown\n    due: 2026-10-12\n    evidence: []\n";
+
+test("rejects an expense written as an inline mapping: the Schema's form is a block", () => {
+  const expense = /^expense:[\s\S]*?(?=^---)/m.exec(record)![0];
+  const inline = record.replace(
+    expense,
+    'expense: { vendor: cascade-appliance-parts, date: 2026-09-12, amount: 212.48, currency: USD, document: "4471", allocations: [{ category: supplies, amount: 212.48 }], payment: { status: paid, due: 2026-10-12, evidence: [] } }\n'
+  );
+  invalid(RECORD, inline, /expense.*block/);
+});
+
+test("rejects a payment written as a flow mapping or an alias", () => {
+  invalid(
+    RECORD,
+    record.replace(
+      BLOCK_PAYMENT,
+      "  payment: { status: unknown, due: 2026-10-12, evidence: [] }\n"
+    ),
+    /payment.*block/
+  );
+  invalid(
+    RECORD,
+    record
+      .replace(BLOCK_PAYMENT, "  payment: *p\n")
+      .replace(
+        "flags: []\n",
+        "flags: []\nnote: &p { status: unknown, due: 2026-10-12, evidence: [] }\n"
+      ),
+    /payment.*block/
+  );
+});
+
+test("rejects frontmatter that is not valid YAML", () => {
+  invalid(
+    RECORD,
+    record.replace("flags: []", "flags: [needs-owner"),
+    /not valid YAML/
+  );
+});

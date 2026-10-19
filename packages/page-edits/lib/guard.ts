@@ -1,4 +1,9 @@
-import { paymentBlock, splitPage, topLevelKeys } from "./frontmatter";
+import {
+  paymentBlock,
+  samePayment,
+  splitPage,
+  topLevelKeys,
+} from "./frontmatter";
 
 /** An edit that would alter an Established Fact outside `change_fact`. */
 export class EstablishedFactError extends Error {
@@ -28,7 +33,10 @@ export function guardPageEdit(
   const old = splitPage(before);
   const next = splitPage(after);
   const oldPayment = paymentBlock(old.frontmatter);
-  if (oldPayment && !same(oldPayment, paymentBlock(next.frontmatter)))
+  if (
+    (oldPayment && !same(oldPayment, paymentBlock(next.frontmatter))) ||
+    !samePayment(old.frontmatter, next.frontmatter)
+  )
     throw new EstablishedFactError(path, "the expense.payment block");
 
   const kind = pageKind(path, old.frontmatter);
