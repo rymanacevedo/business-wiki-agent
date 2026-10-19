@@ -77,3 +77,40 @@ test("base holds only the Pages the Ingest Traps collide with", async () => {
   );
   assert.deepEqual(others, []);
 });
+
+// Every Obligation the Manifest expects from a Source a fixture has Ingested
+// is on an Obligation Page citing that Source, with its Index line.
+for (const fixture of ["full", "base"])
+  test(`the ${fixture} fixture holds every Manifest Obligation of its Ingested Sources`, async () => {
+    const pages = await readWikiDir(join(FIXTURES, fixture));
+    const { manifest } = loadCorpus();
+    const field = (text: string, name: string) =>
+      text.match(new RegExp(`^${name}: (.*)$`, "m"))?.[1].trim();
+    const obligationPages = [...pages]
+      .filter(([path]) => path.startsWith("obligations/"))
+      .map(([path, text]) => ({
+        path,
+        kind: field(text, "obligation"),
+        due: field(text, "due"),
+        sources: field(text, "sources") ?? "",
+      }));
+    const indexLines = pages.get("index.md")!.split("\n");
+    const missing: string[] = [];
+    for (const source of manifest.sources) {
+      if (!pages.has(`summaries/${source.id}.md`)) continue;
+      for (const { kind, due } of source.obligations) {
+        const page = obligationPages.find(
+          (p) =>
+            p.kind === kind && p.due === due && p.sources.includes(source.id)
+        );
+        if (!page) {
+          missing.push(`${source.id}: ${due} ${kind} has no Obligation Page`);
+          continue;
+        }
+        const line = indexLines.find((l) => l.includes(`](${page.path})`));
+        if (!line?.startsWith(`- ${due} ${kind} (active): `))
+          missing.push(`${source.id}: ${page.path} has no Index line`);
+      }
+    }
+    assert.deepEqual(missing, []);
+  });

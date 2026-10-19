@@ -27,6 +27,7 @@ Each section holds `- **Fact**: value (src: <source-id>)` lines.
 - **Entity type (operating agreement)**: Single-member limited liability company (src: 2024-10-10-operating-agreement)
 - **Formation (Articles of Organization)**: Filed October 9, 2024; Effective October 9, 2024 (src: 2024-10-09-articles-of-organization)
 - **Operating agreement effective**: October 10, 2024 (src: 2024-10-10-operating-agreement)
+- **Fiscal year (operating agreement)**: Calendar year (src: 2024-10-10-operating-agreement)
 - **Filing number**: LLC-2024-0731558 (src: 2024-10-09-articles-of-organization)
 - **Management**: Managed by its members (member-managed) (src: 2024-10-09-articles-of-organization)
 - **Management (operating agreement)**: Member-managed; the Member has full authority to bind the Company, open accounts, sign contracts, and hire professionals (src: 2024-10-10-operating-agreement)
@@ -73,6 +74,8 @@ Each section holds `- **Fact**: value (src: <source-id>)` lines.
 - **Account (business checking)**: ****6615 (src: 2026-09-30-bank-statement-tidewater)
 
 ## Tax filings
+
+- **Sales and Use Tax return (Department of Revenue)**: annual; returns due January 31 following each calendar year; next due 2027-01-31 ([Obligation](obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md)) (src: 2024-11-04-sales-tax-registration)
 
 ## Premises lease
 
