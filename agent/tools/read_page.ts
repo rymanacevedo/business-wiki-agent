@@ -15,8 +15,8 @@ export default defineTool({
       .describe("Page paths relative to the Wiki root, with .md"),
   }),
   label: { start: ({ paths }) => `Read ${paths.join(", ")}` },
-  async execute({ paths }) {
-    const store = wiki();
+  async execute({ paths }, ctx) {
+    const store = wiki(ctx);
     const clean = paths.map((path) => path.replace(/^\/?(wiki\/)?/, ""));
     if (clean.some((path) => path.startsWith(SOURCES)))
       throw new Error(

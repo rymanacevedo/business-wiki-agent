@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { frameSource, maskSource } from "../index";
+import { frameSource, maskSource, maskedValues } from "../index";
 
 test("masks an SSN to its last four", () => {
   assert.equal(
@@ -33,6 +33,21 @@ test("leaves everything else clear", () => {
     "Beginning balance 7,784.53; ZIP 98101",
   ].join("\n");
   assert.equal(maskSource(clear), clear);
+});
+
+test("maskedValues lists each full value Masking hides, its masked form, and its class", () => {
+  assert.deepEqual(
+    maskedValues(
+      "SSN: 512-40-6789\nAccount number: 000483726615  Routing number: 021000089\nCard 4111 1111 1111 8820. Invoice 4471, EIN 88-1234567."
+    ),
+    [
+      { value: "512-40-6789", masked: "***-**-6789", kind: "ssn" },
+      { value: "000483726615", masked: "****6615", kind: "account" },
+      { value: "021000089", masked: "****0089", kind: "account" },
+      { value: "4111 1111 1111 8820", masked: "****8820", kind: "account" },
+    ]
+  );
+  assert.deepEqual(maskedValues("Invoice 4471, total $212.48"), []);
 });
 
 test("frames the masked Source in delimiters under a document-data header", () => {

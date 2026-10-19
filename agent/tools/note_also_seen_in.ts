@@ -50,8 +50,8 @@ export default defineTool({
     start: ({ source, records }) =>
       `List ${source} on ${records.length} Record${records.length === 1 ? "" : "s"}`,
   },
-  async execute({ source, records }) {
-    const store = wiki();
+  async execute({ source, records }, ctx) {
+    const store = wiki(ctx);
     if (
       !(await store.read(`${SOURCES}${source}.md`)) &&
       !(await store.read(`${SOURCES}${source}.txt`))

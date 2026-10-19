@@ -1,5 +1,6 @@
 import { defaultBible } from "../../packages/corpus/bible";
 import { createWikiStore, type WikiStore } from "../../packages/wiki-store";
+import { EVAL_RUN_ENV, evalWiki, type SessionCtx } from "./eval-wiki";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -19,10 +20,15 @@ export const clerkConfig = {
 };
 
 /**
- * The WikiStore for this deployment's namespace (`WIKI_NAMESPACE`, default
- * `demo`). Never derived from model input.
+ * The WikiStore for this session. Under an eval run (`CLERK_EVAL_RUN`, set by
+ * the eval setup) it is `eval/<runId>/<sessionId>`, seeded from `WIKI_SEED`
+ * on first access; otherwise the deployment's namespace (`WIKI_NAMESPACE`,
+ * default `demo`). Never derived from model input. Pass the tool or hook
+ * `ctx`; without one, the session is the one a tool last saw.
  */
-export function wiki(): WikiStore {
+export function wiki(ctx?: SessionCtx): WikiStore {
+  const run = process.env[EVAL_RUN_ENV];
+  if (run) return evalWiki(run, ctx);
   return createWikiStore({ namespace: process.env.WIKI_NAMESPACE ?? "demo" });
 }
 

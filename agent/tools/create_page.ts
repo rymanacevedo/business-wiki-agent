@@ -41,7 +41,7 @@ export default defineTool({
       throw new Error(
         `The Owner declined the change_fact that proposed ${clean}; it is not created. Do not retry the change.`
       );
-    const store = wiki();
+    const store = wiki(ctx);
     await refuseDuplicateRecord(store, clean, null, content);
     // The new line must leave a valid Index before the Page is written.
     const index = await store.read("index.md");
