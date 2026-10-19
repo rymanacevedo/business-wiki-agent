@@ -17,5 +17,6 @@ flags: []
 - **Effective date**: 2024-11-04 (src: 2024-11-04-sales-tax-registration)
 - **Valid through**: 2027-06-30 (src: 2024-11-04-sales-tax-registration)
 - **Filing frequency**: annual; returns due January 31 following each calendar year (src: 2024-11-04-sales-tax-registration)
+- **Next return due**: 2027-01-31: [Sales and Use Tax annual return due (Department of Revenue) 2027-01-31](../obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md) (src: 2024-11-04-sales-tax-registration)
 
 Renew this registration before it expires. Display this certificate at the location above (src: 2024-11-04-sales-tax-registration).

@@ -2,7 +2,8 @@
 
 For the Owner's one review pass before committing the fixtures. `full` and
 `base` are Clerk's own output (`bun run wiki:build-fixture --fixture full|base`,
-agent model openai/gpt-5-mini, Demo Date 2026-10-17), not edited by hand.
+agent model openai/gpt-5-mini, Demo Date 2026-10-17), not edited by hand
+except for the corrections listed under "Hand corrections" below.
 `prototype` is the hand-built Wiki from the schema prototype. Every check in
 `agent/lib/tests/fixtures.test.ts` passes on both fixtures.
 
@@ -16,7 +17,7 @@ Bayview certificate). The average was 86K, against the 300K session cap.
 
 - The prototype compiled 6 Sources (EIN letter, lease, permit, original
   insurance certificate, invoice 4471 and its PAID copy 4471-2) into 17 Pages.
-  `full` compiles all 31 non-Inbox Sources into 72 Pages; `base` compiles 4
+  `full` compiles all 31 non-Inbox Sources into 73 Pages (72 as built, plus one hand-added Obligation); `base` compiles 4
   (lease, original certificate, the first Valley Electric receipt, invoice 4471) into 16 Pages.
 - The prototype Ingested 4471-2, which is now an Inbox Source. So in `full` and
   `base` invoice 4471's Record is `payment.status: unknown` and its payment
@@ -68,12 +69,42 @@ Bayview certificate). The average was 86K, against the 300K session cap.
 | 2026-12-31 lease-notice      | same. The body states "90 days before 2027-03-31 → 2026-12-31", and there is no separate Obligation for the lease end.                                                                                    |
 | (none)                       | 2026-10-31 annual-report, 2026-11-01 pay Eastside invoice 3381, 2027-02-28 contract-renewal (Bayview), 2027-03-31 license-renewal (business license), 2027-06-30 license-renewal (sales-tax registration) |
 
-**Missing, open:** there is no tax-filing Obligation for the sales-tax return
-due 2027-01-31. This time the registration summary gives the rule only as
-"returns due January 31 following each calendar year", with no date, so the
-INGEST gate for stated filing dates had nothing to check. Clerk also did not
-apply the instructions' repeating-rule case (one Obligation for the next due
-date).
+**Missing, fixed by hand (see "Hand corrections"):** Clerk built no tax-filing
+Obligation for the sales-tax return due 2027-01-31. This time the registration
+summary gives the rule only as "returns due January 31 following each calendar
+year", with no date, so the INGEST gate for stated filing dates had nothing to
+check. Clerk also did not apply the instructions' repeating-rule case (one
+Obligation for the next due date).
+
+## Hand corrections
+
+The fixtures are otherwise Clerk's output byte for byte. Each correction below
+writes only what a correct Ingest of the named Source would have left, and the
+fixture test "holds every Manifest Obligation of its Ingested Sources" guards
+it. No Log line is added: the Log records Clerk's operations, and the existing
+INGEST line for the Source already covers the Pages it touched.
+
+- **2026-10-19, `full`, Source `2024-11-04-sales-tax-registration`** (integration
+  review of spec #15, finding 5; the Owner chose to fix the fixture over listing
+  it as a limitation). Added
+  `obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md`
+  (`tax-filing`, due 2027-01-31, `recurs: yearly`, counterparty
+  `department-of-revenue`, cited), its Index line between the lease notice and
+  the Bayview renewal, a "Next return due" line linking it from the
+  registration summary, and a cited `Sales and Use Tax return` line under the
+  Profile's empty `## Tax filings` section. The Department of Revenue entity
+  Page is unchanged, because no entity Page in `full` lists Obligations. At
+  the Demo Date the new Obligation is 106 days out, so Lint's missed and
+  due-within-30-days sections are unchanged. Comparing every Manifest
+  Obligation against the Obligation Pages found no other one missing from
+  `full` or `base`.
+- **2026-10-19, `full`, Source `2024-10-10-operating-agreement`** (found by the
+  same comparison, run over Manifest Profile facts). The summary had
+  `Fiscal year: Calendar year` but the Profile did not; added the cited
+  `Fiscal year (operating agreement)` line under `## Identity`. Two other
+  Manifest Profile facts (owner from the EIN letter, business activity from
+  the permit) are on the Profile under a different Source's Citation and were
+  left as built. `base` has every Manifest Profile fact of its Sources.
 
 ## Records and Ledgers (`full`)
 

@@ -2,13 +2,12 @@
 
 For the Owner. Not linked from the README. Tick each step on the day.
 
-- [ ] **Deploy and confirm the URL.** Retry the deploy once Vercel's
-      free-plan upload limit has reset (`eve deploy` from the main checkout,
-      then restore `LANGSMITH_PROJECT=business-wiki-agent-local` in
-      `.env.local`). Check that `curl https://<url>/eve/v1/health` answers, the
-      landing page loads, and `/wiki` shows the Index. Replace every
-      `<deployed-url>` in `README.md`.
-- [ ] **Check production traces.** One demo turn appears in LangSmith project
+- [x] **Deploy and confirm the URL.** Deployed 2026-10-19 to
+      https://business-wiki-agent.vercel.app: the health check answers, the
+      landing page and `/wiki` load, and a curl turn answered with a Citation.
+      Redeploy with `eve deploy` from the main checkout, then restore
+      `LANGSMITH_PROJECT=business-wiki-agent-local` in `.env.local`.
+- [x] **Check production traces.** Demo turns appear in LangSmith project
       `business-wiki-agent-production`, with the run tree intact, chat
       messages and tokens shown, and tool arguments and results shown.
 - [ ] **Reseed `demo`** so the Inbox holds the three Sources again:

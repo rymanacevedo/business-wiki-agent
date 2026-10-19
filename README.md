@@ -23,8 +23,8 @@ established, and shows its evals, traces, and the failures they caught.
 
 ### Tier 1: look, no keys
 
-- **The deployed demo**: `https://<deployed-url>/` (chat) and
-  `https://<deployed-url>/wiki` (the read-only wiki browser). Follow
+- **The deployed demo**: `https://business-wiki-agent.vercel.app/` (chat) and
+  `https://business-wiki-agent.vercel.app/wiki` (the read-only wiki browser). Follow
   [Try this first](#try-this-first). Every Reviewer shares one demo Wiki, and
   anyone with the URL can use it (see the limitations).
 - **The committed eval results**: every eval result is committed, so reading
@@ -189,18 +189,16 @@ is no reset tool. Every Reviewer shares the one `demo` Wiki.
 
 ### Talking to the deployed agent
 
-`<deployed-url>` is filled in after the first deploy.
-
 ```bash
-curl https://<deployed-url>/eve/v1/health
-eve remote connect --url https://<deployed-url>
+curl https://business-wiki-agent.vercel.app/eve/v1/health
+eve remote connect --url https://business-wiki-agent.vercel.app
 
 # One turn over the HTTP channel: create a session, then read its stream.
-curl -s -X POST https://<deployed-url>/eve/v1/session \
+curl -s -X POST https://business-wiki-agent.vercel.app/eve/v1/session \
   -H 'content-type: application/json' \
   -d '{"message":"What is our EIN?"}'
 # -> {"ok":true,"sessionId":"wrun_...","status":"accepted"}
-curl -sN https://<deployed-url>/eve/v1/session/<sessionId>/stream
+curl -sN https://business-wiki-agent.vercel.app/eve/v1/session/<sessionId>/stream
 # NDJSON events; the answer arrives as message.appended deltas, the turn ends at session.waiting.
 ```
 
