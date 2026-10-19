@@ -100,14 +100,11 @@ test("the personal dentist bill passes: one personal Allocation, in no business 
 });
 
 test("the ambiguous hardware receipt passes with two Allocations in supplies and equipment", async () => {
-  // Known fixture defect: split by line item with no needs-owner flag, so the
-  // Manifest's FLAG line is missing.
+  // Split by line item, as the Manifest's own Allocations are: no needs-owner
+  // flag, so no FLAG line is expected.
   const result = await ingestOf("2026-09-18-receipt-harbor-hardware");
 
-  assert.deepEqual(failed(result), {
-    gates: [],
-    extraction: ["log FLAG [needs-owner]"],
-  });
+  assert.deepEqual(failed(result), { gates: [], extraction: [] });
   assert.ok(result.gates.some((c) => c.name === "ambiguous-categories"));
 });
 
