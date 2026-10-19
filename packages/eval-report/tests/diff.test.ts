@@ -169,6 +169,48 @@ test("a case in only one run is joined as missing on the other side", () => {
   );
 });
 
+test("rows whose expectation changed between the runs are marked, and a second total leaves them out", () => {
+  const fixes = [
+    {
+      id: "ingest/sources/0001",
+      commit: "bf5b91c",
+      change: "expects only the Eastside invoice",
+    },
+  ];
+  const { markdown, readmeBlock } = diffRuns(before, after, fixes);
+
+  assert.ok(
+    readmeBlock.includes(
+      "| **total, without dataset-fix rows** | 2 | 1/2 (50%) | 2/2 (100%) | 6.5 → 5.0 | $0.0120 → $0.0110 |"
+    ),
+    readmeBlock
+  );
+  assert.match(readmeBlock, /1 row changed what it expects between the runs/);
+  assert.ok(
+    markdown.includes(
+      "| ingest/sources/0001 | bf5b91c | expects only the Eastside invoice | failed | passed |"
+    ),
+    markdown
+  );
+  assert.ok(
+    markdown.includes(
+      "| ingest/sources/0001 (dataset fix) | satisfies [personal-only] | none |"
+    ),
+    markdown
+  );
+  assert.ok(
+    markdown.includes("| query/0000 | scored | passed |  |"),
+    "verdict changes list every case that moved"
+  );
+});
+
+test("with no dataset fixes the README block is the plain table", () => {
+  assert.equal(
+    diffRuns(before, after, []).readmeBlock,
+    diffRuns(before, after).readmeBlock
+  );
+});
+
 test("the README block between the markers is replaced, and only that block", () => {
   const readme =
     "# Clerk\n\nintro\n\n<!-- eval-diff:start -->\nold table\n<!-- eval-diff:end -->\n\nafter\n";

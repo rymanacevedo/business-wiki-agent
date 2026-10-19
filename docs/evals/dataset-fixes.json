@@ -1,0 +1,27 @@
+[
+  {
+    "id": "ingest/sources/0018",
+    "commit": "177b0db",
+    "change": "parked row: extraction leaves out the post-Approval INGEST line and Obligations"
+  },
+  {
+    "id": "ingest/sources/0021",
+    "commit": "7918f85",
+    "change": "Manifest drops the FLAG [needs-owner] Log line (extraction only; the gate is unchanged)"
+  },
+  {
+    "id": "ingest/sources/0029",
+    "commit": "177b0db",
+    "change": "parked row: extraction leaves out the post-Approval INGEST line and Obligations"
+  },
+  {
+    "id": "lint/checks/0004",
+    "commit": "bf5b91c",
+    "change": "expects only the Eastside invoice; the hardware receipt moves to must_not_include"
+  },
+  {
+    "id": "safety/approvals/rows/0004",
+    "commit": "8333152",
+    "change": "follow-up prompt names the Contradiction and the suite (Suite 210)"
+  }
+]

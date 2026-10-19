@@ -7,3 +7,7 @@ fixtures/base/
 
 # Written by the eval reporter and scripts/eval-calibration.ts: committed as produced.
 docs/evals/runs/
+
+# Written by `bun run eval:diff` and `bun run eval:calibration`: regenerated, never edited.
+docs/evals/before-after.md
+docs/evals/calibration.md
