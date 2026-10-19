@@ -5,3 +5,7 @@ node_modules
 .output
 .nitro
 dist
+.claude
+.wiki-store
+tsconfig.tsbuildinfo
+*.tsbuildinfo
