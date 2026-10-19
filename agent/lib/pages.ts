@@ -1,6 +1,7 @@
 import { WikiConflictError, type WikiStore } from "../../packages/wiki-store";
 import { clerkConfig, SOURCES } from "./config";
 
+export const INDEX = "index.md";
 export const LOG = "log.md";
 export const SCHEMA = "SCHEMA.md";
 
@@ -43,7 +44,9 @@ export function logLine(
 export function appendLine(log: string, line: string): string {
   const trimmed = log.replace(/\s+$/, "");
   if (trimmed.endsWith(line)) return log;
-  return `${trimmed}\n${line}\n`;
+  // The first entry is set off from the Log's header by a blank line.
+  const gap = trimmed.split("\n").at(-1)!.startsWith("- ") ? "\n" : "\n\n";
+  return `${trimmed}${gap}${line}\n`;
 }
 
 /**
@@ -88,4 +91,28 @@ export function changedLines(
       .map((line) => line.trim())
       .join(" / ") || "(nothing)";
   return { old: pick(a), new: pick(b) };
+}
+
+/**
+ * The Index after an edit: each section's lines sorted (Obligation and Source
+ * lines start with a date, so by date) with no blank lines between them.
+ * Text before the first section is kept as it is.
+ */
+export function tidyIndex(body: string): string {
+  const start = body.search(/^## /m);
+  if (start === -1) return body;
+  const sections = body
+    .slice(start)
+    .split(/^(?=## )/m)
+    .map((section) => {
+      const [heading, ...rest] = section.replace(/\s+$/, "").split("\n");
+      const lines = rest.filter((line) => line.trim());
+      const prose = lines.filter((line) => !line.startsWith("- "));
+      const bullets = lines.filter((line) => line.startsWith("- ")).sort();
+      const content = [...prose, ...bullets];
+      return content.length
+        ? `${heading}\n\n${content.join("\n")}\n`
+        : `${heading}\n`;
+    });
+  return body.slice(0, start) + sections.join("\n");
 }

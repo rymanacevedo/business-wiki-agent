@@ -78,3 +78,98 @@ test("rejects body text written inside the frontmatter, such as a section headin
     /## Also seen in/
   );
 });
+
+test("rejects a Profile or Obligation fact line without a Citation", () => {
+  invalid(
+    OBLIGATION,
+    obligation.replace(
+      "- **Status**: active",
+      "- **Description**: renew before expiry\n- **Status**: active"
+    ),
+    /Citation.*Description/
+  );
+  invalid(
+    "profile.md",
+    profile.replace(" (src: 2025-04-01-lease-harborview)", ""),
+    /Citation.*Premises suite/
+  );
+});
+
+test("accepts uncited lines that state no Source fact: Status, links to Pages, not in the wiki, History", () => {
+  validatePage(
+    OBLIGATION,
+    obligation.replace(
+      "- **Status**: active",
+      "- **Kind**: insurance-renewal, recurs yearly\n- **Record**: [certificate](../summaries/2025-11-15-insurance-cert-meridian.md)\n- **Status**: active"
+    )
+  );
+});
+
+const index = `---
+title: Index
+kind: index
+sources: []
+created: 2026-10-17
+updated: 2026-10-17
+status: active
+flags: []
+---
+
+# Index
+
+## Profile
+
+- [Northwind Repair LLC](profile.md): the Business.
+
+## Obligations
+
+- 2026-11-15 insurance-renewal (active): [Insurance renewal](${OBLIGATION})
+
+## Sources
+
+- 2026-09-12 invoice: [Invoice 4471](${RECORD}): parts.
+`;
+
+test("accepts a well-formed Index", () => {
+  validatePage("index.md", index);
+});
+
+test("rejects an Index with a section twice, sections out of order, or a Page listed twice", () => {
+  invalid(
+    "index.md",
+    `${index}\n## Obligations\n`,
+    /"Obligations" more than once/
+  );
+  invalid(
+    "index.md",
+    index
+      .replace("## Profile", "## Tmp")
+      .replace("## Sources", "## Profile")
+      .replace("## Tmp", "## Sources"),
+    /order Profile, Obligations, Entities, Expense ledgers, Sources/
+  );
+  invalid(
+    "index.md",
+    `${index}- 2026-09-12 invoice: [Invoice 4471](${RECORD}): again.\n`,
+    /lists summaries\/2026-09-12-invoice-cascade-parts-4471\.md 2 times/
+  );
+});
+
+test("rejects an Index Source line that does not start with the document date and kind", () => {
+  invalid(
+    "index.md",
+    index.replace("- 2026-09-12 invoice: [Invoice 4471]", "- [Invoice 4471]"),
+    /must start with its date and kind/
+  );
+});
+
+test("rejects urgency stored in a Page body; the Log and Schema may name it", () => {
+  for (const phrase of ["missed", "due soon", "days out"])
+    invalid(RECORD, `${record}- Note: ${phrase}\n`, new RegExp(`"${phrase}"`));
+  validatePage(
+    "log.md",
+    index
+      .replace("kind: index", "kind: log")
+      .replace("## Profile", "- 2026-10-17 LINT: 1 missed")
+  );
+});

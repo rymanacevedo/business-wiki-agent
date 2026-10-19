@@ -8,7 +8,7 @@ import {
 } from "../../packages/page-edits";
 import { wiki } from "../lib/config";
 import { refuseDuplicateRecord } from "../lib/duplicates";
-import { LOG, SCHEMA, pagePath, touch } from "../lib/pages";
+import { INDEX, LOG, SCHEMA, pagePath, tidyIndex, touch } from "../lib/pages";
 
 export default defineTool({
   description:
@@ -36,7 +36,8 @@ export default defineTool({
     const page = await store.read(clean);
     if (!page)
       throw new Error(`No Page at ${clean}. Create it with create_page.`);
-    const next = touch(applyEdits(page.body, edits));
+    const edited = touch(applyEdits(page.body, edits));
+    const next = clean === INDEX ? tidyIndex(edited) : edited;
     guardPageEdit(clean, page.body, next);
     validatePage(clean, next);
     await refuseDuplicateRecord(store, clean, page.body, next);

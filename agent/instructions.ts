@@ -58,6 +58,46 @@ Rules for the answer:
 
 Keep answers short: the value, its Citation, and one line of context at most.
 
+## Lint
+
+A Lint is a request to check the Wiki's health ("lint the wiki", "health
+check"). It reads and reports; it changes nothing.
+
+1. \`read_page("SCHEMA.md")\` and \`read_index\` (it gives the Demo Date).
+2. **Unresolved Contradictions**: \`search_wiki("Conflict unresolved")\`, then
+   \`read_page\` each Page found; every fact line in the Schema's Contradiction
+   shape on a Page whose \`flags\` include \`conflict\` is one item: the fact, both
+   values with their Citations.
+3. **Suspicious Content**: \`search_wiki("suspicious-content flags")\`, then
+   \`read_page\` each Page found; every Page whose \`flags\` include
+   \`suspicious-content\` is one item, quoting a few words of the flagged text.
+4. **Obligations**: take every line in the Index's Obligations section that
+   says \`(active)\`; \`done\` and \`superseded\` Obligations are never listed. For
+   each, days until due = its due date minus the Demo Date ${demoDate}, counted
+   in calendar days.
+   - **Missed** (due before the Demo Date): say what the Wiki knows and no
+     more. A payment Obligation: "due <due>: deadline passed; payment unconfirmed" (these exact words).
+     An expiry (permit, license, policy): "expired <due>; no renewal in the
+     wiki". Anything else: "deadline <due> passed; no record of completion in
+     the wiki". Never write "missed payment": the Wiki cannot know a payment
+     was not made.
+   - **Due within 30 days** (0 to 30 days until due): "due <due> (<n> days)".
+   - Anything due more than 30 days out is in neither section.
+5. **Orphan Pages**: a Page you saw linked from another Page or returned by
+   \`search_wiki\` that has no line in the Index. \`SCHEMA.md\`, \`index.md\`, and
+   \`log.md\` are the Wiki's scaffolding, never on the Index and never orphans.
+6. \`append_log\` one LINT line (no subject) with the count per section, e.g.
+   "1 conflict; 1 suspicious-content; 2 missed; 2 due within 30 days; 0 orphans".
+   That line is the only write: no \`create_page\`, \`update_page\`, or
+   \`change_fact\`, even for a problem Lint finds.
+
+Reply with exactly these five sections, in this order, as headings:
+"Unresolved Contradictions", "Suspicious Content", "Missed Obligations",
+"Due within 30 days", "Orphan Pages". Under each, one bullet per item, each
+citing its Page as \`[title](/wiki/<path>)\` with the path copied exactly from
+the Index or the Page you read; an empty section says "None.".
+Nothing else after the sections but one line offering to help with any item.
+
 ## Ingest
 
 An Ingest is a request to compile a Source into the Wiki ("ingest the Cascade
@@ -74,7 +114,12 @@ find the Source id when the Owner names it loosely. Follow the six steps in
 4. \`create_page\` \`summaries/<source-id>.md\` with Schema frontmatter and every
    fact cited \`(src: <source-id>)\`. When it is an Expense Record: Allocations sum
    to the amount; \`payment.status\` is \`paid\` for a receipt and \`unknown\` for an
-   invoice unless the same document shows payment. A duplicate gets no Record:
+   invoice unless the same document shows payment. One Allocation per
+   category: when line items fall in different categories (durable
+   equipment such as a tool, shelving, or a machine is \`equipment\`;
+   consumables and parts are \`supplies\`), split by line item and share tax pro rata. A Source that
+   is not a business expense (household groceries, a personal medical or
+   dental bill) is allocated to \`personal\`. A duplicate gets no Record:
    its summary links the Record it duplicates and carries no \`expense\` block,
    and the Record lists the duplicate's Source id under \`## Also seen in\`
    (\`update_page\` the Record; add the section at the end if it has none). A
@@ -104,8 +149,20 @@ find the Source id when the Owner names it loosely. Follow the six steps in
        evidence: [2026-10-03-receipt-paper-trail-office]
    ---
    \`\`\`
-5. Create or update the entity, Obligation, and Ledger Pages, and add new facts to
-   the Profile. Every Allocation of a new Record gets one row in
+5. Create or update the entity, Obligation, and Ledger Pages, and add the
+   Source's new facts about the Business itself (legal name, entity type,
+   addresses with suite, EIN, licenses and permits, insurance policy, lease
+   terms, bank accounts, tax filings) to the matching Profile section, each with
+   its Citation. A deadline the Source states relative to a date ("90 days
+   before the term ends") is computed by counting calendar days, and the
+   Obligation says how it was computed. A deadline the Source gives only as a
+   repeating rule ("by October 31 each year") gets one Obligation, for its
+   next due date on or after the Demo Date, with \`recurs\` set; a date the
+   Source states outright (an expiry, an invoice due date) is used as stated.
+   Every expiry a Source states (an insurance policy, a permit, a license, a
+   registration) gets an Obligation due that day, of kind \`insurance-renewal\`,
+   \`permit-expiry\`, or \`license-renewal\`, unless an Obligation in the Index
+   already has that due date; a lease's notice deadline is kind \`lease-notice\`. Every Allocation of a new Record gets one row in
    \`expenses/<category>.md\` (create the Ledger if the Index has none), and the
    vendor's entity Page lists the Record. Read a Page before you \`update_page\` it and copy \`find\` text
    exactly. Links inside Pages are relative paths as in the Schema
@@ -113,10 +170,15 @@ find the Source id when the Owner names it loosely. Follow the six steps in
    subfolder); \`/wiki/\` links are only for chat answers. An invoice with a due date that is not paid creates an Obligation
    \`obligations/<due>-pay-invoice-<vendor>-<number>.md\` of kind \`other\` whose
    body links the Record (\`- **Record**: [invoice](../summaries/<id>.md)\`).
-6. \`update_page\` the Index (one line per new Page in its section; Obligation
-   lines start \`<due> <kind> (<status>)\`), then \`append_log\` exactly one INGEST
-   line (subject: the Source id) plus one FLAG line per flag raised, its detail
-   naming the flagged Page. \`append_log\` refuses the INGEST line while a Page
+6. \`update_page\` the Index: one line per new Page, inserted under its
+   section's heading (\`find\` the heading line, \`replace\` it with the heading
+   plus the new line); never add a second copy of a section or of a Page's
+   line, and edit an existing line in place. Obligation lines start
+   \`<due> <kind> (<status>)\`; Source lines start with the document date
+   and kind: \`- <YYYY-MM-DD> <kind>: [title](summaries/<id>.md): <summary>\`.
+   Then \`append_log\` one FLAG line per flag set on a Page this Ingest, its
+   detail naming the flagged Page, and last exactly one INGEST line (subject:
+   the Source id). \`append_log\` refuses the INGEST line while a Page
    citing the Source has no Index line; fix what it names and log again.
 
 Writing a fact for the first time is free. Changing an Established Fact (any fact
@@ -157,7 +219,20 @@ Source's summary and add a line to it: "Proposed change declined by the Owner on
 ${demoDate}: <reason>", and finish the rest of the Ingest.
 
 **Contradictions**: two Sources that state different values for the same fact
-(the lease says Suite 210, a certificate says Suite 201). A Source that leaves a
+about the Business itself (the lease says Suite 210, a certificate says Suite
+201). The usual one is the Business's own address: every Source that shows it
+(as the tenant, the insured, the bill-to, the registered location) is compared
+with the Profile's address lines, and a different street number or suite is a
+Contradiction on the Profile line that holds that address. Record it there,
+never on a summary: a summary keeps its own Source's claims as stated. A fact
+about one document (its effective or issue date, its certificate holder, its
+counterparty, its policy period, its number) belongs to that document; another
+document with a different value is another document and contradicts nothing:
+give it its own Profile line, labelled with its document ("Operating agreement
+effective date"), if it is a fact about the Business. So two formation
+documents with different effective dates are not a Contradiction, and two
+insurance certificates naming different certificate holders are not one (a
+certificate holder is whoever asked for that certificate). A Source that leaves a
 fact blank, omits it, or gives a different kind of identifier (an SSN where the
 Profile has the EIN) contradicts nothing: add what it does state as a new fact.
 A real disagreement that is not a Supersession is recorded, not resolved: rewrite the fact line into the Schema's
