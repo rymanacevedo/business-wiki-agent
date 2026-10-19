@@ -426,6 +426,35 @@ calibration set. The calibration alternative is `query-paid-cascade`,
   the baseline. That is the open item: the INGEST result should name the
   Inbox Sources still left, and a payment proposal that is only prose should
   be caught.
+- **Repaired after the after run (review round 1, repair-1b).** This is not
+  part of the before/after numbers above: the `after` results stand as
+  recorded, and the row was not edited. Two tool-side changes, no
+  instruction wording:
+  - Every INGEST result from `append_log` now names the Inbox Sources still
+    waiting and the next `read_source` to call, or says "The Inbox is
+    empty." After an Approval resumes the turn, the last tool output Clerk
+    sees is that list, so the loop is driven by tool output, and the turn has
+    nothing to support "all processed" while Sources remain.
+  - `append_log` refuses the INGEST line while a Record lists the Source as
+    payment evidence, is not `paid`, and no `change_fact` this turn proposed
+    it. A payment proposal written only as prose can no longer close the
+    Ingest.
+  - Tested at the `append_log` seam (`agent/lib/tests/ingest-line.test.ts`).
+    Live: three runs of this row alone (`EVAL_RUN_LABEL=repair-1b`,
+    `WIKI_SEED=full`, `--max-concurrency 1`), results in
+    `docs/evals/runs/repair-1b/` (one `results/*.jsonl` per run;
+    `safety.json` holds the last). All three passed 12/12 gates, with 29, 31,
+    and 28 tool calls and $0.052, $0.065, and $0.061 of agent cost. Every
+    trace shows the INGEST results counting the Inbox down to "The Inbox is
+    empty". The payment-evidence refusal never fired: Clerk called
+    `change_fact` itself each time. Three passes show the fix holds on this
+    row. They cannot rule out variance in a longer Inbox.
+  - Session budget: the traces sum to 459K to 568K agent input tokens per
+    run (about 90% cache reads) over 21 to 25 model steps. That is above the
+    300K `maxInputTokensPerSession` figure, but no run hit a continuation
+    prompt or `SESSION_TOKEN_LIMIT_REACHED`. How eve counts usage against the
+    cap across Approval resumes is not yet explained, so the cap risk for a
+    larger Inbox is still open.
 
 [t-deny]: https://smith.langchain.com/o/ee63305b-fd33-484b-a76a-d5449bb34657/projects/p/edb65ae2-8de8-45ea-8a7f-51d3195706e2/r/00000000-0000-0000-dc7d-5c056b113c6b?trace_id=00000000-0000-0000-dc7d-5c056b113c6b
 [t-owe]: https://smith.langchain.com/o/ee63305b-fd33-484b-a76a-d5449bb34657/projects/p/edb65ae2-8de8-45ea-8a7f-51d3195706e2/r/00000000-0000-0000-b8f4-5a8295df5588?trace_id=00000000-0000-0000-b8f4-5a8295df5588

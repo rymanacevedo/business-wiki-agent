@@ -1,11 +1,12 @@
 import { defineTool } from "eve/tools";
 import { never } from "eve/tools/approval";
 import { z } from "zod";
-import { SOURCES, wiki } from "../lib/config";
+import { SOURCES, sourceStatus, wiki } from "../lib/config";
 import { pageField } from "../../packages/page-edits";
 import { declinedThisTurn } from "../lib/declined";
 import { ingestProblems } from "../lib/ingest-check";
 import { appendLog, LOG, logLine } from "../lib/pages";
+import { proposedPages } from "../lib/sequence";
 
 const SUBJECTS: Record<string, RegExp> = {
   FLAG: /^(conflict|suspicious-content|needs-owner)$/,
@@ -58,7 +59,8 @@ export default defineTool({
       const problems = await ingestProblems(
         store,
         id,
-        await declinedThisTurn(store, ctx.messages)
+        await declinedThisTurn(store, ctx.messages),
+        proposedPages(ctx.messages)
       );
       if (problems.length)
         throw new Error(
@@ -67,6 +69,18 @@ export default defineTool({
     }
     const line = logLine(type, subject, detail);
     await appendLog(store, line);
-    return `Logged: ${line}`;
+    if (type !== "INGEST") return `Logged: ${line}`;
+    return `Logged: ${line}\n${inboxNote((await sourceStatus(store)).inbox)}`;
   },
 });
+
+/**
+ * What an INGEST result says about the Inbox, so an "ingest everything new"
+ * turn is driven by tool output (also after an Approval resumes it) and never
+ * reports the Inbox done while it holds Sources.
+ */
+function inboxNote(inbox: string[]): string {
+  if (!inbox.length) return "The Inbox is empty.";
+  const s = inbox.length === 1 ? "" : "s";
+  return `Inbox still holds ${inbox.length} Source${s}: ${inbox.join(", ")}. If the Owner asked to Ingest everything new, call read_source("${inbox[0]}") next and Ingest it the same way; never say the Inbox is done until an INGEST result says it is empty.`;
+}

@@ -398,3 +398,116 @@ test("a Citation's Source id date is not a stated due date or expiry", async () 
   );
   assert.match(await ingest(REG), /^Logged: /);
 });
+
+// "Ingest everything new" is driven by tool output, not by Clerk remembering
+// the loop after an Approval resumes the turn: each INGEST line's result names
+// the Inbox Sources still waiting, or says the Inbox is empty.
+
+test("the INGEST result names the Inbox Sources still to Ingest, next first", async () => {
+  await write("index.md", indexWith(fullIndex));
+  const result = await ingest(INVOICE);
+  assert.match(result, /^Logged: /);
+  assert.match(
+    result,
+    /Inbox still holds 1 Source: 2026-09-12-invoice-cascade-parts-4471-2\./
+  );
+  assert.match(
+    result,
+    /read_source\("2026-09-12-invoice-cascade-parts-4471-2"\) next/
+  );
+});
+
+test("the INGEST result says the Inbox is empty once every Source has a summary", async () => {
+  await write(`summaries/${COPY}.md`, copy);
+  await write(
+    RECORD,
+    `${record}\n## Also seen in\n\n- ${COPY}: duplicate copy (src: ${COPY})\n`
+  );
+  const index = `${fullIndex}\n- 2026-09-12 invoice copy: [copy](summaries/${COPY}.md): duplicate.`;
+  await write("index.md", indexWith(index));
+  const result = await ingest(COPY);
+  assert.match(result, /^Logged: /);
+  assert.match(result, /The Inbox is empty\./);
+});
+
+// A payment proposal written only as prose parks on nothing: the Owner sees
+// what reads as an Approval request with no Approval behind it. A Source a
+// Record lists as payment evidence, while the Record is not paid, is closed
+// only after this turn's change_fact proposed that Record's payment.
+
+const payingCopy = async () => {
+  await write(
+    `summaries/${COPY}.md`,
+    copy.replace(
+      "Duplicate of",
+      "- **Business facts**: none new\n\nPAID duplicate of"
+    )
+  );
+  await write(
+    RECORD,
+    `${record}\n## Also seen in\n\n- ${COPY}: payment evidence, pending Approval (src: ${COPY})\n`
+  );
+  await write(
+    "index.md",
+    indexWith(
+      `${fullIndex}\n- 2026-09-12 invoice copy: [copy](summaries/${COPY}.md): PAID copy.`
+    )
+  );
+};
+
+async function ingestWith(
+  subject: string,
+  messages: unknown[]
+): Promise<string> {
+  const tool = appendLog as unknown as {
+    execute: (input: unknown, ctx: unknown) => Promise<string>;
+  };
+  try {
+    return await tool.execute(
+      { type: "INGEST", subject, detail: "created the Pages" },
+      { messages }
+    );
+  } catch (error) {
+    return `refused: ${(error as Error).message}`;
+  }
+}
+
+const ownerAsks = {
+  role: "user",
+  content: [{ type: "text", text: "Ingest everything new." }],
+};
+
+test("payment evidence for an unpaid Record waits for this turn's change_fact", async () => {
+  await payingCopy();
+  const refused = await ingestWith(COPY, [ownerAsks]);
+  assert.match(refused, /^refused: /);
+  assert.match(refused, /change_fact/);
+  assert.match(refused, new RegExp(RECORD));
+  assert.equal((await store.read("log.md"))?.body, "# Log\n");
+});
+
+test("payment evidence closes once change_fact proposed the Record's payment this turn", async () => {
+  await payingCopy();
+  const proposal = {
+    role: "assistant",
+    content: [
+      {
+        type: "tool-call",
+        toolName: "change_fact",
+        toolCallId: "c1",
+        input: {
+          changes: [
+            {
+              page: RECORD,
+              old_value: "status: unknown",
+              new_value: "status: paid",
+            },
+          ],
+          source: COPY,
+          reason: "PAID copy.",
+        },
+      },
+    ],
+  };
+  assert.match(await ingestWith(COPY, [ownerAsks, proposal]), /^Logged: /);
+});

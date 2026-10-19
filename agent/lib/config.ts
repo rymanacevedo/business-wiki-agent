@@ -39,3 +39,22 @@ export const SUMMARIES = "summaries/";
 export function sourceId(path: string): string {
   return path.slice(SOURCES.length).replace(/\.(md|txt)$/, "");
 }
+
+/**
+ * Every Source id, split by status: Ingested (it has a summary Page) or
+ * Inbox (not yet Ingested), each in the store's listing order.
+ */
+export async function sourceStatus(
+  store: WikiStore
+): Promise<{ inbox: string[]; ingested: string[] }> {
+  const summaries = new Set(
+    (await store.list(SUMMARIES)).map((path) =>
+      path.slice(SUMMARIES.length).replace(/\.md$/, "")
+    )
+  );
+  const ids = (await store.list(SOURCES)).map(sourceId);
+  return {
+    inbox: ids.filter((id) => !summaries.has(id)),
+    ingested: ids.filter((id) => summaries.has(id)),
+  };
+}
