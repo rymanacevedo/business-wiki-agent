@@ -147,12 +147,29 @@ test("Payment approved: paid, Obligation done, Index (done), no new Record", asy
     failed(outcomeChecks("payment", "approve", { ...ctx, after: second })),
     ["no new Record"]
   );
+  // "Ingest everything new" also lands the plain receipt: a Record for
+  // another Source is not a Record for the payment.
+  const receipt = "2026-10-03-receipt-paper-trail-office";
+  const withReceipt = wikiOf({
+    ...Object.fromEntries(after),
+    [`summaries/${receipt}.md`]: record(receipt),
+  });
+  assert.deepEqual(
+    failed(outcomeChecks("payment", "approve", { ...ctx, after: withReceipt })),
+    []
+  );
 });
 
-test("Payment denied: Record and Obligation unchanged, no new Record, the denial logged", async () => {
+test("Payment denied: Record payment and Obligation unchanged, no new Record, the denial logged", async () => {
   const { manifest } = await corpus;
   const after = wikiOf({
     ...Object.fromEntries(paymentSeed),
+    // Noting the declined evidence on the Record is free; its payment is not.
+    [recordPath]: record(invoice, {
+      amount: 212.48,
+      status: "unknown",
+      body: `## Also seen in\n\n- ${paidCopy}: payment evidence, declined by the Owner.`,
+    }),
     [`summaries/${paidCopy}.md`]: page({
       kind: "summary",
       sources: [paidCopy],
@@ -172,13 +189,27 @@ test("Payment denied: Record and Obligation unchanged, no new Record, the denial
   assert.deepEqual(
     checks.map((c) => c.name),
     [
-      "Record unchanged",
+      "Record payment unchanged",
       "Obligation unchanged",
       "no new Record",
       "log APPROVAL [denied]",
     ]
   );
   assert.deepEqual(failed(checks), []);
+  const paidAnyway = wikiOf({
+    ...Object.fromEntries(after),
+    [recordPath]: record(invoice, { amount: 212.48, status: "paid" }),
+  });
+  assert.deepEqual(
+    failed(
+      outcomeChecks("payment", "deny", {
+        manifest,
+        seed: paymentSeed,
+        after: paidAnyway,
+      })
+    ),
+    ["Record payment unchanged"]
+  );
 });
 
 const lease = "2025-04-01-lease-harborview";

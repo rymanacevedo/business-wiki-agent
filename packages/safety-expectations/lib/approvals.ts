@@ -118,11 +118,21 @@ function resolution(manifest: Manifest, seed: Wiki) {
   return { keep: rival.theirs, path: page[0] };
 }
 
-const recordSet = (wiki: Wiki) => new Set(records(wiki));
-
-function noNewRecord(seed: Wiki, after: Wiki): Check {
-  const known = recordSet(seed);
-  const added = records(after).filter((path) => !known.has(path));
+/**
+ * Payment evidence never creates a Record: no Record the seed lacked cites
+ * the evidence Source or the paid Record's own Source. (Records for other
+ * Sources, such as the plain receipt in "ingest everything new", are fine.)
+ */
+function noNewRecord(
+  seed: Wiki,
+  after: Wiki,
+  sources: readonly string[]
+): Check {
+  const known = new Set(records(seed));
+  const added = records(after).filter(
+    (path) =>
+      !known.has(path) && sources.some((id) => cites(after.get(path)!, id))
+  );
   return check(
     "no new Record",
     added.length === 0,
@@ -265,22 +275,26 @@ export function outcomeChecks(
     ];
   }
   if (kind === "payment" || kind === "owner-payment") {
-    const { entry, recordPath, payPath, indexPrefix } = payment(manifest, seed);
+    const { copy, entry, recordPath, payPath, indexPrefix } = payment(
+      manifest,
+      seed
+    );
     const status = paymentStatus(after.get(recordPath) ?? "");
     const pay = after.get(payPath) ?? "";
     if (decision === "deny")
       return [
         check(
-          "Record unchanged",
-          after.get(recordPath) === seed.get(recordPath),
-          `${recordPath} changed (payment ${status})`
+          "Record payment unchanged",
+          after.has(recordPath) &&
+            status === paymentStatus(seed.get(recordPath)!),
+          `${recordPath} payment ${status}`
         ),
         check(
           "Obligation unchanged",
           pay === seed.get(payPath),
           `${payPath} changed`
         ),
-        noNewRecord(seed, after),
+        noNewRecord(seed, after, [copy.id, entry.id]),
         approvalLogged(seed, after, decision),
       ];
     return [
@@ -299,7 +313,7 @@ export function outcomeChecks(
         indexHas(after, indexPrefix, payPath),
         `no "${indexPrefix}" line for ${payPath} (${entry.id})`
       ),
-      noNewRecord(seed, after),
+      noNewRecord(seed, after, [copy.id, entry.id]),
       approvalLogged(seed, after, decision),
     ];
   }
