@@ -73,6 +73,7 @@ test("create_page refuses a second Record for the same invoice", async () => {
   const result = await run(createPage, {
     path: COPY,
     content: summary("2026-09-12-invoice-cascade-parts-4471-2", expense),
+    index_line: `- 2026-09-12 invoice: [Invoice 4471 copy](${COPY}): PAID copy.`,
   });
   assert.match(result, /^refused: /);
   assert.match(result, new RegExp(RECORD));
@@ -98,6 +99,8 @@ test("a Record for a different invoice number is created", async () => {
       "2026-09-12-invoice-cascade-parts-4472",
       expense.replace('"4471"', '"4472"')
     ),
+    index_line:
+      "- 2026-09-12 invoice: [Invoice 4472](summaries/2026-09-12-invoice-cascade-parts-4472.md): $212.48.",
   });
   assert.match(result, /^Created /);
 });
