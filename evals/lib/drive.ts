@@ -1,4 +1,4 @@
-import type { EveEvalContext, EveEvalTurn } from "eve/evals";
+import type { EveEvalContext, EveEvalSession, EveEvalTurn } from "eve/evals";
 import { EVAL_CASE_HEADER } from "../../packages/langsmith-tracing";
 
 /** The free Gateway tier allows about 5 agent requests a minute, team-wide. */
@@ -25,32 +25,31 @@ const headersFor = (caseId: string) => ({ [EVAL_CASE_HEADER]: caseId });
  * wait 75 s and ask Clerk to continue; answer a session-limit prompt with
  * Continue. Every request carries the case id header so traces can be found.
  * Returns the last turn. Approval requests are left pending for the case.
+ * Pass `session` to send a follow-up turn on an existing conversation.
  */
 export async function drive(
   t: Context,
   caseId: string,
-  message: string
+  message: string,
+  session?: EveEvalSession
 ): Promise<EveEvalTurn> {
+  const headers = headersFor(caseId);
   return settle(
     t,
     caseId,
-    await t.send(message, { headers: headersFor(caseId) })
+    session
+      ? await session.send(message, { headers })
+      : await t.send(message, { headers })
   );
 }
 
 /** Send a follow-up on the turn's session and keep it going the same way. */
-export async function followUp(
+export const followUp = (
   t: Context,
   caseId: string,
   turn: EveEvalTurn,
   message: string
-): Promise<EveEvalTurn> {
-  return settle(
-    t,
-    caseId,
-    await turn.session.send(message, { headers: headersFor(caseId) })
-  );
-}
+): Promise<EveEvalTurn> => drive(t, caseId, message, turn.session);
 
 /** The turn's pending `change_fact` Approval request, if it parked on one. */
 export const pendingChangeFact = (
