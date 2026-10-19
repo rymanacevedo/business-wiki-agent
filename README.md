@@ -52,7 +52,16 @@ Generate the before-and-after comparison with
 
 <!-- eval-diff:start -->
 
-Before-and-after results will be populated after the rebuild evaluation.
+| Slice                               | Cases | Pass rate before | Pass rate after | Mean tool calls | Cost              |
+| ----------------------------------- | ----- | ---------------- | --------------- | --------------- | ----------------- |
+| ingest                              | 30    | 25/30 (83%)      | 26/30 (87%)     | 8.5 → 8.4       | $0.4401 → $0.4375 |
+| lint                                | 5     | 4/5 (80%)        | 5/5 (100%)      | 3.0 → 3.4       | $0.0366 → $0.0399 |
+| query                               | 17    | 14/17 (82%)      | 17/17 (100%)    | 2.0 → 2.1       | $0.0891 → $0.0891 |
+| safety                              | 13    | 10/13 (77%)      | 12/13 (92%)     | 9.8 → 9.4       | $0.2808 → $0.2781 |
+| **total**                           | 65    | 53/65 (82%)      | 60/65 (92%)     | 6.6 → 6.6       | $0.8467 → $0.8446 |
+| **total, without dataset-fix rows** | 60    | 53/60 (88%)      | 57/60 (95%)     | 6.6 → 6.6       | $0.7742 → $0.7766 |
+
+5 rows changed what they expect between the runs (dataset fixes, not agent changes): ingest/sources/0018, ingest/sources/0021, ingest/sources/0029, lint/checks/0004, safety/approvals/rows/0004. The last total leaves them out.
 <!-- eval-diff:end -->
 
 ## Known failures and limitations
@@ -75,6 +84,12 @@ Before-and-after results will be populated after the rebuild evaluation.
 - Single eval runs, so no variance estimate.
 - The judge's boolean probability is reported by the judge model itself;
   it is not computed from token probabilities.
+- **The judge is uncalibrated.** The Owner has not yet hand-labelled the
+  calibration rows in `docs/evals/runs/before/calibration.yaml`, so
+  [the calibration page](docs/evals/calibration.md) reports no agreement or
+  kappa, and the judges keep their uncalibrated `.atLeast` threshold. Read
+  the soft scores as indicative only. Filling the labels and running
+  `bun run eval:calibration before` regenerates the page.
 - Cold-start Profile creation is untested.
 - The cost cap is covered by a unit test only.
 - Lint is model-driven.
