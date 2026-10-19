@@ -45,6 +45,16 @@ curl -sN https://<deployed-url>/eve/v1/session/<sessionId>/stream
 # NDJSON events; the answer arrives as message.appended deltas, the turn ends at session.waiting.
 ```
 
+## Evals
+
+Generate the before-and-after comparison with
+`bun run eval:diff <before-label> <after-label>`.
+
+<!-- eval-diff:start -->
+
+Before-and-after results will be populated after the rebuild evaluation.
+<!-- eval-diff:end -->
+
 ## Known failures and limitations
 
 ### Limitations we chose
@@ -63,6 +73,8 @@ curl -sN https://<deployed-url>/eve/v1/session/<sessionId>/stream
   nothing stops many sessions.
 - No document upload: Sources are pre-placed by the seed script.
 - Single eval runs, so no variance estimate.
+- The judge's boolean probability is reported by the judge model itself;
+  it is not computed from token probabilities.
 - Cold-start Profile creation is untested.
 - The cost cap is covered by a unit test only.
 - Lint is model-driven.
