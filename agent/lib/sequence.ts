@@ -35,6 +35,18 @@ export function sourcesReadThisTurn(messages: unknown): string[] {
     .filter((id): id is string => typeof id === "string");
 }
 
+/** The Pages every `change_fact` call this turn proposed to change. */
+export function proposedPages(messages: unknown): string[] {
+  return callsTo(partsThisTurn(messages), "change_fact").flatMap((call) => {
+    const changes = (call.input ?? call.args)?.changes;
+    return Array.isArray(changes)
+      ? changes
+          .map((c: { page?: unknown }) => c?.page)
+          .filter((page): page is string => typeof page === "string")
+      : [];
+  });
+}
+
 /**
  * Page paths named in the new values of `change_fact` calls this turn that
  * did not apply (the Owner denied them, or they failed), e.g. a Supersession's

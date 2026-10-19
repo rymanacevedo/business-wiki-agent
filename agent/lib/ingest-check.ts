@@ -38,11 +38,17 @@ async function readPages(store: WikiStore): Promise<Map<string, string>> {
  * What the Owner declined this turn is not asked for: the new Obligation of a
  * declined Supersession, and the Profile line a declined change would have
  * rewritten.
+ *
+ * A Record that lists the Source as payment evidence while it is not paid
+ * needs a `change_fact` proposing its payment this turn (`proposed`, the
+ * Pages this turn's proposals named): a proposal written only as prose parks
+ * on nothing.
  */
 export async function ingestProblems(
   store: WikiStore,
   id: string,
-  declined: Declined = NOTHING_DECLINED
+  declined: Declined = NOTHING_DECLINED,
+  proposed: string[] = []
 ): Promise<string[]> {
   const indexLines = ((await store.read(INDEX))?.body ?? "").split("\n");
   const pages = await readPages(store);
@@ -75,6 +81,17 @@ export async function ingestProblems(
     if (obligation && !line.startsWith(shape))
       problems.push(
         `The Index line for ${path} must start "${shape}[title](${path})".`
+      );
+  }
+  for (const [path, body] of pages) {
+    if (!path.startsWith("summaries/") || !EXPENSE.test(body)) continue;
+    const seen = body.split(/^## Also seen in[^\n]*$/m)[1]?.split(/^## /m)[0];
+    const evidence = seen
+      ?.split("\n")
+      .some((line) => line.includes(id) && /payment evidence/i.test(line));
+    if (evidence && paymentStatus(body) !== "paid" && !proposed.includes(path))
+      problems.push(
+        `${path} lists ${id} as payment evidence but its payment is ${paymentStatus(body)} and no change_fact proposed it this turn: call change_fact now (the Record's payment block, and its payment Obligation's status), which waits for the Owner's Approval. A proposal written only in your reply is not one.`
       );
   }
   const summaryPath = `summaries/${id}.md`;
