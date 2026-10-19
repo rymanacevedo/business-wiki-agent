@@ -162,7 +162,9 @@ async function ingest(base: string, store: WikiStore, id: string) {
     done: false,
   };
   const session = new Session(base);
-  await session.send(`Ingest ${id}.`);
+  await session.send(
+    `Ingest ${id}. Ingest only this Source: do not open or Ingest any other Source.`
+  );
   report.sessions.push(session.id);
   for (let followUps = 0; ;) {
     const { events, input } = await session.drain();
