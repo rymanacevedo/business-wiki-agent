@@ -11,7 +11,7 @@ const DENIED = /The person who denied it wrote: "([\s\S]*)"$/;
  */
 export default defineHook({
   events: {
-    async "action.result"(event) {
+    async "action.result"(event, ctx) {
       const { result, error } = event.data as {
         result?: { toolName?: string; output?: { code?: string } };
         error?: { code?: string; message?: string };
@@ -22,7 +22,7 @@ export default defineHook({
       const reason =
         DENIED.exec(error?.message ?? "")?.[1] ?? "no reason given";
       await appendLog(
-        wiki(),
+        wiki(ctx),
         logLine(
           "APPROVAL",
           "denied",

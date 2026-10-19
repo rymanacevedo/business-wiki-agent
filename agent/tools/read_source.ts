@@ -15,7 +15,7 @@ export default defineTool({
   }),
   label: { start: ({ id }) => `Read Source ${id}` },
   async execute({ id }, ctx) {
-    const store = wiki();
+    const store = wiki(ctx);
     // Ingest one Source at a time: an earlier Source read this turn must have
     // its summary before the next one is opened.
     const previous = sourcesReadThisTurn(ctx.messages).filter((s) => s !== id);
