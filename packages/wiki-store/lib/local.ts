@@ -1,12 +1,21 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import type { Backend, Entry } from "./backend";
 import { WikiConflictError } from "./errors";
 
 /** The local store's root directory: `WIKI_STORE_DIR`, else `./.wiki-store`. */
 export function localRoot(env: Record<string, string | undefined>): string {
-  return resolve(env.WIKI_STORE_DIR ?? ".wiki-store");
+  // The ignore comment keeps Next.js from tracing the whole repo into the
+  // wiki browser function; on Vercel the store is Blob, never this path.
+  return resolve(/*turbopackIgnore: true*/ env.WIKI_STORE_DIR ?? ".wiki-store");
 }
 
 /**
@@ -52,6 +61,11 @@ export function localBackend(root: string): Backend {
         .map((file) => relative(root, file).split(sep).join("/"))
         .filter((key) => key.startsWith(prefix))
         .sort();
+    },
+    async remove(keys) {
+      await Promise.all(
+        keys.map((key) => rm(join(root, key), { force: true }))
+      );
     },
   };
 }

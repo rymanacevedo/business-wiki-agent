@@ -1,8 +1,9 @@
-import { blobBackend } from "./lib/blob";
-import { localBackend, localRoot } from "./lib/local";
+import type { BlobClient } from "./lib/blob";
+import { selectBackend, type Env } from "./lib/select";
 import { namespacedStore, type WikiStore } from "./lib/store";
 
 export type { Entry } from "./lib/backend";
+export type { BlobClient } from "./lib/blob";
 export type { WikiStore } from "./lib/store";
 export {
   WikiConflictError,
@@ -17,8 +18,14 @@ export type WikiStoreOptions = {
    * Namespaces are leaves: do not use one namespace as a prefix of another.
    */
   namespace: string;
-  /** `VERCEL` selects Blob; otherwise `WIKI_STORE_DIR` (default `.wiki-store`). */
-  env?: Record<string, string | undefined>;
+  /**
+   * `VERCEL` selects private Vercel Blob, except under `eve dev` and
+   * `eve eval` (`EVE_DEV=1`), which always use the local directory
+   * `WIKI_STORE_DIR` (default `.wiki-store`).
+   */
+  env?: Env;
+  /** The Blob client; defaults to `@vercel/blob`. Tests pass a fake. */
+  blob?: BlobClient;
 };
 
 /**
@@ -30,7 +37,7 @@ export type WikiStoreOptions = {
 export function createWikiStore({
   namespace,
   env = process.env,
+  blob,
 }: WikiStoreOptions): WikiStore {
-  const backend = env.VERCEL ? blobBackend() : localBackend(localRoot(env));
-  return namespacedStore(backend, namespace);
+  return namespacedStore(selectBackend(env, blob), namespace);
 }
