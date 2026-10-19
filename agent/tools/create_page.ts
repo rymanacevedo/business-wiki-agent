@@ -1,12 +1,13 @@
 import { defineTool } from "eve/tools";
 import { never } from "eve/tools/approval";
 import { z } from "zod";
-import { validatePage } from "../../packages/page-edits";
+import { pageField, validatePage } from "../../packages/page-edits";
 import { WikiConflictError } from "../../packages/wiki-store";
 import { wiki } from "../lib/config";
 import { pagePath } from "../lib/pages";
 import { refuseDuplicateRecord } from "../lib/duplicates";
 import { declinedPaths } from "../lib/sequence";
+import { declinedThisTurn, isDeclinedObligation } from "../lib/declined";
 import { editIndex, indexLineProblem, withIndexLine } from "../lib/index-lines";
 
 export default defineTool({
@@ -42,6 +43,18 @@ export default defineTool({
         `The Owner declined the change_fact that proposed ${clean}; it is not created. Do not retry the change.`
       );
     const store = wiki(ctx);
+    // The same Obligation under another file name is the same declined change.
+    if (
+      clean.startsWith("obligations/") &&
+      isDeclinedObligation(
+        await declinedThisTurn(store, ctx.messages),
+        pageField(content, "obligation"),
+        pageField(content, "due")
+      )
+    )
+      throw new Error(
+        `The Owner declined the change_fact that proposed a ${pageField(content, "obligation")} Obligation due ${pageField(content, "due")}; ${clean} is not created. Do not retry the change under another name.`
+      );
     await refuseDuplicateRecord(store, clean, null, content);
     // The new line must leave a valid Index before the Page is written.
     const index = await store.read("index.md");

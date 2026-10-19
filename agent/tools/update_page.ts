@@ -7,6 +7,7 @@ import {
   validatePage,
 } from "../../packages/page-edits";
 import { wiki } from "../lib/config";
+import { declinedLines, declinedThisTurn } from "../lib/declined";
 import { refuseDuplicateRecord } from "../lib/duplicates";
 import { INDEX, LOG, SCHEMA, pagePath, tidyIndex, touch } from "../lib/pages";
 
@@ -39,6 +40,18 @@ export default defineTool({
     const edited = touch(applyEdits(page.body, edits));
     const next = clean === INDEX ? tidyIndex(edited) : edited;
     guardPageEdit(clean, page.body, next);
+    // A line the Owner declined to change this turn stays exactly as it is,
+    // in any shape: a Contradiction would land the declined value anyway.
+    const kept = new Set(next.split("\n").map((l) => l.trim()));
+    const current = new Set(page.body.split("\n").map((l) => l.trim()));
+    for (const line of declinedLines(
+      await declinedThisTurn(store, ctx.messages),
+      clean
+    ))
+      if (current.has(line) && !kept.has(line))
+        throw new Error(
+          `The Owner declined the change_fact to this line of ${clean} this turn; it stays as it is: ${line}`
+        );
     validatePage(clean, next);
     await refuseDuplicateRecord(store, clean, page.body, next);
     await store.write(clean, next, { etag: page.etag });
