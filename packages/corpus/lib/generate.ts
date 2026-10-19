@@ -272,7 +272,12 @@ function entryOf(
   const c = contribution(d, bible, idOf);
   const log = [`INGEST [${id}]`];
   const flag = d.trap ? FLAG_OF[d.trap] : undefined;
-  if (flag) log.push(`FLAG [${flag}]`);
+  // A receipt split into one Allocation per category needs no Owner call:
+  // `needs-owner` (and its FLAG line) is only for a single Allocation.
+  const split =
+    d.trap === "ambiguous-category" &&
+    (c.expense?.allocations.length ?? 0) > 1;
+  if (flag && !split) log.push(`FLAG [${flag}]`);
   if (c.milestone) log.push(`MILESTONE [${c.milestone}]`);
   return {
     id,

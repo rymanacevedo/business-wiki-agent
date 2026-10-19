@@ -857,8 +857,7 @@
       "corroborates": [],
       "masked": [],
       "log": [
-        "INGEST [2026-09-18-receipt-harbor-hardware]",
-        "FLAG [needs-owner]"
+        "INGEST [2026-09-18-receipt-harbor-hardware]"
       ],
       "brief": "Hardware receipt mixing a wire shelving unit with cleaning supplies: split equipment and supplies, or one Allocation flagged needs-owner."
     },

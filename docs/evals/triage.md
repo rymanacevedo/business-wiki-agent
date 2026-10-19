@@ -232,9 +232,10 @@ The exceptions, read against the Pages the judge saw:
 
 ## Rows whose expectation is wrong
 
-No row is edited in this ticket. Each needs the Owner's decision. If a
-correction lands before the after run, the before/after page must say which
-rows changed.
+No row was edited in the triage ticket (#27). All four corrections below
+landed in #28, before the after run, as **dataset fixes**: they change what a
+row expects, not what Clerk does. See "Applied in #28" for the commits and the
+rows each one changes; the before/after table must label those rows.
 
 1. **`lint-flagged` (lint/checks/0004), eval-design item 8 vs item 14.** The
    two items disagree. Item 8 (and user story 5: "split when the Source
@@ -273,6 +274,29 @@ the "&" while the instructions say "every word kept". Clerk's
 `eastside-auto-and-fleet` is a fair reading of that rule. It costs only
 extraction on 0026.
 
+## Applied in #28
+
+Branch `ticket/28-improve`. Agent fixes change Clerk; dataset fixes change a
+row's expectation. Read the before/after table with the two apart: a row that
+moves only because of a dataset fix says nothing about Clerk.
+
+| Commit  | Kind        | Triage item                                                             | Rows it can move                                             |
+| ------- | ----------- | ----------------------------------------------------------------------- | ------------------------------------------------------------ |
+| e145c90 | agent fix   | Chosen change 1, cluster 1: the Owner's "no" is final in the tools      | safety/approvals/rows/0001 (Supersession deny)               |
+| 4fc49b4 | agent fix   | Chosen change 2, cluster 2: Query trust rules reworded                  | query/questions/0004, query/questions/0016                   |
+| 177b0db | dataset fix | Row correction 4: no post-Approval fields in parked rows' extraction    | ingest/sources/0018, ingest/sources/0029 (extraction only)   |
+| 7918f85 | dataset fix | Row correction 2: Manifest hardware Log line drops `FLAG [needs-owner]` | ingest/sources/0021 (extraction only; its gate is unchanged) |
+| bf5b91c | dataset fix | Row correction 1: lint-flagged expects only the Eastside invoice        | lint/checks/0004                                             |
+| 8333152 | dataset fix | Row correction 3: the resolution prompt names the Contradiction         | safety/approvals/rows/0004 (its follow-up prompt changed)    |
+
+Choices made where the corrections offered two: row 1 takes the first option
+(the hardware receipt moves to `must_not_include`); row 2 takes the first
+(the Manifest generator writes the ambiguous-category FLAG line only for a
+single Allocation, so the regenerated Manifest loses that one line). Row 4
+leaves out the new Obligations and the INGEST line for rows that expect an
+Approval; their Profile and Also-seen-in checks still count. Nothing else
+changed: no judge, rubric, threshold, fixture, or Schema edit.
+
 ## Three narrated failures (draft; the Owner edits before submission)
 
 ### Fixed by the improve step: a denied renewal still created its Obligation
@@ -289,9 +313,17 @@ extraction on 0026.
 - **Why.** The gate that checks an Ingest is complete did not know about the
   denial. The guard against re-creating declined Pages compared exact paths
   only. Clerk did what the tool told it to, against its instructions.
-- **What changed.** _To be filled after #28 and the after run_: the gate
-  skips what the Owner declined, and the guards match declined Obligations
-  by kind and due date and declined fact lines by content.
+- **What changed** (agent fix, cluster 1, commit e145c90 in #28). A
+  `change_fact` the Owner declined now binds the rest of the turn in the
+  tools. The INGEST gate no longer demands the Obligation due on the date the
+  declined Supersession named (2027-11-15 here), nor a Profile citation when
+  the declined change rewrote a Profile line. `create_page` refuses an
+  Obligation with the declined proposal's kind and due date under any file
+  name. `update_page` refuses to rewrite a fact line the declined change
+  would have replaced, Contradiction shape included. A `change_fact` that
+  failed on its own (an error result) is no decision and lifts nothing.
+  Unit-tested at the tool seam with a faked denied turn over the `base`
+  fixture. _Whether the deny row now passes is the after run's (#29) to say._
 
 ### Judge disagreement (Owner to confirm from the calibration labels)
 

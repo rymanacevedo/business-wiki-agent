@@ -5,6 +5,7 @@ import {
   paymentStatus,
 } from "../../packages/page-edits";
 import type { WikiStore } from "../../packages/wiki-store";
+import { declinedOn, NOTHING_DECLINED, type Declined } from "./declined";
 import { LOG, SCHEMA } from "./pages";
 
 const INDEX = "index.md";
@@ -33,10 +34,15 @@ async function readPages(store: WikiStore): Promise<Map<string, string>> {
  * block that links a Record (a duplicate, or a statement corroborating a
  * receipt) is listed under that Record's \`## Also seen in\`, and no Ledger
  * row counts it.
+ *
+ * What the Owner declined this turn is not asked for: the new Obligation of a
+ * declined Supersession, and the Profile line a declined change would have
+ * rewritten.
  */
 export async function ingestProblems(
   store: WikiStore,
-  id: string
+  id: string,
+  declined: Declined = NOTHING_DECLINED
 ): Promise<string[]> {
   const indexLines = ((await store.read(INDEX))?.body ?? "").split("\n");
   const pages = await readPages(store);
@@ -106,7 +112,11 @@ export async function ingestProblems(
       ([, body]) => pageSources(body).includes(id) && body.includes(date)
     );
   for (const due of summary ? expiries(summary) : [])
-    if (!dueOn(due) && !countedFrom(due))
+    if (
+      !dueOn(due) &&
+      !countedFrom(due) &&
+      !declined.obligations.some((o) => o.due === due)
+    )
       problems.push(
         `${summaryPath} says something expires ${due}: create its Obligation (kind insurance-renewal, permit-expiry, or license-renewal, due ${due}, citing the Source) and its Index line.`
       );
@@ -126,7 +136,8 @@ export async function ingestProblems(
     profile !== undefined &&
     !pageSources(profile).includes(id) &&
     !profile.includes(`(src: ${id})`) &&
-    !NO_BUSINESS_FACTS.test(summary)
+    !NO_BUSINESS_FACTS.test(summary) &&
+    declinedOn(declined, "profile.md").length === 0
   )
     problems.push(
       `profile.md cites nothing from ${id}: add the Source's new facts about the Business itself (legal name, entity type, addresses with suite, EIN, licenses and permits, insurance policy, lease terms and landlord, bank accounts, tax filings) to the Profile, each cited (src: ${id}), and ${id} to its sources. If the Source states none the Profile lacks, add the line "- **Business facts**: none new" to ${summaryPath}.`

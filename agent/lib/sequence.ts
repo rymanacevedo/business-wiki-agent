@@ -59,3 +59,43 @@ export function declinedPaths(messages: unknown): string[] {
   }
   return paths;
 }
+
+export type ProposedChange = {
+  page: string;
+  old_value: string;
+  new_value: string;
+};
+
+/**
+ * The changes of every `change_fact` call this turn the Owner declined. A
+ * denial is an `execution-denied` result; no result at all counts too, as in
+ * `declinedPaths`. A call that failed on its own (an error result) is no
+ * decision of the Owner's, so it is left out.
+ */
+export function declinedChanges(messages: unknown): ProposedChange[] {
+  const parts = partsThisTurn(messages);
+  const results = new Map(
+    parts
+      .filter((p) => p?.type === "tool-result")
+      .map((p) => [p.toolCallId, JSON.stringify(p.output ?? "")])
+  );
+  const changes: ProposedChange[] = [];
+  for (const call of callsTo(parts, "change_fact")) {
+    const result = results.get(call.toolCallId);
+    if (
+      result !== undefined &&
+      !/execution-denied|TOOL_EXECUTION_DENIED/.test(result)
+    )
+      continue;
+    const proposed = (call.input ?? call.args)?.changes;
+    if (!Array.isArray(proposed)) continue;
+    for (const c of proposed as Partial<ProposedChange>[])
+      if (
+        typeof c?.page === "string" &&
+        typeof c.old_value === "string" &&
+        typeof c.new_value === "string"
+      )
+        changes.push(c as ProposedChange);
+  }
+  return changes;
+}

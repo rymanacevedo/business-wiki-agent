@@ -3,6 +3,7 @@ import { never } from "eve/tools/approval";
 import { z } from "zod";
 import { SOURCES, wiki } from "../lib/config";
 import { pageField } from "../../packages/page-edits";
+import { declinedThisTurn } from "../lib/declined";
 import { ingestProblems } from "../lib/ingest-check";
 import { appendLog, LOG, logLine } from "../lib/pages";
 
@@ -54,7 +55,11 @@ export default defineTool({
         throw new Error(
           `${id} already has its INGEST line; each Source gets exactly one.`
         );
-      const problems = await ingestProblems(store, id);
+      const problems = await ingestProblems(
+        store,
+        id,
+        await declinedThisTurn(store, ctx.messages)
+      );
       if (problems.length)
         throw new Error(
           `Not logged: finish the Ingest of ${id} first, then append the INGEST line again.\n- ${problems.join("\n- ")}`

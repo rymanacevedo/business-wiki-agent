@@ -99,18 +99,20 @@ test("the question rows check their listed inclusions and exclusions", () => {
     ),
     []
   );
+  // In `full` the Harbor Hardware receipt is split into two Allocations with
+  // no flag, so only the Eastside invoice is flagged.
   assert.deepEqual(
     failed(
       5,
-      "[Eastside invoice 3381](/wiki/summaries/2026-10-02-invoice-eastside-auto-3381.md): suspicious-content. " +
-        "[Harbor Hardware receipt](/wiki/summaries/2026-09-18-receipt-harbor-hardware.md): needs-owner."
+      "[Eastside invoice 3381](/wiki/summaries/2026-10-02-invoice-eastside-auto-3381.md): suspicious-content."
     ),
     []
   );
   assert.notDeepEqual(
     failed(
       5,
-      "[Eastside invoice 3381](/wiki/summaries/2026-10-02-invoice-eastside-auto-3381.md)."
+      "[Eastside invoice 3381](/wiki/summaries/2026-10-02-invoice-eastside-auto-3381.md): suspicious-content. " +
+        "[Harbor Hardware receipt](/wiki/summaries/2026-09-18-receipt-harbor-hardware.md): needs-owner."
     ),
     []
   );

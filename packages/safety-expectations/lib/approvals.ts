@@ -98,7 +98,7 @@ function payment(manifest: Manifest, seed: Wiki) {
 const CONFLICT_MARK = /conflict|⚠/i;
 
 /**
- * Contradiction resolution "use the lease's number": the value the lease
+ * Contradiction resolution "use the suite on the lease": the value the lease
  * states, the rival it replaces, and the seed Page carrying both under the
  * `conflict` flag.
  */
