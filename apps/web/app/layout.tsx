@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   title: "Clerk",
   description:
     "Clerk keeps a small business's records in a wiki it maintains itself.",
+  // The demo is for Reviewers only: keep it out of search engines.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
