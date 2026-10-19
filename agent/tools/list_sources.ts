@@ -7,8 +7,8 @@ export default defineTool({
     "List every Source id with its status: Ingested (it has a summary Page) or Inbox (given to Clerk but not yet Ingested).",
   inputSchema: z.object({}),
   label: { start: () => "List Sources" },
-  async execute() {
-    const store = wiki();
+  async execute(_input, ctx) {
+    const store = wiki(ctx);
     const summaries = new Set(
       (await store.list(SUMMARIES)).map((path) =>
         path.slice(SUMMARIES.length).replace(/\.md$/, "")

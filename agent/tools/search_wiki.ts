@@ -15,12 +15,12 @@ export default defineTool({
       .describe("Keywords; Pages matching more of them rank higher"),
   }),
   label: { start: ({ query }) => `Search the Wiki for "${query}"` },
-  async execute({ query }) {
+  async execute({ query }, ctx) {
     const terms = [
       ...new Set(query.toLowerCase().split(/[^\p{L}\p{N}]+/u)),
     ].filter((term) => term.length > 1);
     if (terms.length === 0) throw new Error("Give at least one keyword.");
-    const store = wiki();
+    const store = wiki(ctx);
     const paths = (await store.list("")).filter(
       (path) => !path.startsWith(SOURCES)
     );

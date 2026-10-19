@@ -55,8 +55,8 @@ export default defineTool({
   label: {
     start: ({ changes }) => `Change ${changes.map((c) => c.page).join(", ")}`,
   },
-  async execute({ changes, source, reason }) {
-    const store = wiki();
+  async execute({ changes, source, reason }, ctx) {
+    const store = wiki(ctx);
     const applied = await applyChanges(store, changes);
     for (const [path, { etag, next }] of applied)
       await store.write(path, touch(next), { etag });

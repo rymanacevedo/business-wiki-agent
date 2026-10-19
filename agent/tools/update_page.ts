@@ -26,13 +26,13 @@ export default defineTool({
   }),
   approval: never(),
   label: { start: ({ path }) => `Update ${path}` },
-  async execute({ path, edits }) {
+  async execute({ path, edits }, ctx) {
     const clean = pagePath(path);
     if (clean === LOG)
       throw new Error("The Log is append-only: use append_log.");
     if (clean === SCHEMA)
       throw new Error("SCHEMA.md is maintained by the Owner, not by Ingest.");
-    const store = wiki();
+    const store = wiki(ctx);
     const page = await store.read(clean);
     if (!page)
       throw new Error(`No Page at ${clean}. Create it with create_page.`);

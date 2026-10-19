@@ -31,7 +31,7 @@ export default defineTool({
       throw new Error(
         `The Owner declined the change_fact that proposed ${clean}; it is not created. Do not retry the change.`
       );
-    const store = wiki();
+    const store = wiki(ctx);
     await refuseDuplicateRecord(store, clean, null, content);
     try {
       await store.write(

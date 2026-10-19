@@ -23,8 +23,8 @@ export default defineTool({
   label: {
     start: ({ type, subject }) => `Log ${type}${subject ? ` ${subject}` : ""}`,
   },
-  async execute({ type, subject, detail }) {
-    const store = wiki();
+  async execute({ type, subject, detail }, ctx) {
+    const store = wiki(ctx);
     const rule = SUBJECTS[type];
     if (rule && !rule.test(subject ?? ""))
       throw new Error(`${type} needs a subject matching ${rule}.`);

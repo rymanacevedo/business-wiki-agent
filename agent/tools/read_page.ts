@@ -9,13 +9,13 @@ export default defineTool({
     path: z.string().describe("Page path relative to the Wiki root, with .md"),
   }),
   label: { start: ({ path }) => `Read ${path}` },
-  async execute({ path }) {
+  async execute({ path }, ctx) {
     const clean = path.replace(/^\/?(wiki\/)?/, "");
     if (clean.startsWith(SOURCES))
       throw new Error(
         "Sources are not Pages; use read_source with the Source id."
       );
-    const page = await wiki().read(clean);
+    const page = await wiki(ctx).read(clean);
     if (!page)
       throw new Error(`No Page at ${clean}. Check the Index for the path.`);
     return page.body;
