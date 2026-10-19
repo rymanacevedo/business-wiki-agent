@@ -1,4 +1,4 @@
-import type { EveEvalContext, EveEvalTurn } from "eve/evals";
+import type { EveEvalContext, EveEvalSession, EveEvalTurn } from "eve/evals";
 import { EVAL_CASE_HEADER } from "../../packages/langsmith-tracing";
 
 /** The free Gateway tier allows about 5 agent requests a minute, team-wide. */
@@ -20,14 +20,18 @@ const failedOnRateLimit = (turn: EveEvalTurn) =>
  * wait 75 s and ask Clerk to continue; answer a session-limit prompt with
  * Continue. Every request carries the case id header so traces can be found.
  * Returns the last turn. Approval requests are left pending for the case.
+ * Pass `session` to send a follow-up turn on an existing conversation.
  */
 export async function drive(
   t: EveEvalContext<unknown>,
   caseId: string,
-  message: string
+  message: string,
+  session?: EveEvalSession
 ): Promise<EveEvalTurn> {
   const headers = { [EVAL_CASE_HEADER]: caseId };
-  let turn = await t.send(message, { headers });
+  let turn = session
+    ? await session.send(message, { headers })
+    : await t.send(message, { headers });
   for (let round = 0; round < 6 && !t.signal.aborted; round++) {
     const limit = turn.inputRequests.find((r) => r.kind === "session-limit");
     if (limit) {
