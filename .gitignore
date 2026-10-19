@@ -6,6 +6,7 @@ node_modules/
 
 # secrets and tool state (Eve scaffold ignores the same)
 .env*
+!.env.example
 .vercel/
 .eve/
 
