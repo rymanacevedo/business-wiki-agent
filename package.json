@@ -22,6 +22,7 @@
     "lint:fix": "oxlint --fix",
     "review:spec": "bun scripts/review-spec.ts",
     "wiki:seed": "bun scripts/wiki-seed.ts",
+    "wiki:build-fixture": "bun scripts/wiki-build-fixture.ts",
     "corpus:generate": "bun scripts/corpus-generate.ts"
   },
   "devDependencies": {
