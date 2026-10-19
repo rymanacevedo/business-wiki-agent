@@ -1,5 +1,10 @@
 import { PageEditError } from "./apply";
-import { splitPage, topLevelKeys } from "./frontmatter";
+import {
+  expenseStyleProblem,
+  parseFrontmatter,
+  splitPage,
+  topLevelKeys,
+} from "./frontmatter";
 import { pageSources } from "./fields";
 
 const REQUIRED = [
@@ -257,6 +262,14 @@ export function validatePage(path: string, page: string): void {
       path,
       `body text belongs below the closing ---, not in the frontmatter (found "${misplaced.trim()}")`
     );
+  const doc = parseFrontmatter(frontmatter);
+  if (!doc)
+    fail(
+      path,
+      "the frontmatter is not valid YAML (quote a value that contains a colon, close every [ ] and { })"
+    );
+  const style = expenseStyleProblem(doc!);
+  if (style) fail(path, style);
   const keys = topLevelKeys(frontmatter);
   for (const key of REQUIRED)
     if (!keys.has(key)) fail(path, `frontmatter has no ${key}`);

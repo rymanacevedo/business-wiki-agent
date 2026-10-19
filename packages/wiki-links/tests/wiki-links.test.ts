@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -123,6 +123,51 @@ test("a Citation's Source opens by id whatever its extension", async () => {
       ])
     )?.path,
     "sources/2026-10-03-receipt-paper-trail-office.txt"
+  );
+});
+
+const corpusSource = (name: string) =>
+  readFileSync(join(__dirname, "../../../corpus/sources", name), "utf8");
+
+test("a Source opens masked as Clerk saw it: no full SSN, account, or routing number", async () => {
+  const store = await seeded();
+  const w9 = corpusSource("2026-02-20-w9-northwind.md");
+  const statement = corpusSource("2026-09-30-bank-statement-tidewater.txt");
+  await writeFile(join(root, "demo/sources/2026-02-20-w9-northwind.md"), w9);
+  await writeFile(
+    join(root, "demo/sources/2026-09-30-bank-statement-tidewater.txt"),
+    statement
+  );
+
+  const ssn = /Social security number:\s*(\d{3}-\d{2}-(\d{4}))/.exec(w9)!;
+  const openedW9 = await openWikiPage(store, [
+    "sources",
+    "2026-02-20-w9-northwind",
+  ]);
+  assert.ok(!openedW9!.body.includes(ssn[1]), "the full SSN is shown");
+  assert.ok(openedW9!.body.includes(`***-**-${ssn[2]}`));
+
+  const account = /Account number:\s*(\d+)/.exec(statement)![1];
+  const routing = /Routing number:\s*(\d+)/.exec(statement)![1];
+  const openedStatement = await openWikiPage(store, [
+    "sources",
+    "2026-09-30-bank-statement-tidewater",
+  ]);
+  for (const full of [account, routing]) {
+    assert.ok(!openedStatement!.body.includes(full), "a full number is shown");
+    assert.ok(openedStatement!.body.includes(`****${full.slice(-4)}`));
+  }
+});
+
+test("a Page opens as written", async () => {
+  const store = await seeded();
+  await writeFile(
+    join(root, "demo/entities/bank.md"),
+    "Account ****6789 (src: x)\n"
+  );
+  assert.equal(
+    (await openWikiPage(store, ["entities", "bank.md"]))?.body,
+    "Account ****6789 (src: x)\n"
   );
 });
 
