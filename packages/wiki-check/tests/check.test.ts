@@ -18,7 +18,7 @@ const PROFILE = `${fm("title: Northwind Repair LLC\nkind: profile\nsources: [202
 const OBLIGATION = `${fm("title: Lease notice\nkind: obligation\nobligation: lease-notice\ndue: 2026-12-31\ncounterparty: harborview-properties\nrecurs: none\nsources: [2025-04-01-lease-harborview]")}
 # Lease notice
 
-- **Due**: 2026-12-31 (src: 2025-04-01-lease-harborview)
+- **Due**: 2026-12-31, 90 days before the term ends on 2027-03-31 (src: 2025-04-01-lease-harborview)
 - **Kind**: lease-notice, one-off
 - **Counterparty**: [Harborview Properties LLC](../entities/harborview-properties.md)
 - **Status**: active

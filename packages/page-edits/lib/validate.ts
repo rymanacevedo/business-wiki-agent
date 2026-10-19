@@ -1,5 +1,6 @@
 import { PageEditError } from "./apply";
 import { splitPage, topLevelKeys } from "./frontmatter";
+import { pageSources } from "./fields";
 
 const REQUIRED = [
   "title",
@@ -38,6 +39,29 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 /** A frontmatter field at the start of a body line: the YAML went in the wrong place. */
 const FIELD =
   /^(title|kind|sources|created|updated|status|flags|expense|payment|allocations|entity|obligation|due|counterparty|recurs|superseded_by|done_on|category):/;
+
+/** The Schema's closed list of expense categories. */
+const CATEGORIES = [
+  "supplies",
+  "equipment",
+  "rent",
+  "utilities",
+  "insurance",
+  "professional-services",
+  "vehicle",
+  "meals",
+  "software",
+  "other",
+  "personal",
+];
+
+function checkCategory(path: string, category: string | undefined): void {
+  if (category !== undefined && !CATEGORIES.includes(category))
+    fail(
+      path,
+      `category "${category}" is not in the closed list (${CATEGORIES.join(", ")})`
+    );
+}
 
 /** Sections of a Profile or Obligation Page that hold no Source facts. */
 const NON_FACT_SECTION = /^##\s+(History|Related|How this)/i;
@@ -138,6 +162,8 @@ function checkExpense(path: string, expense: string[]) {
     if (line.trim() && indentOf(line) <= child) break;
     for (const match of line.matchAll(/amount:\s*([\d.]+)/g))
       allocations.push(cents(match[1]));
+    for (const match of line.matchAll(/category:\s*([\w-]+)/g))
+      checkCategory(path, match[1]);
   }
   const sum = allocations.reduce((a, b) => a + b, 0);
   if (allocations.length === 0 || sum !== cents(amount!))
@@ -150,6 +176,70 @@ function checkExpense(path: string, expense: string[]) {
   );
   if (!status || !/status:\s*(paid|unpaid|unknown)\s*$/.test(status))
     fail(path, "expense.payment.status must be paid, unpaid, or unknown");
+}
+
+const ALSO_SEEN_IN = /^##\s+Also seen in\b/i;
+
+/**
+ * `## Also seen in` exists only to list Sources: one section per Page, never
+ * empty (a Record nothing else mentions has no such section).
+ */
+function alsoSeenInProblem(body: string[]): string | undefined {
+  const starts = body.flatMap((line, i) =>
+    ALSO_SEEN_IN.test(line) ? [i] : []
+  );
+  if (starts.length > 1)
+    return `"## Also seen in" appears ${starts.length} times; keep one section and add every line under it`;
+  if (starts.length === 0) return undefined;
+  const rest = body.slice(starts[0] + 1);
+  const end = rest.findIndex((line) => line.startsWith("## "));
+  const items = (end === -1 ? rest : rest.slice(0, end)).filter((line) =>
+    line.startsWith("- ")
+  );
+  if (items.length === 0)
+    return `"## Also seen in" lists no Source; add the section only with its first "- <source-id> ..." line`;
+  return undefined;
+}
+
+/** "90 days before ... 2027-03-31" or "2027-03-31 minus 90 days". */
+const DAYS_BEFORE =
+  /(\d+)\s+(?:calendar\s+)?days?\s+before\b[^\n]*?(\d{4}-\d{2}-\d{2})/i;
+const DATE_MINUS =
+  /(\d{4}-\d{2}-\d{2})\s+minus\s+(\d+)\s+(?:calendar\s+)?days?/i;
+
+function daysBefore(date: string, days: number): string {
+  const day = new Date(`${date}T00:00:00Z`);
+  day.setUTCDate(day.getUTCDate() - days);
+  return day.toISOString().slice(0, 10);
+}
+
+/**
+ * A lease notice is due a stated number of calendar days before the term
+ * ends; the Page says how it was computed, and its due date is that day.
+ */
+function checkCountedDue(path: string, due: string, body: string[]): void {
+  // Citations carry Source dates, never the date counted from.
+  const lines = body.map((line) => line.replace(/\(src: [^)]*\)/g, ""));
+  let rule: { days: number; from: string } | undefined;
+  for (const line of lines) {
+    const minus = DATE_MINUS.exec(line);
+    if (minus) rule ??= { days: Number(minus[2]), from: minus[1] };
+  }
+  for (const line of lines) {
+    const before = DAYS_BEFORE.exec(line);
+    if (before) rule ??= { days: Number(before[1]), from: before[2] };
+  }
+  if (!rule)
+    fail(
+      path,
+      `a lease-notice Obligation says how its due date was computed, e.g. "90 days before the term ends on <YYYY-MM-DD>"`
+    );
+  const expected = daysBefore(rule!.from, rule!.days);
+  if (expected !== due)
+    fail(
+      path,
+      `${rule!.days} calendar days before ${rule!.from} is ${expected}, not ${due}: set due (and the file name and title) to ${expected}`
+    );
 }
 
 /** Throws PageEditError when `page` breaks the Schema's frontmatter rules for `path`. */
@@ -180,6 +270,7 @@ export function validatePage(path: string, page: string): void {
       path,
       `frontmatter fields belong in the frontmatter, not the body (found "${stray.trim()}")`
     );
+  if (kind === "ledger") checkCategory(path, keys.get("category"));
   if (kind === "obligation") {
     if (!OBLIGATION_KINDS.includes(keys.get("obligation") ?? ""))
       fail(
@@ -188,6 +279,20 @@ export function validatePage(path: string, page: string): void {
       );
     if (!DATE.test(keys.get("due") ?? ""))
       fail(path, "an Obligation needs due: YYYY-MM-DD");
+    // A Source's own date is in its id. What happened on or before the day
+    // the document was written (a filing made, a registration issued) is a
+    // fact for the Profile, not an Obligation.
+    const stated = pageSources(page)
+      .map((id) => /^\d{4}-\d{2}-\d{2}/.exec(id)?.[0])
+      .filter((date): date is string => Boolean(date))
+      .sort()[0];
+    if (stated && keys.get("due")! <= stated)
+      fail(
+        path,
+        `an Obligation is due after the document that states it (${stated}), not on ${keys.get("due")}: a past event is a Profile or summary fact, not an Obligation`
+      );
+    if (keys.get("obligation") === "lease-notice")
+      checkCountedDue(path, keys.get("due")!, body);
   }
   if (kind === "profile" || kind === "obligation") {
     const uncited = uncitedFacts(body)[0];
@@ -206,6 +311,8 @@ export function validatePage(path: string, page: string): void {
           `relative urgency is computed when asked, never stored: drop "${pattern.exec(hit)![0].toLowerCase()}" (found "${hit.trim()}")`
         );
     }
+  const seen = alsoSeenInProblem(body);
+  if (seen) fail(path, seen);
   if (kind === "index") {
     const problem = indexProblem(body);
     if (problem) fail(path, problem);
