@@ -4,6 +4,9 @@ import { CLASSES, type CaseReport, type SliceReport } from "./types";
 
 export type Run = { label: string; slices: SliceReport[] };
 
+/** A row whose expectation changed between the runs: a dataset fix, not an agent change. */
+export type DatasetFix = { id: string; commit: string; change: string };
+
 export const START = "<!-- eval-diff:start -->";
 export const END = "<!-- eval-diff:end -->";
 
@@ -74,28 +77,40 @@ const ids = (list: CaseReport[]) => new Set(list.map((c) => c.id));
  */
 export function diffRuns(
   before: Run,
-  after: Run
+  after: Run,
+  datasetFixes: DatasetFix[] = []
 ): { markdown: string; readmeBlock: string } {
+  const fixById = new Map(datasetFixes.map((f) => [f.id, f]));
+  const unfixed = (run: Run): Run => ({
+    ...run,
+    slices: run.slices.map((s) => ({
+      ...s,
+      cases: s.cases.filter((c) => !fixById.has(c.id)),
+    })),
+  });
   const slices = [
     ...new Set([...before.slices, ...after.slices].map((s) => s.slice)),
   ].sort();
   const all = (run: Run) => cases(run);
-  const caseCount = (slice?: string) =>
-    new Set([...ids(cases(before, slice)), ...ids(cases(after, slice))]).size;
+  const beforeById = new Map(all(before).map((c) => [c.id, c]));
+  const afterById = new Map(all(after).map((c) => [c.id, c]));
 
-  const sliceRow = (name: string, slice?: string) => {
-    const b = cases(before, slice);
-    const a = cases(after, slice);
+  const sliceRow = (name: string, slice?: string, runs = [before, after]) => {
+    const b = cases(runs[0]!, slice);
+    const a = cases(runs[1]!, slice);
     return [
       name,
-      String(caseCount(slice)),
+      String(new Set([...ids(b), ...ids(a)]).size),
       passRate(b),
       passRate(a),
       `${toolCalls(b)} → ${toolCalls(a)}`,
       `${cost(b)} → ${cost(a)}`,
     ];
   };
-  const readmeBlock = table(
+  const fixedHere = [...fixById.keys()].filter(
+    (id) => beforeById.has(id) || afterById.has(id)
+  );
+  const sliceTable = table(
     [
       "Slice",
       "Cases",
@@ -104,8 +119,22 @@ export function diffRuns(
       "Mean tool calls",
       "Cost",
     ],
-    [...slices.map((s) => sliceRow(s, s)), sliceRow("**total**")]
+    [
+      ...slices.map((s) => sliceRow(s, s)),
+      sliceRow("**total**"),
+      ...(fixedHere.length
+        ? [
+            sliceRow("**total, without dataset-fix rows**", undefined, [
+              unfixed(before),
+              unfixed(after),
+            ]),
+          ]
+        : []),
+    ]
   );
+  const readmeBlock = fixedHere.length
+    ? `${sliceTable}\n\n${fixedHere.length} ${fixedHere.length === 1 ? "row" : "rows"} changed what ${fixedHere.length === 1 ? "it expects" : "they expect"} between the runs (dataset fixes, not agent changes): ${fixedHere.sort().join(", ")}. The last total leaves them out.`
+    : sliceTable;
 
   const classes = [...CLASSES, "unclassified" as const].filter((k) =>
     [...all(before), ...all(after)].some((c) => c.class === k)
@@ -141,16 +170,36 @@ export function diffRuns(
     }
   }
 
-  const beforeById = new Map(all(before).map((c) => [c.id, c]));
-  const afterById = new Map(all(after).map((c) => [c.id, c]));
-  const gateRows = [...new Set([...beforeById.keys(), ...afterById.keys()])]
-    .sort()
+  const allIds = [
+    ...new Set([...beforeById.keys(), ...afterById.keys()]),
+  ].sort();
+  const marked = (id: string) => (fixById.has(id) ? `${id} (dataset fix)` : id);
+  const gateRows = allIds
     .map((id) => [
-      id,
+      marked(id),
       failedGates(beforeById.get(id)),
       failedGates(afterById.get(id)),
     ])
     .filter(([, b, a]) => b !== "none" || a !== "none");
+  const verdict = (c: CaseReport | undefined) => c?.verdict ?? "(not run)";
+  const verdictRows = allIds
+    .filter((id) => verdict(beforeById.get(id)) !== verdict(afterById.get(id)))
+    .map((id) => [
+      id,
+      verdict(beforeById.get(id)),
+      verdict(afterById.get(id)),
+      fixById.get(id)?.commit ?? "",
+    ]);
+  const fixRows = fixedHere.map((id) => {
+    const f = fixById.get(id)!;
+    return [
+      id,
+      f.commit,
+      f.change,
+      verdict(beforeById.get(id)),
+      verdict(afterById.get(id)),
+    ];
+  });
 
   const markdown = [
     `# Before and after: \`${before.label}\` → \`${after.label}\``,
@@ -170,6 +219,25 @@ export function diffRuns(
     scoreRows.length
       ? table(["Slice", "Score", "Before", "After"], scoreRows)
       : "No labelled scores.",
+    "",
+    ...(fixRows.length
+      ? [
+          "## Rows whose expectation changed (dataset fixes)",
+          "",
+          "These rows were corrected between the runs: they expect something different in the after run, so a verdict change here says nothing about Clerk.",
+          "",
+          table(
+            ["Case", "Commit", "Change", "Verdict before", "Verdict after"],
+            fixRows
+          ),
+          "",
+        ]
+      : []),
+    "## Verdict changes per case",
+    "",
+    verdictRows.length
+      ? table(["Case", "Before", "After", "Dataset fix"], verdictRows)
+      : "No verdict changed.",
     "",
     "## Failed gates per case",
     "",

@@ -8,6 +8,7 @@ import {
   diffRuns,
   readRun,
   rewriteReadmeBlock,
+  type DatasetFix,
 } from "../packages/eval-report/diff";
 
 async function exists(path: string): Promise<boolean> {
@@ -38,9 +39,15 @@ async function main(): Promise<number> {
       console.error(`No run docs/evals/runs/${label}/`);
       return 1;
     }
+  // Rows corrected between the runs (docs/evals/triage.md, "Applied in #28").
+  const fixesFile = join(root, "docs/evals/dataset-fixes.json");
+  const datasetFixes = (await exists(fixesFile))
+    ? (JSON.parse(await readFile(fixesFile, "utf8")) as DatasetFix[])
+    : [];
   const { markdown, readmeBlock } = diffRuns(
     await readRun(runs, beforeLabel),
-    await readRun(runs, afterLabel)
+    await readRun(runs, afterLabel),
+    datasetFixes
   );
   const page = join(root, "docs/evals/before-after.md");
   await mkdir(dirname(page), { recursive: true });
