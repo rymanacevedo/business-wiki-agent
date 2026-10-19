@@ -199,3 +199,68 @@ test("the INGEST line waits until a closed Obligation's Index line shows its new
   );
   assert.match(await ingest(INVOICE), /^Logged: /);
 });
+
+test("the INGEST line waits for a FLAG line naming each flagged Page the Source cites", async () => {
+  await write(
+    RECORD,
+    record.replace("flags: []", "flags: [suspicious-content]")
+  );
+  await write("index.md", indexWith(fullIndex));
+  const refused = await ingest(INVOICE);
+  assert.match(refused, /^refused: /);
+  assert.match(refused, /FLAG \[suspicious-content\]/);
+
+  const log = await store.read("log.md");
+  await store.write(
+    "log.md",
+    `${log!.body}- 2026-10-17 FLAG [suspicious-content]: ${RECORD} quotes an instruction.\n`,
+    { etag: log!.etag }
+  );
+  assert.match(await ingest(INVOICE), /^Logged: /);
+});
+
+test("an unpaid invoice's INGEST line waits for its payment Obligation", async () => {
+  rmSync(join(root, "t", OBLIGATION));
+  await write("index.md", indexWith(fullIndex.split("\n").slice(1).join("\n")));
+  const refused = await ingest(INVOICE);
+  assert.match(refused, /^refused: /);
+  assert.match(refused, /payment Obligation/);
+  assert.match(refused, /obligations\/2026-10-12-pay-invoice-/);
+});
+
+test("a Source that states an expiry waits for an Obligation due that day", async () => {
+  const CERT = "2025-11-15-insurance-cert-meridian";
+  const SUMMARY = `summaries/${CERT}.md`;
+  const RENEWAL = "obligations/2026-11-15-insurance-renewal-meridian.md";
+  writeFileSync(join(root, "t", "sources", `${CERT}.txt`), "CERTIFICATE\n");
+  await write(
+    SUMMARY,
+    page(
+      "summary",
+      CERT,
+      "",
+      `\n- **Policy expiration**: 2026-11-15 (src: ${CERT})\n\nNotice before the expiration date thereof (src: ${CERT}).\n`
+    )
+  );
+  const certLine = `- 2025-11-15 certificate: [Insurance certificate](${SUMMARY}): policy GL-2025-77410.`;
+  await write("index.md", indexWith(`${fullIndex}\n${certLine}`));
+  const refused = await ingest(CERT);
+  assert.match(refused, /^refused: /);
+  assert.match(refused, /expires 2026-11-15/);
+
+  await write(
+    RENEWAL,
+    page(
+      "obligation",
+      CERT,
+      "obligation: insurance-renewal\ndue: 2026-11-15\ncounterparty: meridian\nrecurs: none\n"
+    )
+  );
+  await write(
+    "index.md",
+    indexWith(
+      `${fullIndex}\n${certLine}\n- 2026-11-15 insurance-renewal (active): [Renew policy](${RENEWAL})`
+    )
+  );
+  assert.match(await ingest(CERT), /^Logged: /);
+});
