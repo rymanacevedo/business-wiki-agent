@@ -13,7 +13,9 @@ import { WikiConflictError } from "./errors";
 
 /** The local store's root directory: `WIKI_STORE_DIR`, else `./.wiki-store`. */
 export function localRoot(env: Record<string, string | undefined>): string {
-  return resolve(env.WIKI_STORE_DIR ?? ".wiki-store");
+  // The ignore comment keeps Next.js from tracing the whole repo into the
+  // wiki browser function; on Vercel the store is Blob, never this path.
+  return resolve(/*turbopackIgnore: true*/ env.WIKI_STORE_DIR ?? ".wiki-store");
 }
 
 /**

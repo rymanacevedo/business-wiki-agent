@@ -13,7 +13,7 @@
     "start": "eve start",
     "eval": "eve eval",
     "deploy": "eve deploy",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p apps/web/tsconfig.json",
     "test": "bun test",
     "lint:boundaries": "depcruise packages",
     "check": "bun run lint && bun run lint:boundaries && bun run typecheck && bun run test",
