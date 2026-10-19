@@ -4,3 +4,6 @@ corpus/
 # Written by `bun run wiki:build-fixture`: Clerk's own output, kept byte for byte.
 fixtures/full/
 fixtures/base/
+
+# Written by the eval reporter and scripts/eval-calibration.ts: committed as produced.
+docs/evals/runs/

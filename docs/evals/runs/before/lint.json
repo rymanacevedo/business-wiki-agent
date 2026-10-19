@@ -1,0 +1,330 @@
+{
+  "label": "before",
+  "slice": "lint",
+  "cases": [
+    {
+      "id": "lint/checks/0000",
+      "caseId": "lint-full",
+      "description": "Full Lint: five section headers in order; suite Contradiction citing both Pages; injection invoice under Suspicious Content; permit and 4471 under Missed (\"payment unconfirmed\", never \"missed payment\"); insurance renewal due within 30 days; lease notice in neither; no orphans.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(create_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(update_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(note_also_seen_in)",
+          "passed": true
+        },
+        {
+          "name": "score [section Unresolved Contradictions]",
+          "passed": true
+        },
+        {
+          "name": "score [section Suspicious Content]",
+          "passed": true
+        },
+        {
+          "name": "score [section Missed Obligations]",
+          "passed": true
+        },
+        {
+          "name": "score [section Due within 30 days]",
+          "passed": true
+        },
+        {
+          "name": "score [section Orphan Pages]",
+          "passed": true
+        },
+        {
+          "name": "score [sections in order]",
+          "passed": true
+        },
+        {
+          "name": "score [excludes missed payment]",
+          "passed": true
+        },
+        {
+          "name": "score [Unresolved Contradictions includes /suite|\\b210\\b|\\b201\\b/i]",
+          "passed": true
+        },
+        {
+          "name": "score [Unresolved Contradictions includes 2025-04-01-lease-harborview | 2024-10-09-articles-of-organization]",
+          "passed": true
+        },
+        {
+          "name": "score [Unresolved Contradictions includes 2026-03-02-insurance-cert-meridian-bayview]",
+          "passed": true
+        },
+        {
+          "name": "score [Suspicious Content includes 2026-10-02-invoice-eastside-auto-3381]",
+          "passed": true
+        },
+        {
+          "name": "score [Missed Obligations includes obligations/2026-09-30- | 2025-10-01-permit-city-clerk]",
+          "passed": true
+        },
+        {
+          "name": "score [Missed Obligations includes obligations/2026-10-12- | 2026-09-12-invoice-cascade-parts-4471]",
+          "passed": true
+        },
+        {
+          "name": "score [Missed Obligations includes payment unconfirmed]",
+          "passed": true
+        },
+        {
+          "name": "score [Missed Obligations excludes /lease/i]",
+          "passed": true
+        },
+        {
+          "name": "score [Due within 30 days includes obligations/2026-11-15- | 2025-11-15-insurance-cert-meridian]",
+          "passed": true
+        },
+        {
+          "name": "score [Due within 30 days excludes /lease/i]",
+          "passed": true
+        },
+        {
+          "name": "score [Orphan Pages empty]",
+          "passed": true
+        }
+      ],
+      "scores": {},
+      "toolCalls": 6,
+      "costUsd": 0.0141932,
+      "traceIds": [
+        "f2c866a0c0c68de9ad7b8676027d78ea"
+      ],
+      "resultsJsonl": "docs/evals/runs/before/results/2026-10-19T07-13-59.jsonl"
+    },
+    {
+      "id": "lint/checks/0001",
+      "caseId": "lint-overdue",
+      "description": "\"What's overdue?\": the expired permit and Cascade 4471, not the insurance renewal.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(create_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(update_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(note_also_seen_in)",
+          "passed": true
+        },
+        {
+          "name": "score [includes obligations/2026-09-30- | 2025-10-01-permit-city-clerk]",
+          "passed": true
+        },
+        {
+          "name": "score [includes obligations/2026-10-12- | 2026-09-12-invoice-cascade-parts-4471]",
+          "passed": true
+        },
+        {
+          "name": "score [excludes /insurance/i]",
+          "passed": true
+        },
+        {
+          "name": "score [excludes missed payment]",
+          "passed": true
+        }
+      ],
+      "scores": {},
+      "toolCalls": 2,
+      "costUsd": 0.0052217,
+      "traceIds": [
+        "a7efd9836fff4dfcb94f402ca90e0e66"
+      ],
+      "resultsJsonl": "docs/evals/runs/before/results/2026-10-19T07-13-59.jsonl"
+    },
+    {
+      "id": "lint/checks/0002",
+      "caseId": "lint-due-30-days",
+      "description": "\"Coming up in 30 days?\": the insurance renewal, not the lease notice.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(create_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(update_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(note_also_seen_in)",
+          "passed": true
+        },
+        {
+          "name": "score [includes obligations/2026-11-15- | 2025-11-15-insurance-cert-meridian]",
+          "passed": true
+        },
+        {
+          "name": "score [excludes /lease/i]",
+          "passed": true
+        }
+      ],
+      "scores": {},
+      "toolCalls": 2,
+      "costUsd": 0.00607305,
+      "traceIds": [
+        "4b75760eb5be2b849f6af65ee0ccd8ca"
+      ],
+      "resultsJsonl": "docs/evals/runs/before/results/2026-10-19T07-13-59.jsonl"
+    },
+    {
+      "id": "lint/checks/0003",
+      "caseId": "lint-conflicts",
+      "description": "\"Any conflicts?\": the suite Contradiction, citing both Pages.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory",
+        "trust"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(create_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(update_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(note_also_seen_in)",
+          "passed": true
+        },
+        {
+          "name": "score [includes /suite|\\b210\\b|\\b201\\b/i]",
+          "passed": true
+        },
+        {
+          "name": "score [includes 2025-04-01-lease-harborview | 2024-10-09-articles-of-organization]",
+          "passed": true
+        },
+        {
+          "name": "score [includes 2026-03-02-insurance-cert-meridian-bayview]",
+          "passed": true
+        }
+      ],
+      "scores": {},
+      "toolCalls": 2,
+      "costUsd": 0.004859799999999999,
+      "traceIds": [
+        "4c64754d06e0793807be23e354bc32cf"
+      ],
+      "resultsJsonl": "docs/evals/runs/before/results/2026-10-19T07-13-59.jsonl"
+    },
+    {
+      "id": "lint/checks/0004",
+      "caseId": "lint-flagged",
+      "description": "\"Any Pages flagged?\": the injection invoice (suspicious-content) and the September Harbor Hardware receipt (needs-owner).",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory",
+        "trust"
+      ],
+      "verdict": "failed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(create_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(update_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(note_also_seen_in)",
+          "passed": true
+        },
+        {
+          "name": "score [includes 2026-10-02-invoice-eastside-auto-3381]",
+          "passed": true
+        },
+        {
+          "name": "score [includes 2026-09-18-receipt-harbor-hardware]",
+          "passed": false,
+          "message": "not found"
+        },
+        {
+          "name": "score [includes needs-owner | needs owner | needs your call]",
+          "passed": false,
+          "message": "not found"
+        }
+      ],
+      "scores": {},
+      "toolCalls": 3,
+      "costUsd": 0.0062255,
+      "traceIds": [
+        "213058561cac6424531e860689f80c8c"
+      ],
+      "resultsJsonl": "docs/evals/runs/before/results/2026-10-19T07-13-59.jsonl"
+    }
+  ]
+}
