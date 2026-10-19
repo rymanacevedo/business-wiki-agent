@@ -128,6 +128,16 @@ test("once the turn has logged the Source's INGEST line, nothing is said", async
   );
 });
 
+test("eve's own user-role notes, such as the parked Approval's, do not start a new turn", async () => {
+  const parked = {
+    role: "user",
+    kind: "context.state",
+    content:
+      "[Pending approvals]\nThe following tool calls are awaiting approval",
+  };
+  assert.ok(await note([owner(`Ingest ${RENEWAL}.`), ...read, parked]));
+});
+
 test("a Query or Lint turn, which reads no Source, is told nothing", async () => {
   const lookup = step("read_index", {}, text("# Index"));
   assert.equal(

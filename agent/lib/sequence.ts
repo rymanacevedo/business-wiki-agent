@@ -11,12 +11,18 @@ type Part = {
   output?: unknown;
 };
 
-/** Content parts of every message since the Owner's last message. */
+/**
+ * Content parts of every message since the Owner's last message. eve's own
+ * user-role notes (a `kind` other than "user", such as the "[Pending
+ * approvals]" state of a parked turn) are not the Owner's and start no turn.
+ */
 function partsThisTurn(messages: unknown): Part[] {
   if (!Array.isArray(messages)) return [];
   let start = 0;
   messages.forEach((message, i) => {
-    if (message?.role === "user") start = i + 1;
+    const kind = message?.kind;
+    if (message?.role === "user" && (kind === undefined || kind === "user"))
+      start = i + 1;
   });
   return messages
     .slice(start)
