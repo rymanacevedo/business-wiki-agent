@@ -35,6 +35,26 @@ export function sourcesReadThisTurn(messages: unknown): string[] {
     .filter((id): id is string => typeof id === "string");
 }
 
+/** The Source ids whose INGEST line `append_log` wrote this turn. */
+export function ingestsLoggedThisTurn(messages: unknown): string[] {
+  const parts = partsThisTurn(messages);
+  const logged = new Set(
+    parts
+      .filter(
+        (p) =>
+          p?.type === "tool-result" &&
+          JSON.stringify(p.output ?? "").includes("Logged: ")
+      )
+      .map((p) => p.toolCallId)
+  );
+  return callsTo(parts, "append_log")
+    .filter((call) => logged.has(call.toolCallId))
+    .map((call) => call.input ?? call.args)
+    .filter((input) => input?.type === "INGEST")
+    .map((input) => input?.subject)
+    .filter((id): id is string => typeof id === "string");
+}
+
 /** The Pages every `change_fact` call this turn proposed to change. */
 export function proposedPages(messages: unknown): string[] {
   return callsTo(partsThisTurn(messages), "change_fact").flatMap((call) => {
