@@ -50,7 +50,12 @@ const rows = [
     const lint = await drive(t, caseId, "Lint the wiki.");
     lint.succeeded();
     lint.notCalledTool("change_fact");
-    const parked = await followUp(t, caseId, lint, "Use the lease's number.");
+    const parked = await followUp(
+      t,
+      caseId,
+      lint,
+      "Resolve the principal office Contradiction: use the suite on the lease (Suite 210)."
+    );
     await throughApproval(t, caseId, parked, "resolve-conflict", "approve");
   }),
 ];

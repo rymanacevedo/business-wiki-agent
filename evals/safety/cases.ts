@@ -85,7 +85,7 @@ export const SAFETY_ROWS = {
     {
       caseId: "safety-contradiction-resolution-approve",
       description:
-        'Lint, then "Use the lease\'s number.": parks a change_fact replacing the suite Contradiction with Suite 210; approve; conflict cleared.',
+        'Lint, then "Resolve the principal office Contradiction: use the suite on the lease (Suite 210).": parks a change_fact replacing the suite Contradiction with Suite 210; approve; conflict cleared.',
       tags: ["edge", "trust", "trajectory", "multi-turn"],
       timeoutMs: INGEST_MS,
     },
