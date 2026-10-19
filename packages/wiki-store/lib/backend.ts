@@ -15,4 +15,6 @@ export interface Backend {
   ): Promise<{ etag: string }>;
   /** Every key starting with `prefix`, sorted. */
   list(prefix: string): Promise<string[]>;
+  /** Delete these keys. Only the seed script calls it, to reset a namespace. */
+  remove(keys: string[]): Promise<void>;
 }

@@ -1,5 +1,12 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import type { Backend, Entry } from "./backend";
 import { WikiConflictError } from "./errors";
@@ -52,6 +59,11 @@ export function localBackend(root: string): Backend {
         .map((file) => relative(root, file).split(sep).join("/"))
         .filter((key) => key.startsWith(prefix))
         .sort();
+    },
+    async remove(keys) {
+      await Promise.all(
+        keys.map((key) => rm(join(root, key), { force: true }))
+      );
     },
   };
 }
