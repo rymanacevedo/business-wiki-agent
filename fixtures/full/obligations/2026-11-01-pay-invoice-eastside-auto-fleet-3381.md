@@ -1,5 +1,5 @@
 ---
-title: Pay Eastside Auto & Fleet invoice 3381 due 2026-11-01
+title: Pay invoice 2026-11-01 (Eastside Auto & Fleet #3381)
 kind: obligation
 sources: [2026-10-02-invoice-eastside-auto-3381]
 created: 2026-10-17
@@ -13,4 +13,3 @@ recurs: none
 ---
 
 - **Record**: [invoice](../summaries/2026-10-02-invoice-eastside-auto-3381.md) (src: 2026-10-02-invoice-eastside-auto-3381)
-- **Status**: active

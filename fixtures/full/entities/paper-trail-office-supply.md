@@ -9,7 +9,6 @@ flags: []
 entity: vendor
 ---
 
-Paper Trail Office Supply — vendor cited by the 2026-08-14 receipt (src: 2026-08-14-receipt-paper-trail-office).
+Paper Trail Office Supply as named on a receipt. (src: 2026-08-14-receipt-paper-trail-office)
 
-### Records
-- [Paper Trail Office Supply receipt 2026-08-14](../summaries/2026-08-14-receipt-paper-trail-office.md) (src: 2026-08-14-receipt-paper-trail-office)
+- **Record**: [receipt](../summaries/2026-08-14-receipt-paper-trail-office.md) $41.02 (src: 2026-08-14-receipt-paper-trail-office)

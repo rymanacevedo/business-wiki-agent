@@ -9,9 +9,13 @@ flags: []
 entity: bank
 ---
 
-Tidewater Community Bank, 200 Harbor Ave, Portside (src: 2026-08-31-bank-statement-tidewater)
+TIDEWATER COMMUNITY BANK (src: 2026-08-31-bank-statement-tidewater)
 
-Accounts seen in the Sources:
+- **Address**: 200 Harbor Ave, Portside (src: 2026-08-31-bank-statement-tidewater)
+- **Accounts**:
+  - Business checking ****6615 (src: 2026-08-31-bank-statement-tidewater)
+  - Business checking ****6615 (src: 2026-09-30-bank-statement-tidewater)
 
-- Business checking account ****6615 (src: 2026-08-31-bank-statement-tidewater)
-- Business checking account ****6615 (src: 2026-09-30-bank-statement-tidewater)
+## Records
+
+None.

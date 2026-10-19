@@ -1,5 +1,5 @@
 ---
-title: Supplies ledger
+title: supplies ledger
 kind: ledger
 sources: []
 created: 2026-10-17
@@ -9,8 +9,7 @@ flags: []
 category: supplies
 ---
 
-Ledger of supplies expense Records.
+### Ledger rows
 
-- 2026-09-09 [Valley Electric Supply receipt 2026-09-09](../summaries/2026-09-09-receipt-valley-electric.md): 68.80
-
-- 2026-09-12 [Cascade Appliance Parts invoice 2026-09-12](../summaries/2026-09-12-invoice-cascade-parts-4471.md): 212.48
+- 2026-09-09 Valley Electric Supply: [Valley Electric Supply receipt 2026-09-09](../summaries/2026-09-09-receipt-valley-electric.md) — 68.80 (src: 2026-09-09-receipt-valley-electric)
+- 2026-09-12 Cascade Appliance Parts: [Cascade Appliance Parts invoice 2026-09-12](../summaries/2026-09-12-invoice-cascade-parts-4471.md) — 212.48 (src: 2026-09-12-invoice-cascade-parts-4471)

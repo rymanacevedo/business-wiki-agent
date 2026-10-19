@@ -9,6 +9,6 @@ flags: []
 category: utilities
 ---
 
-Ledger of utility expenses.
+## Ledger
 
-- 2026-09-15: [Portside Power & Light receipt 2026-09-15](../summaries/2026-09-15-receipt-portside-power.md): 118.36
+- 2026-09-15 | PORTSIDE POWER & LIGHT | 118.36 | [Record](../summaries/2026-09-15-receipt-portside-power.md) (src: 2026-09-15-receipt-portside-power)

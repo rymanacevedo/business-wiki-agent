@@ -11,7 +11,7 @@ expense:
   date: 2026-09-15
   amount: 118.36
   currency: USD
-  document: "TRN 150940"
+  document: null
   allocations:
     - { category: utilities, amount: 118.36 }
   payment:
@@ -20,19 +20,12 @@ expense:
     evidence: [2026-09-15-receipt-portside-power]
 ---
 
-Portside Power & Light receipt dated 2026-09-15 showing an electric service payment of $118.36 (src: 2026-09-15-receipt-portside-power).
-
-Document shows: "ELEC SVC PMT ACCT END 1402" and a transaction code "REG 2  TRN 150940" (src: 2026-09-15-receipt-portside-power).
-
-Payment instrument: DEBIT ************4417 for $118.36 (src: 2026-09-15-receipt-portside-power).
-
-Subtotal and Total both $118.36 (src: 2026-09-15-receipt-portside-power).
+- **Vendor**: PORTSIDE POWER & LIGHT (src: 2026-09-15-receipt-portside-power)
+- **Date**: 2026-09-15 (src: 2026-09-15-receipt-portside-power)
+- **Amount**: $118.36 (src: 2026-09-15-receipt-portside-power)
+- **Description**: ELEC SVC PMT ACCT END 1402 (src: 2026-09-15-receipt-portside-power)
+- **Payment method**: DEBIT ************4417 (src: 2026-09-15-receipt-portside-power)
 
 ## Also seen in
 
-None.
-
-
-## Also seen in
-
-- 2026-09-30-bank-statement-tidewater (corroborates payment) (src: 2026-09-30-bank-statement-tidewater)
+- 2026-09-30-bank-statement-tidewater: corroborates payment (src: 2026-09-30-bank-statement-tidewater)

@@ -9,12 +9,10 @@ flags: []
 entity: vendor
 ---
 
-# Harbor Hardware & Supply
+HARBOR HARDWARE & SUPPLY (src: 2026-08-03-receipt-harbor-hardware)
 
-- **Name**: Harbor Hardware & Supply (src: 2026-08-03-receipt-harbor-hardware)
-- **Address**: 1602 Harbor Ave, Portside (src: 2026-08-03-receipt-harbor-hardware)
+- **Address**: 1602 HARBOR AVE PORTSIDE (src: 2026-08-03-receipt-harbor-hardware)
 
-## Records
-
-- [Harbor Hardware receipt 2026-08-03](../summaries/2026-08-03-receipt-harbor-hardware.md) (src: 2026-08-03-receipt-harbor-hardware)
-- [Harbor Hardware receipt 2026-09-18](../summaries/2026-09-18-receipt-harbor-hardware.md) (src: 2026-09-18-receipt-harbor-hardware)
+- **Records**:
+  - [Harbor Hardware & Supply receipt 2026-08-03](../summaries/2026-08-03-receipt-harbor-hardware.md) (src: 2026-08-03-receipt-harbor-hardware)
+  - [Harbor Hardware & Supply receipt 2026-09-18](../summaries/2026-09-18-receipt-harbor-hardware.md) (src: 2026-09-18-receipt-harbor-hardware)

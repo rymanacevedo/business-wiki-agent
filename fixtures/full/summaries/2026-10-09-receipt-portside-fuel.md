@@ -20,11 +20,10 @@ expense:
     evidence: [2026-10-09-receipt-portside-fuel]
 ---
 
-Portside Fuel Stop receipt: 17.204 GAL @ 3.919 = 67.42 USD (src: 2026-10-09-receipt-portside-fuel).
+PORTSIDE FUEL STOP (src: 2026-10-09-receipt-portside-fuel)
 
-Payment by DEBIT ************4417 (src: 2026-10-09-receipt-portside-fuel).
-
-
-## Also seen in
-
-None.
+- **Date**: 2026-10-09 (src: 2026-10-09-receipt-portside-fuel)
+- **Quantity and price**: 17.204 GAL @ 3.919 (src: 2026-10-09-receipt-portside-fuel)
+- **Total**: $67.42 (src: 2026-10-09-receipt-portside-fuel)
+- **Payment method**: DEBIT ************4417 (src: 2026-10-09-receipt-portside-fuel)
+- **Auth**: AUTH 3QFE APPROVED (src: 2026-10-09-receipt-portside-fuel)

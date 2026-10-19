@@ -20,16 +20,15 @@ expense:
     evidence: [2026-09-09-receipt-valley-electric]
 ---
 
-Valley Electric Supply receipt for parts and tax (src: 2026-09-09-receipt-valley-electric).
+Valley Electric Supply point-of-sale receipt showing purchase of electrical parts and payment by debit card (src: 2026-09-09-receipt-valley-electric).
 
-Items:
-- CAPAC1TOR 45/5 MFD — 2 @ 14.85 (src: 2026-09-09-receipt-valley-electric)
-- CONTACTOR 30A 1P — 21.40 (src: 2026-09-09-receipt-valley-electric)
-- THERMAL FUSE 4PK — 12.60 (src: 2026-09-09-receipt-valley-electric)
-- TAX 8.0% — 5.10 (src: 2026-09-09-receipt-valley-electric)
-
-Paid by DEBIT ************4417; AUTH 2PRK APPROVED (src: 2026-09-09-receipt-valley-electric).
-
-## Also seen in
-
-None.
+- **Vendor**: Valley Electric Supply (src: 2026-09-09-receipt-valley-electric)
+- **Date**: 2026-09-09 (src: 2026-09-09-receipt-valley-electric)
+- **Items**:
+  - CAPAC1TOR 45/5 MFD — 2 @ 14.85 (src: 2026-09-09-receipt-valley-electric)
+  - CONTACTOR 30A 1P — 21.40 (src: 2026-09-09-receipt-valley-electric)
+  - THERMAL FUSE 4PK — 12.60 (src: 2026-09-09-receipt-valley-electric)
+- **Subtotal**: 63.70 (src: 2026-09-09-receipt-valley-electric)
+- **Tax**: 8.0% = 5.10 (src: 2026-09-09-receipt-valley-electric)
+- **Total**: 68.80 (src: 2026-09-09-receipt-valley-electric)
+- **Payment**: DEBIT ************4417, AUTH 2PRK APPROVED (src: 2026-09-09-receipt-valley-electric)

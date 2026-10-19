@@ -1,5 +1,5 @@
 ---
-title: General Business Operating Permit: BP-2025-0918
+title: General Business Operating Permit (Office of the City Clerk)
 kind: summary
 sources: [2025-10-01-permit-city-clerk]
 created: 2026-10-17
@@ -7,13 +7,13 @@ updated: 2026-10-17
 status: active
 flags: []
 expense:
-  vendor: city-clerk
+  vendor: office-of-the-city-clerk
   date: 2025-10-01
   amount: 85.00
   currency: USD
-  document: BP-2025-0918
+  document: 77120
   allocations:
-    - { category: licenses, amount: 85.00 }
+    - { category: other, amount: 85.00 }
   payment:
     status: paid
     due: null
@@ -22,7 +22,7 @@ expense:
 
 # General Business Operating Permit
 
-- **Permit number**: BP-2025-0918 (src: 2025-10-01-permit-city-clerk)
+- **Permit No.**: BP-2025-0918 (src: 2025-10-01-permit-city-clerk)
 - **Issued to**: Northwind Repair LLC (src: 2025-10-01-permit-city-clerk)
 - **Business address**: 1480 Harbor Ave, Suite 210 (src: 2025-10-01-permit-city-clerk)
 - **Business activity**: Appliance repair and service (src: 2025-10-01-permit-city-clerk)

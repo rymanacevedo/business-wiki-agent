@@ -20,11 +20,13 @@ expense:
     evidence: [2026-09-02-receipt-portside-fuel]
 ---
 
-Portside Fuel Stop receipt: 16.950 GAL @ 3.859 = 65.41 USD (src: 2026-09-02-receipt-portside-fuel).
+PORTSIDE FUEL STOP (src: 2026-09-02-receipt-portside-fuel)
 
-Payment by debit card ending in ****4417 (src: 2026-09-02-receipt-portside-fuel).
-
+- **Date**: 2026-09-02 (src: 2026-09-02-receipt-portside-fuel)
+- **Quantity and price**: 16.950 GAL @ 3.859 (src: 2026-09-02-receipt-portside-fuel)
+- **Total**: $65.41 (src: 2026-09-02-receipt-portside-fuel)
+- **Payment method**: DEBIT ************4417 (src: 2026-09-02-receipt-portside-fuel)
 
 ## Also seen in
 
-- 2026-09-30-bank-statement-tidewater (corroborates payment) (src: 2026-09-30-bank-statement-tidewater)
+- 2026-09-30-bank-statement-tidewater: corroborates payment (src: 2026-09-30-bank-statement-tidewater)

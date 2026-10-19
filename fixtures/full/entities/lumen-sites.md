@@ -9,8 +9,10 @@ flags: []
 entity: vendor
 ---
 
-Lumen Sites — vendor. (src: 2026-09-01-invoice-lumen-sites-hosting)
+Lumen Sites (src: 2026-09-01-invoice-lumen-sites-hosting)
+
+- **Contact**: billing@lumensites.example (src: 2026-09-01-invoice-lumen-sites-hosting)
 
 ## Records
 
-- [Lumen Sites invoice LS-2609-0388 2026-09-01](../summaries/2026-09-01-invoice-lumen-sites-hosting.md): expense $20.00 (src: 2026-09-01-invoice-lumen-sites-hosting)
+- 2026-09-01 [Lumen Sites invoice LS-2609-0388](../summaries/2026-09-01-invoice-lumen-sites-hosting.md): $20.00 (src: 2026-09-01-invoice-lumen-sites-hosting)
