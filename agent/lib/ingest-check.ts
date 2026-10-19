@@ -10,6 +10,7 @@ import { LOG, SCHEMA } from "./pages";
 const INDEX = "index.md";
 const SUMMARY_LINK = /summaries\/([a-z0-9][a-z0-9-]*)\.md/g;
 const EXPENSE = /^expense\s*:/m;
+const NO_BUSINESS_FACTS = /^- \*\*Business facts\*\*: none new/m;
 
 /** Every Page but the Index, Log, Schema, and Sources, by path. */
 async function readPages(store: WikiStore): Promise<Map<string, string>> {
@@ -89,20 +90,47 @@ export async function ingestProblems(
       );
     }
   }
+  const obligations = [...pages].filter(([path]) =>
+    path.startsWith("obligations/")
+  );
+  const dueOn = (date: string) =>
+    obligations.some(([, body]) =>
+      new RegExp(`^due:\\s*${date}\\s*$`, "m").test(body)
+    );
   // An expiry the Source states (a policy, permit, license, or registration)
-  // is tracked by an Obligation due that day.
+  // is tracked by an Obligation due that day. A deadline counted from it (a
+  // lease's notice date, "90 days before 2027-03-31") tracks it too, so a
+  // lease end gets no second Obligation.
+  const countedFrom = (date: string) =>
+    obligations.some(
+      ([, body]) => pageSources(body).includes(id) && body.includes(date)
+    );
   for (const due of summary ? expiries(summary) : [])
-    if (
-      ![...pages].some(
-        ([path, body]) =>
-          path.startsWith("obligations/") &&
-          new RegExp(`^due:\\s*${due}\\s*$`, "m").test(body)
-      )
-    )
+    if (!dueOn(due) && !countedFrom(due))
       problems.push(
         `${summaryPath} says something expires ${due}: create its Obligation (kind insurance-renewal, permit-expiry, or license-renewal, due ${due}, citing the Source) and its Index line.`
       );
+  // A filing the Source says is due on a date (a tax return, a report) is an
+  // Obligation due that day.
+  for (const due of summary ? filings(summary) : [])
+    if (!dueOn(due))
+      problems.push(
+        `${summaryPath} says a filing is due ${due}: create its Obligation (kind tax-filing, or annual-report for a report, due ${due}, citing the Source) and its Index line.`
+      );
   if (!summary || EXPENSE.test(summary)) return problems;
+  // A Source with no Record is a document about the Business (a lease, a
+  // certificate, a filing): its new facts go on the Profile, or its summary
+  // says it has none the Profile lacks.
+  const profile = pages.get("profile.md");
+  if (
+    profile !== undefined &&
+    !pageSources(profile).includes(id) &&
+    !profile.includes(`(src: ${id})`) &&
+    !NO_BUSINESS_FACTS.test(summary)
+  )
+    problems.push(
+      `profile.md cites nothing from ${id}: add the Source's new facts about the Business itself (legal name, entity type, addresses with suite, EIN, licenses and permits, insurance policy, lease terms and landlord, bank accounts, tax filings) to the Profile, each cited (src: ${id}), and ${id} to its sources. If the Source states none the Profile lacks, add the line "- **Business facts**: none new" to ${summaryPath}.`
+    );
   for (const [, other] of summary.matchAll(SUMMARY_LINK)) {
     const recordPath = `summaries/${other}.md`;
     const record = pages.get(recordPath);
@@ -110,7 +138,7 @@ export async function ingestProblems(
     const seen = record.split(/^## Also seen in[^\n]*$/m)[1]?.split(/^## /m)[0];
     if (!seen?.includes(id))
       problems.push(
-        `${summaryPath} links the Record ${recordPath}: list ${id} under that Record's "## Also seen in" section (add the section at the end if it has none).`
+        `${summaryPath} links the Record ${recordPath}: list ${id} under that Record's "## Also seen in" with note_also_seen_in.`
       );
   }
   for (const [path, body] of pages)
@@ -121,13 +149,32 @@ export async function ingestProblems(
   return problems;
 }
 
+/** A summary's fact lines without their Citations: a Source id carries a date. */
+function factLines(summary: string): string[] {
+  return summary
+    .split("\n")
+    .filter((line) => line.startsWith("- "))
+    .map((line) => line.replace(/\(src: [^)]*\)/g, ""));
+}
+
 /** Dates a summary's fact lines give as an expiry or a "valid through". */
 function expiries(summary: string): string[] {
   const dates = new Set<string>();
-  for (const line of summary.split("\n")) {
-    if (!line.startsWith("- ")) continue;
+  for (const line of factLines(summary)) {
     for (const [, date] of line.matchAll(
       /(?:expir[a-z]*|valid (?:through|until))\b[^;\n]*?(\d{4}-\d{2}-\d{2})/gi
+    ))
+      dates.add(date);
+  }
+  return [...dates];
+}
+
+/** Dates a summary's fact lines give for a return, filing, or report due. */
+function filings(summary: string): string[] {
+  const dates = new Set<string>();
+  for (const line of factLines(summary)) {
+    for (const [, date] of line.matchAll(
+      /\b(?:returns?|filings?|reports?)\b[^;\n]*?\bdue\b[^;\n]*?(\d{4}-\d{2}-\d{2})/gi
     ))
       dates.add(date);
   }
