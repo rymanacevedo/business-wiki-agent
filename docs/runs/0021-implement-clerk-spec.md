@@ -36,6 +36,10 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
   - Masking missed a 4-6-5 card number and masked a bare 10-digit phone. It now masks by label, card grouping, and Luhn checksum; phones and the EIN stay clear. The masked values across all 36 Sources are unchanged.
   - The demo was redeployed with both fixes.
 - **Integration review, round 3** (head c2f890f) found one blocking problem: labelled account and routing numbers printed in spaced groups ("Routing number: 021 000 021") stayed clear. Both automatic repair rounds were used, so it went to the human, who approved a third repair and a fourth review. repair-3 masks groups of 2 to 6 digits joined by single spaces after an account, routing, or card label. Masking of all 34 Sources is unchanged, and no eval row prints such a number. The demo was redeployed.
+- **Integration review, round 4** (head 135042d) found two blocking problems. Each round had found the next variant of a narrow fix, so the human approved a root-cause round. repair-4's implementer tried to break its own fixes first and turned each variant into a test.
+  - The guard checked only that each old fact line survived somewhere, so changing the EIN and moving the original under `## History` skipped the Approval. Facts are now held by section and label: the current line must stay, or become an admitted Conflict, in the same place. A first version also refused a second line under an existing label; live Ingest showed that breaks an Obligation gaining a second Record link, so new lines under a label are allowed.
+  - Masking joined groups only with a single space. Any horizontal whitespace now joins them, never a line break, and a labelled number stops at a following date or phone. Masking of the Corpus is byte-identical.
+  - Live: the guard-affected rows passed (Bayview certificate, at-ingest Contradiction, all five approvals rows); `ingest/sources/0029` failed again, as in the `after` run, with no guard refusal. The demo was redeployed.
 
 ## Findings worth remembering
 
@@ -45,6 +49,7 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
 - Eve adds a user-role "[Pending approvals]" message (`kind: context.state`) when a turn parks; it is not a turn boundary.
 - `next dev` with `withEve` starts its own eve dev server, which blocks `eve eval` in the same checkout.
 - The free judge is saturated: 53 of 56 baseline judgments were 1.0. It is uncalibrated until the Owner labels `docs/evals/runs/before/calibration.yaml`.
+- A review fix that patches only the reported example invites the next variant: rounds 2–4 each found one. Asking the implementer to attack its own fix before reporting found and closed far more.
 - Per-ticket detail lives in the implementers' run notes outside the repo (`clerk-notes/runlog-*.md`); this entry is their summary.
 
 ## What the human checked
@@ -57,15 +62,16 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
 - Upgraded Vercel to Pro to get past the upload limit, and asked for the site to be kept out of search engines.
 - Chose to fix "ingest everything new" and the `full` fixture rather than list them, and picked the `change_fact` result as the carrier for the unfinished-Ingest note.
 - Asked for the edge cases to become their own tickets.
-- Approved a third repair round and a fourth review after round 3's Masking finding.
+- Approved a third repair round and a fourth review after round 3's Masking finding, then a root-cause round after round 4.
 
 ## Open questions
 
 - Calibration labels, trace share links, the "What I checked myself" list, the pitch sign-off.
+- Left open by repair-4: a second, different line under a label whose original stays is admitted (labels like Record legitimately repeat; Lint should flag a second value); setext headings, same-named sections, and zero-width or fullwidth digits in Masking.
 - Follow-ups #32–#38, among them the unexplained session token budget (#34) and the Bayview Contradiction proposed as a change (#33).
 
 ## Artifacts
 
 - Branch `spec/15-clerk`, PR #31, tag `eval-baseline`, deployed demo https://business-wiki-agent.vercel.app
-- `docs/evals/runs/after-repairs/`, `docs/evals/runs/repair-1b/`, `docs/evals/runs/repair-1e/`, `docs/evals/runs/repair-2/`
+- `docs/evals/runs/after-repairs/`, `docs/evals/runs/repair-1b/`, `docs/evals/runs/repair-1e/`, `docs/evals/runs/repair-2/`, `docs/evals/runs/repair-4/`
 - `docs/evals/triage.md`, `docs/evals/before-after.md`, `docs/evals/calibration.md`, `docs/submission-checklist.md`

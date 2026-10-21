@@ -269,7 +269,11 @@ original claim's wording without an Approval, so a Conflict must now keep
 the complete claim and its Citation. Masking missed a card number printed
 4-6-5 and masked a bare phone number, so it now masks by label, card
 grouping, and checksum. A third round found labelled bank numbers printed in
-spaced groups ("021 000 021") left clear; those are masked now too. Both were fixed test-first; the Bayview row passed
+spaced groups ("021 000 021") left clear; those are masked now too. A
+fourth found the guard could be passed by moving the old fact under History,
+and that double spaces or tabs slipped past Masking. Facts are now held by
+their section and label, and any horizontal whitespace joins a number's
+groups ([`docs/evals/runs/repair-4/`](docs/evals/runs/repair-4/)). Both were fixed test-first; the Bayview row passed
 2 of 3 live runs after the change
 ([`docs/evals/runs/repair-2/`](docs/evals/runs/repair-2/)).
 
