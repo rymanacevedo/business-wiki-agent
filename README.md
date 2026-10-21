@@ -522,6 +522,8 @@ run. None of them is trimmed. Each one still open has a follow-up issue.
 - **No rate limit.** The per-session caps in `agent/agent.ts` (about $1 of
   tokens and 300K input tokens per session) are the only abuse mitigation;
   nothing stops many sessions.
+- The Approval card shows the proposed change as one block of text; its
+  line breaks are not kept.
 - No document upload: Sources are pre-placed by the seed script.
 - Single eval runs, so no variance estimate.
 - The judge's boolean probability is reported by the judge model itself;
