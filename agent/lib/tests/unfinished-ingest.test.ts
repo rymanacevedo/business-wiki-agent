@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { afterEach, beforeEach, test } from "node:test";
 import { createWikiStore, type WikiStore } from "../../../packages/wiki-store";
 import { seedNamespace } from "../../../packages/wiki-store/seed";
+import changeFact from "../../tools/change_fact";
 import createPage from "../../tools/create_page";
 import { unfinishedIngestNote } from "../unfinished-ingest";
 
@@ -184,5 +185,42 @@ test("a refused INGEST line does not finish the Ingest", async () => {
   });
   assert.ok(
     await note([owner(`Ingest ${RENEWAL}.`), ...read, ...approved, ...refused])
+  );
+});
+
+// The note rides on change_fact's approved result: that result is the input of
+// the first model call after the Approval resumes the turn, where Clerk
+// stopped early.
+
+const fact = (messages: unknown[]) =>
+  (changeFact as unknown as Tool).execute(supersession, { messages });
+
+test("an approved change during an unfinished Ingest ends its result with the note", async () => {
+  const result = String(await fact([owner(`Ingest ${RENEWAL}.`), ...read]));
+  assert.match(result, /^Approved and applied to /);
+  assert.match(
+    result,
+    new RegExp(
+      `\\n\\nThe Ingest of ${RENEWAL} is unfinished\\.[\\s\\S]*INGEST line before you reply to the Owner\\.$`
+    )
+  );
+});
+
+test("an approved change outside an Ingest returns the plain result", async () => {
+  const result = String(await fact([owner("Mark the old policy superseded.")]));
+  assert.match(
+    result,
+    /^Approved and applied to [^\n]*logged APPROVAL approved\.$/
+  );
+});
+
+test("an approved change after the Source's INGEST line returns the plain result", async () => {
+  const logged = ingest(text(`Logged: - 2026-10-17 INGEST [${RENEWAL}]: x`));
+  const result = String(
+    await fact([owner(`Ingest ${RENEWAL}.`), ...read, ...logged])
+  );
+  assert.match(
+    result,
+    /^Approved and applied to [^\n]*logged APPROVAL approved\.$/
   );
 });
