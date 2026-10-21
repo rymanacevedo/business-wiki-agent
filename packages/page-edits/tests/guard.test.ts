@@ -223,6 +223,33 @@ test("the refusal explains how to record a Contradiction without Approval", () =
   );
 });
 
+test("a Conflict that trims the first claim is refused with the exact claim to keep", () => {
+  const original =
+    "1480 Harbor Avenue, Suite 210, Portside (src: 2025-04-01-lease-harborview)";
+  const before = edit(
+    profile,
+    "- **Premises suite**: Suite 210 (src: 2025-04-01-lease-harborview)",
+    `- **Premises address**: ${original}`
+  );
+  assert.throws(
+    () =>
+      guardPageEdit(
+        "profile.md",
+        before,
+        edit(
+          before,
+          `- **Premises address**: ${original}`,
+          "- **Premises address**: ⚠ **Conflict**, unresolved since 2026-10-17: 1480 Harbor Avenue, Suite 210 (src: 2025-04-01-lease-harborview) or 1480 Harbor Ave, Suite 201 (src: 2026-03-02-insurance-cert-meridian-bayview)"
+        )
+      ),
+    (error: unknown) =>
+      error instanceof EstablishedFactError &&
+      error.message.includes(
+        `\`- **Premises address**: ⚠ **Conflict**, unresolved since <Demo Date>: ${original} or <new value> (src: <new source>)\``
+      )
+  );
+});
+
 test("protects Profile and Obligation Pages by path even if kind is edited", () => {
   const relabel = (body: string, kind: string) =>
     edit(body, `kind: ${kind}`, "kind: summary");

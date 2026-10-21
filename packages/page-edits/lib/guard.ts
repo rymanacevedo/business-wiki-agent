@@ -5,14 +5,20 @@ import {
   topLevelKeys,
 } from "./frontmatter";
 
+/** The fact line a refused edit would change: its label and its claims. */
+type Fact = { label: string; claims: string[] };
+
 /** An edit that would alter an Established Fact outside `change_fact`. */
 export class EstablishedFactError extends Error {
-  constructor(path: string, what: string) {
+  constructor(path: string, what: string, fact?: Fact) {
+    const shape = fact
+      ? `\`- ${fact.label}: ⚠ **Conflict**, unresolved since <Demo Date>: ${fact.claims.join(" or ")} or <new value> (src: <new source>)\``
+      : "`- **Label**: ⚠ **Conflict**, unresolved since <Demo Date>: <current value> (src: <its source>) or <new value> (src: <new source>)`";
     super(
       `update_page cannot change ${what} on ${path}: it is an Established Fact. ` +
         "Propose the change with change_fact (page, old value, new value, Source, reason) and wait for the Owner's Approval. " +
-        "If a new Source disagrees with this fact (a Contradiction, not a Supersession), do not use change_fact: rewrite the line in the Schema's Conflict shape, same label, keeping the current value and its Citation verbatim as one claim: " +
-        "`- **Label**: ⚠ **Conflict**, unresolved since <Demo Date>: <current value> (src: <its source>) or <new value> (src: <new source>)`; that needs no Approval."
+        "If a new Source disagrees with this fact (a Contradiction, not a Supersession), do not use change_fact: rewrite the line in the Schema's Conflict shape, same label, keeping the current value and its Citation verbatim as one claim, word for word: " +
+        `${shape}; that needs no Approval.`
     );
     this.name = "EstablishedFactError";
   }
@@ -60,7 +66,12 @@ export function guardPageEdit(
       continue;
     }
     if (PLACEHOLDER.test(line) || keptInConflict(line, next.body)) continue;
-    throw new EstablishedFactError(path, `the fact line "${line}"`);
+    const fact = FACT_LINE.exec(line);
+    throw new EstablishedFactError(
+      path,
+      `the fact line "${line}"`,
+      fact ? { label: fact[1], claims: claims(fact[2]).claims } : undefined
+    );
   }
 }
 
