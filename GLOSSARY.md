@@ -95,11 +95,15 @@ A reference from a Page or an answer back to the Source or Page it came from.
 _Avoid_: Reference, footnote
 
 **Link**:
-A typed relation from one Page to another, derived from a Citation, a Markdown link, or a frontmatter field such as `sources`, `vendor`, or `superseded_by`. Clerk never writes a Link by hand; it follows from what the Pages already say.
+A relation between two Pages, derived from what one of them already says: a Citation or `sources` entry (to the Source's summary Page), a Markdown link, a `vendor` or `counterparty` field (to the entity Page), or `superseded_by`. Clerk never writes a Link by hand, and every Link can be followed in either direction.
 _Avoid_: Edge, relationship, backlink, graph
 
+**Match**:
+A Page, and the section within it, that a Query matched directly, before any Link is followed. The Neighbourhood grows from the Matches.
+_Avoid_: Hit, entry point, seed, result
+
 **Neighbourhood**:
-The Pages within a small number of Links of a Page that matched a Query, returned with it so an answer can connect facts across Pages.
+The Pages one Link away from a Match, returned with it so an answer can connect facts across Pages. Each carries the Link that brought it in.
 _Avoid_: Subgraph, context window, related pages, hops
 
 ### The seed corpus
