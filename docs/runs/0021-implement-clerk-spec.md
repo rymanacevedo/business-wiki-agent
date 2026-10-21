@@ -35,6 +35,7 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
   - The Contradiction guard kept only a fact's numbers, so "Sam Rivera (sole Member; 100% membership interest)" could be rewritten without an Approval. A Conflict must now state the complete original claim, value and Citation, word for word. The refusal names the exact claim to keep, after a live run showed Clerk trimming it.
   - Masking missed a 4-6-5 card number and masked a bare 10-digit phone. It now masks by label, card grouping, and Luhn checksum; phones and the EIN stay clear. The masked values across all 36 Sources are unchanged.
   - The demo was redeployed with both fixes.
+- **Integration review, round 3** (head c2f890f) found one blocking problem: labelled account and routing numbers printed in spaced groups ("Routing number: 021 000 021") stayed clear. Both automatic repair rounds were used, so it went to the human, who approved a third repair and a fourth review. repair-3 masks groups of 2 to 6 digits joined by single spaces after an account, routing, or card label. Masking of all 34 Sources is unchanged, and no eval row prints such a number. The demo was redeployed.
 
 ## Findings worth remembering
 
@@ -56,6 +57,7 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
 - Upgraded Vercel to Pro to get past the upload limit, and asked for the site to be kept out of search engines.
 - Chose to fix "ingest everything new" and the `full` fixture rather than list them, and picked the `change_fact` result as the carrier for the unfinished-Ingest note.
 - Asked for the edge cases to become their own tickets.
+- Approved a third repair round and a fourth review after round 3's Masking finding.
 
 ## Open questions
 

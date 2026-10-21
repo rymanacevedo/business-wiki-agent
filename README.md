@@ -268,7 +268,8 @@ A second review round found two more. A Contradiction could trim the
 original claim's wording without an Approval, so a Conflict must now keep
 the complete claim and its Citation. Masking missed a card number printed
 4-6-5 and masked a bare phone number, so it now masks by label, card
-grouping, and checksum. Both were fixed test-first; the Bayview row passed
+grouping, and checksum. A third round found labelled bank numbers printed in
+spaced groups ("021 000 021") left clear; those are masked now too. Both were fixed test-first; the Bayview row passed
 2 of 3 live runs after the change
 ([`docs/evals/runs/repair-2/`](docs/evals/runs/repair-2/)).
 
