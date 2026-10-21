@@ -264,6 +264,13 @@ Approval this time, and the Bayview certificate still proposed a
 Contradiction as a change. The other two misses are the known judge
 disagreements. Results are in
 [`docs/evals/runs/after-repairs/`](docs/evals/runs/after-repairs/).
+A second review round found two more. A Contradiction could trim the
+original claim's wording without an Approval, so a Conflict must now keep
+the complete claim and its Citation. Masking missed a card number printed
+4-6-5 and masked a bare phone number, so it now masks by label, card
+grouping, and checksum. Both were fixed test-first; the Bayview row passed
+2 of 3 live runs after the change
+([`docs/evals/runs/repair-2/`](docs/evals/runs/repair-2/)).
 
 ### Three narrated failures
 

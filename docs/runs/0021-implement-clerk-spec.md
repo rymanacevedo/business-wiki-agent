@@ -31,6 +31,10 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
   - repair-1d tried a dynamic instruction; Eve 0.80.1 resolves those only at turn start, so it became a step-scoped dynamic tool. Dropped: it broke the prompt cache and missed the first step after the resume.
   - repair-1e puts the note in the approved `change_fact` result instead, and fixes the turn helpers, which took Eve's "[Pending approvals]" message for the Owner's. It passed 3 of 3 live runs.
 - The edge cases left open became follow-up issues #32–#38.
+- **Integration review, round 2** (head 51131e7) found two blocking problems, fixed in repair-2 (the last automatic round), test-first:
+  - The Contradiction guard kept only a fact's numbers, so "Sam Rivera (sole Member; 100% membership interest)" could be rewritten without an Approval. A Conflict must now state the complete original claim, value and Citation, word for word. The refusal names the exact claim to keep, after a live run showed Clerk trimming it.
+  - Masking missed a 4-6-5 card number and masked a bare 10-digit phone. It now masks by label, card grouping, and Luhn checksum; phones and the EIN stay clear. The masked values across all 36 Sources are unchanged.
+  - The demo was redeployed with both fixes.
 
 ## Findings worth remembering
 
@@ -61,5 +65,5 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
 ## Artifacts
 
 - Branch `spec/15-clerk`, PR #31, tag `eval-baseline`, deployed demo https://business-wiki-agent.vercel.app
-- `docs/evals/runs/after-repairs/`, `docs/evals/runs/repair-1b/`, `docs/evals/runs/repair-1e/`
+- `docs/evals/runs/after-repairs/`, `docs/evals/runs/repair-1b/`, `docs/evals/runs/repair-1e/`, `docs/evals/runs/repair-2/`
 - `docs/evals/triage.md`, `docs/evals/before-after.md`, `docs/evals/calibration.md`, `docs/submission-checklist.md`
