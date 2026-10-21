@@ -253,6 +253,18 @@ gates per case are on [the before/after page](docs/evals/before-after.md).
 5 rows changed what they expect between the runs (dataset fixes, not agent changes): ingest/sources/0018, ingest/sources/0021, ingest/sources/0029, lint/checks/0004, safety/approvals/rows/0004. The last total leaves them out.
 <!-- eval-diff:end -->
 
+**After the integration review.** The Codex review of the finished branch
+found five blocking problems. Three were fixed in code (a payment edit that
+skipped the Approval, an unmasked Source browser, and "ingest everything
+new"), one in the `full` fixture, and the deploy was finished. The same two
+invocations then ran again as `after-repairs`, kept apart from the table
+above: 61/65, with Ingest 29/30, Lint 5/5, Query 16/17, and Safety 11/13.
+"Ingest everything new" passed. The approved Supersession stopped after its
+Approval this time, and the Bayview certificate still proposed a
+Contradiction as a change. The other two misses are the known judge
+disagreements. Results are in
+[`docs/evals/runs/after-repairs/`](docs/evals/runs/after-repairs/).
+
 ### Three narrated failures
 
 Quoted in full from [the triage page](docs/evals/triage.md), where the
@@ -408,12 +420,15 @@ on request if you would rather browse the projects directly.
 
 ### Failures we saw
 
-From [triage](docs/evals/triage.md) and the after run. None of them is
-trimmed.
+From [triage](docs/evals/triage.md), the after run, and the after-repairs
+run. None of them is trimmed. Each one still open has a follow-up issue.
 
-- **"Ingest everything new" stops early and says it is done** (open). In the
-  after run it wrote a payment proposal as prose instead of calling
-  `change_fact`, so no Approval card backed it.
+- **"Ingest everything new" stops early and says it is done** (fixed after
+  the integration review). In the after run it wrote a payment proposal as
+  prose instead of calling `change_fact`, so no Approval card backed it. Now
+  every INGEST result names the Inbox Sources left, and `append_log` refuses
+  to close an Ingest on a prose-only payment proposal. It passed in 3 of 3
+  repair runs and in the after-repairs run.
   ([triage, cluster 3](docs/evals/triage.md#3-ingest-everything-new-stops-after-the-first-approval-and-claims-it-finished-model-behaviour))
 - **A denied Supersession landed under another file name** (fixed by the
   improve step). ([cluster 1](docs/evals/triage.md#1-a-denied-supersession-lands-anyway-tooling))
@@ -423,30 +438,39 @@ trimmed.
   ([cluster 2](docs/evals/triage.md#2-query-trust-rules-not-applied-instruction-wording))
 - **A Contradiction proposed as a change.** On the Bayview certificate,
   Clerk called `change_fact` for the Profile suite instead of recording a
-  Contradiction. This passed in the baseline and failed after.
-  ([after run](docs/evals/triage.md#after-run-29))
+  Contradiction. This passed in the baseline and failed in the after and
+  after-repairs runs.
+  ([after run](docs/evals/triage.md#after-run-29), [#33](https://github.com/rymanacevedo/business-wiki-agent/issues/33))
 - **Parked before the summary.** Two Approval Ingests (the PAID duplicate
   and the renewal) parked on `change_fact` before writing their summary
   Page. ([after run](docs/evals/triage.md#after-run-29))
 - **Category judgement varies.** A mixed hardware receipt got one
   Allocation in the baseline, and the Eastside labor line was filed under
   `professional-services` in the after run.
-  ([cluster 4](docs/evals/triage.md#4-category-judgement-on-a-mixed-receipt-model-behaviour))
+  ([cluster 4](docs/evals/triage.md#4-category-judgement-on-a-mixed-receipt-model-behaviour), [#36](https://github.com/rymanacevedo/business-wiki-agent/issues/36))
 - **Profile left short on the operating agreement**: ownership, management,
   and fiscal year stayed on the summary only (soft score).
   ([cluster 5](docs/evals/triage.md#5-profile-left-short-on-a-formation-document-instruction-wording-soft-only))
 - **The judge is saturated**, apart from two disagreements, one where the
-  judge looks right and one where it looks wrong.
-  ([cluster 7](docs/evals/triage.md#7-judges-saturated-with-two-exceptions))
+  judge looks right and one where it looks wrong. Both disagreements came
+  back in the after-repairs run.
+  ([cluster 7](docs/evals/triage.md#7-judges-saturated-with-two-exceptions), [#35](https://github.com/rymanacevedo/business-wiki-agent/issues/35))
 - **Four rows expected the wrong thing** and were corrected as dataset
   fixes. ([corrections](docs/evals/triage.md#rows-whose-expectation-is-wrong))
 - **Fixture defects** in `full`: a spurious "certificate holder"
-  Contradiction on the Profile, and a duplicated Premises section.
+  Contradiction on the Profile, and a duplicated Premises section. The
+  missing sales-tax filing Obligation and fiscal-year Profile line were
+  corrected by hand after the integration review
+  ([fixtures/REVIEW.md](fixtures/REVIEW.md)).
   ([cluster 6](docs/evals/triage.md#6-rows-whose-expectation-is-wrong-see-the-corrections-section))
 - **Parked turns have no LangSmith trace.** A turn that ends waiting on an
   Approval nobody answers shows up nowhere, probably because its root span
   never ends.
-  ([triage](docs/evals/triage.md#triage-of-the-baseline))
+  ([triage](docs/evals/triage.md#triage-of-the-baseline), [#37](https://github.com/rymanacevedo/business-wiki-agent/issues/37))
+- **The session token budget is unexplained.** Multi-Source Ingest traces
+  sum above the 300K per-session input cap without hitting it, so how eve
+  counts usage across Approval resumes is unknown, and a larger Inbox may
+  stop mid-Ingest. ([#34](https://github.com/rymanacevedo/business-wiki-agent/issues/34))
 
 ### Limitations we chose
 
