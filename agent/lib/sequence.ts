@@ -11,12 +11,18 @@ type Part = {
   output?: unknown;
 };
 
-/** Content parts of every message since the Owner's last message. */
+/**
+ * Content parts of every message since the Owner's last message. eve's own
+ * user-role notes (a `kind` other than "user", such as the "[Pending
+ * approvals]" state of a parked turn) are not the Owner's and start no turn.
+ */
 function partsThisTurn(messages: unknown): Part[] {
   if (!Array.isArray(messages)) return [];
   let start = 0;
   messages.forEach((message, i) => {
-    if (message?.role === "user") start = i + 1;
+    const kind = message?.kind;
+    if (message?.role === "user" && (kind === undefined || kind === "user"))
+      start = i + 1;
   });
   return messages
     .slice(start)
@@ -32,6 +38,26 @@ const callsTo = (parts: Part[], toolName: string) =>
 export function sourcesReadThisTurn(messages: unknown): string[] {
   return callsTo(partsThisTurn(messages), "read_source")
     .map((p) => (p.input ?? p.args)?.id)
+    .filter((id): id is string => typeof id === "string");
+}
+
+/** The Source ids whose INGEST line `append_log` wrote this turn. */
+export function ingestsLoggedThisTurn(messages: unknown): string[] {
+  const parts = partsThisTurn(messages);
+  const logged = new Set(
+    parts
+      .filter(
+        (p) =>
+          p?.type === "tool-result" &&
+          JSON.stringify(p.output ?? "").includes("Logged: ")
+      )
+      .map((p) => p.toolCallId)
+  );
+  return callsTo(parts, "append_log")
+    .filter((call) => logged.has(call.toolCallId))
+    .map((call) => call.input ?? call.args)
+    .filter((input) => input?.type === "INGEST")
+    .map((input) => input?.subject)
     .filter((id): id is string => typeof id === "string");
 }
 

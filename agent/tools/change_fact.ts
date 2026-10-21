@@ -5,6 +5,7 @@ import { wiki } from "../lib/config";
 import { appendLog, changedLines, logLine, touch } from "../lib/pages";
 import { applyChanges, proposalProblems, type Change } from "../lib/proposal";
 import { editIndex, withObligationLines } from "../lib/index-lines";
+import { unfinishedIngestNote } from "../lib/unfinished-ingest";
 
 const change = z.object({
   page: z
@@ -86,6 +87,11 @@ export default defineTool({
       (await editIndex(store, (body) =>
         withObligationLines(body, obligations)
       ));
-    return `Approved and applied to ${[...applied.keys()].join(", ")}${indexed ? "; their Index lines now show the new status" : ""}; logged APPROVAL approved.`;
+    const result = `Approved and applied to ${[...applied.keys()].join(", ")}${indexed ? "; their Index lines now show the new status" : ""}; logged APPROVAL approved.`;
+    // This result opens the first model step after the Approval resumes the
+    // turn: say there what this turn's Ingest still lacks, so Clerk does not
+    // stop halfway.
+    const note = await unfinishedIngestNote(ctx.messages, store);
+    return note ? `${result}\n\n${note}` : result;
   },
 });
