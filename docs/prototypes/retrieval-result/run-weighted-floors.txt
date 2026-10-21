@@ -1,0 +1,405 @@
+# PROTOTYPE retrieval result · fixture full: 70 Pages, 108 sections, 117 Links (cites+links 52, cites 28, links 10, party 27)
+# options: {"excerpt":"facts","links":"page","pad":true,"neighbours":"weighted","floor":0.2,"matchFloor":0.33}
+
+
+==============================================================================
+QUERY: What did we buy from Harbor Hardware, and is any invoice to them unpaid?
+terms: buy harbor hardware any invoice them unpaid · rung: lexical
+
+--- Variant A (2255 chars, ~564 tokens)
+## Matches (5)
+### expenses/supplies.md
+Supplies · ledger · active
+> - 2026-08-03 Harbor Hardware & Supply: 23.13 [receipt](../summaries/2026-08-03-receipt-harbor-hardware.md) (src: 2026-08-03-receipt-harbor-hardware)
+> - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4471.md) (src: 2026-09-12-invoice-cascade-parts-4471)
+> - 2026-09-18 Harbor Hardware & Supply: 24.26 [receipt](../summaries/2026-09-18-receipt-harbor-hardware.md) (src: 2026-09-18-receipt-harbor-hardware)
+### expenses/equipment.md
+Equipment · ledger · active
+> category: equipment
+> - 2026-08-20 Ridgeline Tool Supply — $312.12 — [invoice](../summaries/2026-08-20-invoice-ridgeline-tools-r20931.md) (src: 2026-08-20-invoice-ridgeline-tools-r20931)
+> - 2026-09-18 Harbor Hardware & Supply: 86.38 [receipt](../summaries/2026-09-18-receipt-harbor-hardware.md) (src: 2026-09-18-receipt-harbor-hardware)
+### entities/harbor-hardware-supply.md
+Harbor Hardware & Supply · entity · active
+> HARBOR HARDWARE & SUPPLY (src: 2026-08-03-receipt-harbor-hardware)
+> - **Address**: 1602 HARBOR AVE PORTSIDE (src: 2026-08-03-receipt-harbor-hardware)
+> - **Records**: - [Harbor Hardware & Supply receipt 2026-08-03](../summaries/2026-08-03-receipt-harbor-hardware.md) (src: 2026-08-03-receipt-harbor-hardware) - [Harbor Hardware & Supply receipt 2026-09-18](../summaries/2026-09-18-receipt-harbor-hardware.md) (src: 2026-09-18-receipt-harbor-hardware)
+### summaries/2026-09-18-receipt-harbor-hardware.md
+Harbor Hardware & Supply receipt 2026-09-18 · summary · active
+> vendor: harbor-hardware-supply
+> evidence: [2026-09-18-receipt-harbor-hardware]
+> HARBOR HARDWARE & SUPPLY (src: 2026-09-18-receipt-harbor-hardware)
+### summaries/2026-08-03-receipt-harbor-hardware.md
+Harbor Hardware & Supply receipt 2026-08-03 · summary · active
+> vendor: harbor-hardware-supply
+> evidence: [2026-08-03-receipt-harbor-hardware]
+> HARBOR HARDWARE & SUPPLY (src: 2026-08-03-receipt-harbor-hardware)
+## Also linked (2)
+- summaries/2026-08-20-invoice-ridgeline-tools-r20931.md · summary · active: cited by, linked from expenses/equipment.md
+- summaries/2026-08-31-bank-statement-tidewater.md · summary · active: cited by summaries/2026-08-03-receipt-harbor-hardware.md
+
+--- Variant B (1521 chars, ~381 tokens)
+expenses/supplies.md [ledger, active]
+  - 2026-08-03 Harbor Hardware & Supply: 23.13 [receipt](../summaries/2026-08-03-receipt-harbor-hardware.md)
+  - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4471.md)
+  - 2026-09-18 Harbor Hardware & Supply: 24.26 [receipt](../summaries/2026-09-18-receipt-harbor-hardware.md)
+expenses/equipment.md [ledger, active]
+  category: equipment
+  - 2026-08-20 Ridgeline Tool Supply — $312.12 — [invoice](../summaries/2026-08-20-invoice-ridgeline-tools-r20931.md)
+  - 2026-09-18 Harbor Hardware & Supply: 86.38 [receipt](../summaries/2026-09-18-receipt-harbor-hardware.md)
+entities/harbor-hardware-supply.md [entity, active]
+  HARBOR HARDWARE & SUPPLY
+  - **Address**: 1602 HARBOR AVE PORTSIDE
+  - **Records**: - [Harbor Hardware & Supply receipt 2026-08-03](../summaries/2026-08-03-receipt-harbor-hardware.md) - [Harbor Hardware & Supply receipt 2026-09-…
+summaries/2026-09-18-receipt-harbor-hardware.md [summary, active]
+  vendor: harbor-hardware-supply
+  evidence: [2026-09-18-receipt-harbor-hardware]
+  HARBOR HARDWARE & SUPPLY
+summaries/2026-08-03-receipt-harbor-hardware.md [summary, active]
+  vendor: harbor-hardware-supply
+  evidence: [2026-08-03-receipt-harbor-hardware]
+  HARBOR HARDWARE & SUPPLY
+summaries/2026-08-20-invoice-ridgeline-tools-r20931.md [summary, active] ← cited by expenses/equipment.md
+summaries/2026-08-31-bank-statement-tidewater.md [summary, active] ← cited by summaries/2026-08-03-receipt-harbor-hardware.md
+
+--- Variant C (2047 chars, ~512 tokens)
+expenses/supplies.md [ledger, active]
+  - 2026-08-03 Harbor Hardware & Supply: 23.13 [receipt](../summaries/2026-08-03-receipt-harbor-hardware.md) (src: 2026-08-03-receipt-harbor-hardware)
+  - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4471.md) (src: 2026-09-12-invoice-cascade-parts-4471)
+  - 2026-09-18 Harbor Hardware & Supply: 24.26 [receipt](../summaries/2026-09-18-receipt-harbor-hardware.md) (src: 2026-09-18-receipt-harbor-hardware)
+expenses/equipment.md [ledger, active]
+  category: equipment
+  - 2026-08-20 Ridgeline Tool Supply — $312.12 — [invoice](../summaries/2026-08-20-invoice-ridgeline-tools-r20931.md) (src: 2026-08-20-invoice-ridgeline-tools-r20931)
+  - 2026-09-18 Harbor Hardware & Supply: 86.38 [receipt](../summaries/2026-09-18-receipt-harbor-hardware.md) (src: 2026-09-18-receipt-harbor-hardware)
+entities/harbor-hardware-supply.md [entity, active]
+  HARBOR HARDWARE & SUPPLY (src: 2026-08-03-receipt-harbor-hardware)
+  - **Address**: 1602 HARBOR AVE PORTSIDE (src: 2026-08-03-receipt-harbor-hardware)
+  - **Records**: - [Harbor Hardware & Supply receipt 2026-08-03](../summaries/2026-08-03-receipt-harbor-hardware.md) (src: 2026-08-03-receipt-harbor-hardware) - [Harbor Hardware & Supply receipt 2026-09-18](../summaries/2026-09-18-receipt-harbor-hardware.md) (src: 2026-09-18-receipt-harbor-hardware)
+summaries/2026-09-18-receipt-harbor-hardware.md [summary, active]
+  vendor: harbor-hardware-supply
+  evidence: [2026-09-18-receipt-harbor-hardware]
+  HARBOR HARDWARE & SUPPLY (src: 2026-09-18-receipt-harbor-hardware)
+summaries/2026-08-03-receipt-harbor-hardware.md [summary, active]
+  vendor: harbor-hardware-supply
+  evidence: [2026-08-03-receipt-harbor-hardware]
+  HARBOR HARDWARE & SUPPLY (src: 2026-08-03-receipt-harbor-hardware)
+summaries/2026-08-20-invoice-ridgeline-tools-r20931.md [summary, active] ← cited by expenses/equipment.md
+summaries/2026-08-31-bank-statement-tidewater.md [summary, active] ← cited by summaries/2026-08-03-receipt-harbor-hardware.md
+
+--- Neighbourhood Pages that lexical top 8 alone would not show: summaries/2026-08-20-invoice-ridgeline-tools-r20931.md, summaries/2026-08-31-bank-statement-tidewater.md
+
+--- read_page cost of each Match, for scale
+  expenses/supplies.md 1101 chars ~276 tokens
+  expenses/equipment.md 512 chars ~128 tokens
+  entities/harbor-hardware-supply.md 662 chars ~166 tokens
+  summaries/2026-09-18-receipt-harbor-hardware.md 1265 chars ~317 tokens
+  summaries/2026-08-03-receipt-harbor-hardware.md 1240 chars ~310 tokens
+
+==============================================================================
+QUERY: Which Obligations come from the Harborview lease?
+terms: obligations come harborview lease · rung: lexical
+
+--- Variant A (1659 chars, ~415 tokens)
+## Matches (4)
+### obligations/2026-12-31-lease-notice-harborview.md
+Lease notice due 2026-12-31 (Harborview Properties) · obligation · active · section "Lease notice: Harborview Properties LLC"
+> - **Lease term end**: 2027-03-31 (src: 2025-04-01-lease-harborview)
+> - **Notice requirement**: 90 days before the term ends (src: 2025-04-01-lease-harborview)
+> - **Computed deadline**: 90 days before 2027-03-31 → 2026-12-31 (src: 2025-04-01-lease-harborview)
+### summaries/2025-04-01-lease-harborview.md
+Harborview Properties lease 2025-04-01 · summary · active · section "Commercial Lease Agreement"
+> - **Document date**: April 1, 2025 (src: 2025-04-01-lease-harborview)
+> - **Landlord**: Harborview Properties LLC, 900 Quay Street, Portside (src: 2025-04-01-lease-harborview)
+> - **Tenant**: Northwind Repair LLC, a single-member limited liability company (Sam Rivera, Member) (src: 2025-04-01-lease-harborview)
+### profile.md
+Northwind Repair LLC · profile · active · section "Premises lease"
+> - **Lease (Harborview Properties LLC)**: Premises 1480 Harbor Avenue, Suite 210, Portside; approx. 850 sq ft (src: 2025-04-01-lease-harborview)
+> - **Lease term**: 2025-04-01 to 2027-03-31 (src: 2025-04-01-lease-harborview)
+> - **Rent**: $1,450.00 per month, due on the 1st; late after the 5th (late fee $75) (src: 2025-04-01-lease-harborview)
+### entities/harborview-properties.md
+Harborview Properties LLC · entity · active · section "Harborview Properties LLC"
+> entity: landlord
+> - **Name (as printed)**: Harborview Properties LLC (src: 2025-04-01-lease-harborview)
+> - **Address (as printed)**: 900 Quay Street, Portside (src: 2025-04-01-lease-harborview)
+
+--- Variant B (1061 chars, ~266 tokens)
+obligations/2026-12-31-lease-notice-harborview.md [obligation, active] § Lease notice: Harborview Properties LLC
+  - **Lease term end**: 2027-03-31
+  - **Notice requirement**: 90 days before the term ends
+  - **Computed deadline**: 90 days before 2027-03-31 → 2026-12-31
+summaries/2025-04-01-lease-harborview.md [summary, active] § Commercial Lease Agreement
+  - **Document date**: April 1, 2025
+  - **Landlord**: Harborview Properties LLC, 900 Quay Street, Portside
+  - **Tenant**: Northwind Repair LLC, a single-member limited liability company (Sam Rivera, Member)
+profile.md [profile, active] § Premises lease
+  - **Lease (Harborview Properties LLC)**: Premises 1480 Harbor Avenue, Suite 210, Portside; approx. 850 sq ft
+  - **Lease term**: 2025-04-01 to 2027-03-31
+  - **Rent**: $1,450.00 per month, due on the 1st; late after the 5th (late fee $75)
+entities/harborview-properties.md [entity, active] § Harborview Properties LLC
+  entity: landlord
+  - **Name (as printed)**: Harborview Properties LLC
+  - **Address (as printed)**: 900 Quay Street, Portside
+
+--- Variant C (1446 chars, ~362 tokens)
+obligations/2026-12-31-lease-notice-harborview.md [obligation, active] § Lease notice: Harborview Properties LLC
+  - **Lease term end**: 2027-03-31 (src: 2025-04-01-lease-harborview)
+  - **Notice requirement**: 90 days before the term ends (src: 2025-04-01-lease-harborview)
+  - **Computed deadline**: 90 days before 2027-03-31 → 2026-12-31 (src: 2025-04-01-lease-harborview)
+summaries/2025-04-01-lease-harborview.md [summary, active] § Commercial Lease Agreement
+  - **Document date**: April 1, 2025 (src: 2025-04-01-lease-harborview)
+  - **Landlord**: Harborview Properties LLC, 900 Quay Street, Portside (src: 2025-04-01-lease-harborview)
+  - **Tenant**: Northwind Repair LLC, a single-member limited liability company (Sam Rivera, Member) (src: 2025-04-01-lease-harborview)
+profile.md [profile, active] § Premises lease
+  - **Lease (Harborview Properties LLC)**: Premises 1480 Harbor Avenue, Suite 210, Portside; approx. 850 sq ft (src: 2025-04-01-lease-harborview)
+  - **Lease term**: 2025-04-01 to 2027-03-31 (src: 2025-04-01-lease-harborview)
+  - **Rent**: $1,450.00 per month, due on the 1st; late after the 5th (late fee $75) (src: 2025-04-01-lease-harborview)
+entities/harborview-properties.md [entity, active] § Harborview Properties LLC
+  entity: landlord
+  - **Name (as printed)**: Harborview Properties LLC (src: 2025-04-01-lease-harborview)
+  - **Address (as printed)**: 900 Quay Street, Portside (src: 2025-04-01-lease-harborview)
+
+--- Neighbourhood Pages that lexical top 8 alone would not show: none
+
+--- read_page cost of each Match, for scale
+  obligations/2026-12-31-lease-notice-harborview.md 742 chars ~186 tokens
+  summaries/2025-04-01-lease-harborview.md 1709 chars ~428 tokens
+  profile.md 6777 chars ~1695 tokens
+  entities/harborview-properties.md 501 chars ~126 tokens
+
+==============================================================================
+QUERY: What do we owe Cascade Appliance Parts?
+terms: owe cascade appliance parts · rung: lexical
+
+--- Variant A (1813 chars, ~454 tokens)
+## Matches (5)
+### entities/cascade-appliance-parts.md
+CASCADE APPLIANCE PARTS · entity · active
+> CASCADE APPLIANCE PARTS
+> - Address: 2210 Mill Rd, Portside. (src: 2026-09-12-invoice-cascade-parts-4471)
+> - Email: orders@cascadeparts.example. (src: 2026-09-12-invoice-cascade-parts-4471)
+### summaries/2026-09-12-invoice-cascade-parts-4471.md
+Cascade Appliance Parts invoice 2026-09-12 · summary · active
+> vendor: cascade-appliance-parts
+> CASCADE APPLIANCE PARTS invoice #4471 dated 2026-09-12 to Northwind Repair LLC (1480 Harbor Ave Ste 210). (src: 2026-09-12-invoice-cascade-parts-4471)
+> - Terms: Net 30; Due: 2026-10-12. (src: 2026-09-12-invoice-cascade-parts-4471)
+### summaries/2026-09-12-invoice-cascade-parts-4472.md
+Cascade Appliance Parts invoice 2026-09-12 #4472 · summary · active
+> vendor: cascade-appliance-parts
+> evidence: [2026-09-12-invoice-cascade-parts-4472]
+> CASCADE APPLIANCE PARTS invoice #4472 dated 2026-09-12 to Northwind Repair LLC (1480 Harbor Ave Ste 210). (src: 2026-09-12-invoice-cascade-parts-4472)
+### obligations/2026-10-12-pay-invoice-cascade-appliance-parts-4471.md
+Pay invoice 2026-10-12 (Cascade Appliance Parts #4471) · obligation · active
+> counterparty: cascade-appliance-parts
+> - **Record**: [Invoice #4471](../summaries/2026-09-12-invoice-cascade-parts-4471.md). (src: 2026-09-12-invoice-cascade-parts-4471)
+> - **Amount**: 212.48. (src: 2026-09-12-invoice-cascade-parts-4471)
+### expenses/supplies.md
+Supplies · ledger · active
+> category: supplies
+> - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4471.md) (src: 2026-09-12-invoice-cascade-parts-4471)
+> - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4472.md) (src: 2026-09-12-invoice-cascade-parts-4472)
+
+--- Variant B (1188 chars, ~297 tokens)
+entities/cascade-appliance-parts.md [entity, active]
+  CASCADE APPLIANCE PARTS
+  - Address: 2210 Mill Rd, Portside.
+  - Email: orders@cascadeparts.example.
+summaries/2026-09-12-invoice-cascade-parts-4471.md [summary, active]
+  vendor: cascade-appliance-parts
+  CASCADE APPLIANCE PARTS invoice #4471 dated 2026-09-12 to Northwind Repair LLC (1480 Harbor Ave Ste 210).
+  - Terms: Net 30; Due: 2026-10-12.
+summaries/2026-09-12-invoice-cascade-parts-4472.md [summary, active]
+  vendor: cascade-appliance-parts
+  evidence: [2026-09-12-invoice-cascade-parts-4472]
+  CASCADE APPLIANCE PARTS invoice #4472 dated 2026-09-12 to Northwind Repair LLC (1480 Harbor Ave Ste 210).
+obligations/2026-10-12-pay-invoice-cascade-appliance-parts-4471.md [obligation, active]
+  counterparty: cascade-appliance-parts
+  - **Record**: [Invoice #4471](../summaries/2026-09-12-invoice-cascade-parts-4471.md).
+  - **Amount**: 212.48.
+expenses/supplies.md [ledger, active]
+  category: supplies
+  - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4471.md)
+  - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4472.md)
+
+--- Variant C (1593 chars, ~399 tokens)
+entities/cascade-appliance-parts.md [entity, active]
+  CASCADE APPLIANCE PARTS
+  - Address: 2210 Mill Rd, Portside. (src: 2026-09-12-invoice-cascade-parts-4471)
+  - Email: orders@cascadeparts.example. (src: 2026-09-12-invoice-cascade-parts-4471)
+summaries/2026-09-12-invoice-cascade-parts-4471.md [summary, active]
+  vendor: cascade-appliance-parts
+  CASCADE APPLIANCE PARTS invoice #4471 dated 2026-09-12 to Northwind Repair LLC (1480 Harbor Ave Ste 210). (src: 2026-09-12-invoice-cascade-parts-4471)
+  - Terms: Net 30; Due: 2026-10-12. (src: 2026-09-12-invoice-cascade-parts-4471)
+summaries/2026-09-12-invoice-cascade-parts-4472.md [summary, active]
+  vendor: cascade-appliance-parts
+  evidence: [2026-09-12-invoice-cascade-parts-4472]
+  CASCADE APPLIANCE PARTS invoice #4472 dated 2026-09-12 to Northwind Repair LLC (1480 Harbor Ave Ste 210). (src: 2026-09-12-invoice-cascade-parts-4472)
+obligations/2026-10-12-pay-invoice-cascade-appliance-parts-4471.md [obligation, active]
+  counterparty: cascade-appliance-parts
+  - **Record**: [Invoice #4471](../summaries/2026-09-12-invoice-cascade-parts-4471.md). (src: 2026-09-12-invoice-cascade-parts-4471)
+  - **Amount**: 212.48. (src: 2026-09-12-invoice-cascade-parts-4471)
+expenses/supplies.md [ledger, active]
+  category: supplies
+  - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4471.md) (src: 2026-09-12-invoice-cascade-parts-4471)
+  - 2026-09-12 Cascade Appliance Parts: 212.48 [invoice](../summaries/2026-09-12-invoice-cascade-parts-4472.md) (src: 2026-09-12-invoice-cascade-parts-4472)
+
+--- Neighbourhood Pages that lexical top 8 alone would not show: none
+
+--- read_page cost of each Match, for scale
+  entities/cascade-appliance-parts.md 777 chars ~195 tokens
+  summaries/2026-09-12-invoice-cascade-parts-4471.md 1292 chars ~323 tokens
+  summaries/2026-09-12-invoice-cascade-parts-4472.md 1147 chars ~287 tokens
+  obligations/2026-10-12-pay-invoice-cascade-appliance-parts-4471.md 499 chars ~125 tokens
+  expenses/supplies.md 1101 chars ~276 tokens
+
+==============================================================================
+QUERY: When does our insurance renew, and who is the insurer?
+terms: insurance renew insurer · rung: lexical
+
+--- Variant A (2477 chars, ~620 tokens)
+## Matches (5)
+### entities/meridian-mutual-insurance-company.md
+Meridian Mutual Insurance Company · entity · active · section "Meridian Mutual Insurance Company"
+> entity: insurer
+> - **Name (as printed)**: Meridian Mutual Insurance Company (src: 2025-11-15-insurance-cert-meridian)
+### summaries/2025-11-15-insurance-cert-meridian.md
+Certificate of Liability Insurance (Meridian Mutual Insurance Company) · summary · active
+> Certificate of Liability Insurance issued 2025-11-15 evidencing Commercial General Liability coverage for Northwind Repair LLC (src: 2025-11-15-insurance-cert-meridian).
+> - **Producer**: Bayline Insurance Agency, 42 Pier Rd, Portside (src: 2025-11-15-insurance-cert-meridian)
+> - **Insurer**: Meridian Mutual Insurance Company (src: 2025-11-15-insurance-cert-meridian)
+### summaries/2026-03-02-insurance-cert-meridian-bayview.md
+Certificate of Liability Insurance (Meridian Mutual Insurance Company) · summary · active
+> Certificate of Liability Insurance issued 03/02/2026 evidencing Commercial General Liability coverage for Northwind Repair LLC (src: 2026-03-02-insurance-cert-meridian-bayview).
+> - **Producer**: Bayline Insurance Agency, 42 Pier Rd, Portside (src: 2026-03-02-insurance-cert-meridian-bayview)
+> - **Insurer**: Meridian Mutual Insurance Company (src: 2026-03-02-insurance-cert-meridian-bayview)
+### obligations/2026-11-15-insurance-renewal-meridian-mutual-insurance-company.md
+Insurance renewal due 2026-11-15 (Meridian Mutual Insurance Company) · obligation · active
+> obligation: insurance-renewal
+> counterparty: meridian-mutual-insurance-company
+> - **Policy number**: GL-2025-77410 (src: 2025-11-15-insurance-cert-meridian)
+### profile.md
+Northwind Repair LLC · profile · active · section "Insurance"
+> - **Commercial general liability (certificate)**: Meridian Mutual Insurance Company; Policy GL-2025-77410; effective 2025-11-15; expires 2026-11-15; limits each occurrence $1,000,000, general aggregate $2,000,000; annual premium $1,284.00 (src: 2025-11-15-insurance-cert-meridian)
+> - **Certificate holder / additional insured**: ⚠ **Conflict**, unresolved since 2026-10-17: Harborview Properties LLC, 900 Quay Street, Portside (src: 2025-11-15-insurance-cert-meridian) or Bayview Residential Management, 310 Beacon Street, Portside (src: 2026-03-02-insurance-cert-meridian-bayview) - First recorded: Harborview Properties LLC, 900 Quay Street, Portside from 2025-11-15-insurance-cert-meridian. Resolving needs Approval.
+
+--- Variant B (1394 chars, ~349 tokens)
+entities/meridian-mutual-insurance-company.md [entity, active] § Meridian Mutual Insurance Company
+  entity: insurer
+  - **Name (as printed)**: Meridian Mutual Insurance Company
+summaries/2025-11-15-insurance-cert-meridian.md [summary, active]
+  Certificate of Liability Insurance issued 2025-11-15 evidencing Commercial General Liability coverage for Northwind Repair LLC.
+  - **Producer**: Bayline Insurance Agency, 42 Pier Rd, Portside
+  - **Insurer**: Meridian Mutual Insurance Company
+summaries/2026-03-02-insurance-cert-meridian-bayview.md [summary, active]
+  Certificate of Liability Insurance issued 03/02/2026 evidencing Commercial General Liability coverage for Northwind Repair LLC.
+  - **Producer**: Bayline Insurance Agency, 42 Pier Rd, Portside
+  - **Insurer**: Meridian Mutual Insurance Company
+obligations/2026-11-15-insurance-renewal-meridian-mutual-insurance-company.md [obligation, active]
+  obligation: insurance-renewal
+  counterparty: meridian-mutual-insurance-company
+  - **Policy number**: GL-2025-77410
+profile.md [profile, active] § Insurance
+  - **Commercial general liability (certificate)**: Meridian Mutual Insurance Company; Policy GL-2025-77410; effective 2025-11-15; expires 2026-11-15; limits eac…
+  - **Certificate holder / additional insured**: ⚠ **Conflict**, unresolved since 2026-10-17: Harborview Properties LLC, 900 Quay Street, Portside or Bayview Res…
+
+--- Variant C (2151 chars, ~538 tokens)
+entities/meridian-mutual-insurance-company.md [entity, active] § Meridian Mutual Insurance Company
+  entity: insurer
+  - **Name (as printed)**: Meridian Mutual Insurance Company (src: 2025-11-15-insurance-cert-meridian)
+summaries/2025-11-15-insurance-cert-meridian.md [summary, active]
+  Certificate of Liability Insurance issued 2025-11-15 evidencing Commercial General Liability coverage for Northwind Repair LLC (src: 2025-11-15-insurance-cert-meridian).
+  - **Producer**: Bayline Insurance Agency, 42 Pier Rd, Portside (src: 2025-11-15-insurance-cert-meridian)
+  - **Insurer**: Meridian Mutual Insurance Company (src: 2025-11-15-insurance-cert-meridian)
+summaries/2026-03-02-insurance-cert-meridian-bayview.md [summary, active]
+  Certificate of Liability Insurance issued 03/02/2026 evidencing Commercial General Liability coverage for Northwind Repair LLC (src: 2026-03-02-insurance-cert-meridian-bayview).
+  - **Producer**: Bayline Insurance Agency, 42 Pier Rd, Portside (src: 2026-03-02-insurance-cert-meridian-bayview)
+  - **Insurer**: Meridian Mutual Insurance Company (src: 2026-03-02-insurance-cert-meridian-bayview)
+obligations/2026-11-15-insurance-renewal-meridian-mutual-insurance-company.md [obligation, active]
+  obligation: insurance-renewal
+  counterparty: meridian-mutual-insurance-company
+  - **Policy number**: GL-2025-77410 (src: 2025-11-15-insurance-cert-meridian)
+profile.md [profile, active] § Insurance
+  - **Commercial general liability (certificate)**: Meridian Mutual Insurance Company; Policy GL-2025-77410; effective 2025-11-15; expires 2026-11-15; limits each occurrence $1,000,000, general aggregate $2,000,000; annual premium $1,284.00 (src: 2025-11-15-insurance-cert-meridian)
+  - **Certificate holder / additional insured**: ⚠ **Conflict**, unresolved since 2026-10-17: Harborview Properties LLC, 900 Quay Street, Portside (src: 2025-11-15-insurance-cert-meridian) or Bayview Residential Management, 310 Beacon Street, Portside (src: 2026-03-02-insurance-cert-meridian-bayview) - First recorded: Harborview Properties LLC, 900 Quay Street, Portside from 2025-11-15-insurance-cert-meridian. Resolving needs Approval.
+
+--- Neighbourhood Pages that lexical top 8 alone would not show: none
+
+--- read_page cost of each Match, for scale
+  entities/meridian-mutual-insurance-company.md 643 chars ~161 tokens
+  summaries/2025-11-15-insurance-cert-meridian.md 1249 chars ~313 tokens
+  summaries/2026-03-02-insurance-cert-meridian-bayview.md 1343 chars ~336 tokens
+  obligations/2026-11-15-insurance-renewal-meridian-mutual-insurance-company.md 687 chars ~172 tokens
+  profile.md 6777 chars ~1695 tokens
+
+==============================================================================
+QUERY: What is our EIN?
+terms: ein · rung: lexical
+
+--- Variant A (1890 chars, ~473 tokens)
+## Matches (4)
+### summaries/2024-10-21-ein-letter.md
+EIN assignment (Internal Revenue Service) · summary · active · section "EIN assignment"
+> - **Assigned EIN**: 88-1234567 (src: 2024-10-21-ein-letter)
+> - **Legal name**: NORTHWIND REPAIR LLC (src: 2024-10-21-ein-letter)
+> - **Entity type**: Limited Liability Company, single member (disregarded entity) (src: 2024-10-21-ein-letter)
+### entities/internal-revenue-service.md
+INTERNAL REVENUE SERVICE · entity · active · section "Documents"
+> - [EIN assignment (Internal Revenue Service)](../summaries/2024-10-21-ein-letter.md) (src: 2024-10-21-ein-letter)
+### profile.md
+Northwind Repair LLC · profile · active · section "Identity"
+> - **Legal name (EIN letter)**: NORTHWIND REPAIR LLC (src: 2024-10-21-ein-letter)
+> - **Entity type (EIN letter)**: Limited Liability Company, single member (disregarded entity) (src: 2024-10-21-ein-letter)
+> - **EIN**: 88-1234567 (src: 2024-10-21-ein-letter)
+### summaries/2024-11-04-sales-tax-registration.md
+Department of Revenue sales tax registration 2024-11-04 · summary · active · section "Department of Revenue — Certificate of Registration: Sales and Use Tax"
+> - **Registration No.**: ST-24-558201 (src: 2024-11-04-sales-tax-registration)
+> - **Registered business**: Northwind Repair LLC (src: 2024-11-04-sales-tax-registration)
+> - **Federal EIN**: 88-1234567 (src: 2024-11-04-sales-tax-registration)
+## Also linked (3)
+- obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md · obligation · active: linked from profile.md; cites, links to, linked from summaries/2024-11-04-sales-tax-registration.md
+- obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md · obligation · active: cites, links to summaries/2024-11-04-sales-tax-registration.md
+- entities/department-of-revenue.md · entity · active: cites, links to summaries/2024-11-04-sales-tax-registration.md
+
+--- Variant B (1277 chars, ~320 tokens)
+summaries/2024-10-21-ein-letter.md [summary, active] § EIN assignment
+  - **Assigned EIN**: 88-1234567
+  - **Legal name**: NORTHWIND REPAIR LLC
+  - **Entity type**: Limited Liability Company, single member (disregarded entity)
+entities/internal-revenue-service.md [entity, active] § Documents
+  - [EIN assignment (Internal Revenue Service)](../summaries/2024-10-21-ein-letter.md)
+profile.md [profile, active] § Identity
+  - **Legal name (EIN letter)**: NORTHWIND REPAIR LLC
+  - **Entity type (EIN letter)**: Limited Liability Company, single member (disregarded entity)
+  - **EIN**: 88-1234567
+summaries/2024-11-04-sales-tax-registration.md [summary, active] § Department of Revenue — Certificate of Registration: Sales and Use Tax
+  - **Registration No.**: ST-24-558201
+  - **Registered business**: Northwind Repair LLC
+  - **Federal EIN**: 88-1234567
+obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md [obligation, active] ← linked from profile.md; cites summaries/2024-11-04-sales-tax-registration.md
+obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md [obligation, active] ← cites summaries/2024-11-04-sales-tax-registration.md
+entities/department-of-revenue.md [entity, active] ← cites summaries/2024-11-04-sales-tax-registration.md
+
+--- Variant C (1603 chars, ~401 tokens)
+summaries/2024-10-21-ein-letter.md [summary, active] § EIN assignment
+  - **Assigned EIN**: 88-1234567 (src: 2024-10-21-ein-letter)
+  - **Legal name**: NORTHWIND REPAIR LLC (src: 2024-10-21-ein-letter)
+  - **Entity type**: Limited Liability Company, single member (disregarded entity) (src: 2024-10-21-ein-letter)
+entities/internal-revenue-service.md [entity, active] § Documents
+  - [EIN assignment (Internal Revenue Service)](../summaries/2024-10-21-ein-letter.md) (src: 2024-10-21-ein-letter)
+profile.md [profile, active] § Identity
+  - **Legal name (EIN letter)**: NORTHWIND REPAIR LLC (src: 2024-10-21-ein-letter)
+  - **Entity type (EIN letter)**: Limited Liability Company, single member (disregarded entity) (src: 2024-10-21-ein-letter)
+  - **EIN**: 88-1234567 (src: 2024-10-21-ein-letter)
+summaries/2024-11-04-sales-tax-registration.md [summary, active] § Department of Revenue — Certificate of Registration: Sales and Use Tax
+  - **Registration No.**: ST-24-558201 (src: 2024-11-04-sales-tax-registration)
+  - **Registered business**: Northwind Repair LLC (src: 2024-11-04-sales-tax-registration)
+  - **Federal EIN**: 88-1234567 (src: 2024-11-04-sales-tax-registration)
+obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md [obligation, active] ← linked from profile.md; cites summaries/2024-11-04-sales-tax-registration.md
+obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md [obligation, active] ← cites summaries/2024-11-04-sales-tax-registration.md
+entities/department-of-revenue.md [entity, active] ← cites summaries/2024-11-04-sales-tax-registration.md
+
+--- Neighbourhood Pages that lexical top 8 alone would not show: obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md, obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md, entities/department-of-revenue.md
+
+--- read_page cost of each Match, for scale
+  summaries/2024-10-21-ein-letter.md 732 chars ~183 tokens
+  entities/internal-revenue-service.md 336 chars ~84 tokens
+  profile.md 6777 chars ~1695 tokens
+  summaries/2024-11-04-sales-tax-registration.md 1224 chars ~306 tokens

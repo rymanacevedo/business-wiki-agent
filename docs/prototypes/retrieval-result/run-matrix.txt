@@ -1,0 +1,202 @@
+# PROTOTYPE retrieval result · fixture full: 70 Pages, 108 sections, 117 Links (cites+links 52, cites 28, links 10, party 27)
+# options: {"excerpt":"facts","links":"section","pad":true,"neighbours":"count","floor":0,"matchFloor":0}
+
+
+==============================================================================
+QUERY: What did we buy from Harbor Hardware, and is any invoice to them unpaid?
+
+  [#46 rule, page links] 5 Matches, 3 neighbours
+    0.17  summaries/2026-08-14-receipt-paper-trail-office.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-09-09-receipt-valley-electric.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-09-12-invoice-cascade-parts-4471.md  ← cited by/linked from supplies.md
+
+  [#46 rule, section links] 5 Matches, 3 neighbours
+    0.17  summaries/2026-08-14-receipt-paper-trail-office.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-09-09-receipt-valley-electric.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-09-12-invoice-cascade-parts-4471.md  ← cited by/linked from supplies.md
+
+  [weighted, page links] 5 Matches, 3 neighbours
+    0.50  summaries/2026-08-20-invoice-ridgeline-tools-r20931.md  ← cited by/linked from equipment.md
+    0.25  summaries/2026-08-31-bank-statement-tidewater.md  ← cited by 2026-08-03-receipt-harbor-hardware.md
+    0.17  summaries/2026-08-14-receipt-paper-trail-office.md  ← cited by/linked from supplies.md
+
+  [weighted, page links, floor 0.2] 5 Matches, 2 neighbours
+    0.50  summaries/2026-08-20-invoice-ridgeline-tools-r20931.md  ← cited by/linked from equipment.md
+    0.25  summaries/2026-08-31-bank-statement-tidewater.md  ← cited by 2026-08-03-receipt-harbor-hardware.md
+
+  [weighted, page, floor 0.2, match floor 0.33] 5 Matches, 2 neighbours
+    0.50  summaries/2026-08-20-invoice-ridgeline-tools-r20931.md  ← cited by/linked from equipment.md
+    0.25  summaries/2026-08-31-bank-statement-tidewater.md  ← cited by 2026-08-03-receipt-harbor-hardware.md
+
+==============================================================================
+QUERY: Which Obligations come from the Harborview lease?
+
+  [#46 rule, page links] 5 Matches, 3 neighbours
+    0.27  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md; cites/links to/linked from 2024-11-04-sales-tax-registration.md
+    0.07  summaries/2024-10-09-articles-of-organization.md  ← cited by profile.md
+    0.07  summaries/2024-10-10-operating-agreement.md  ← cited by profile.md
+
+  [#46 rule, section links] 5 Matches, 3 neighbours
+    0.20  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← cites/links to/linked from 2024-11-04-sales-tax-registration.md
+    0.20  obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+    0.20  entities/department-of-revenue.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+
+  [weighted, page links] 5 Matches, 3 neighbours
+    0.27  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md; cites/links to/linked from 2024-11-04-sales-tax-registration.md
+    0.20  obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+    0.20  entities/department-of-revenue.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+
+  [weighted, page links, floor 0.2] 5 Matches, 3 neighbours
+    0.27  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md; cites/links to/linked from 2024-11-04-sales-tax-registration.md
+    0.20  obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+    0.20  entities/department-of-revenue.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+
+  [weighted, page, floor 0.2, match floor 0.33] 4 Matches, 0 neighbours
+
+==============================================================================
+QUERY: What do we owe Cascade Appliance Parts?
+
+  [#46 rule, page links] 5 Matches, 3 neighbours
+    0.17  summaries/2026-08-03-receipt-harbor-hardware.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-08-14-receipt-paper-trail-office.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-09-09-receipt-valley-electric.md  ← cited by/linked from supplies.md
+
+  [#46 rule, section links] 5 Matches, 3 neighbours
+    0.17  summaries/2026-08-03-receipt-harbor-hardware.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-08-14-receipt-paper-trail-office.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-09-09-receipt-valley-electric.md  ← cited by/linked from supplies.md
+
+  [weighted, page links] 5 Matches, 3 neighbours
+    0.17  summaries/2026-08-03-receipt-harbor-hardware.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-08-14-receipt-paper-trail-office.md  ← cited by/linked from supplies.md
+    0.17  summaries/2026-09-09-receipt-valley-electric.md  ← cited by/linked from supplies.md
+
+  [weighted, page links, floor 0.2] 5 Matches, 0 neighbours
+
+  [weighted, page, floor 0.2, match floor 0.33] 5 Matches, 0 neighbours
+
+==============================================================================
+QUERY: When does our insurance renew, and who is the insurer?
+
+  [#46 rule, page links] 5 Matches, 3 neighbours
+    0.07  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md
+    0.07  summaries/2024-10-09-articles-of-organization.md  ← cited by profile.md
+    0.07  summaries/2024-10-10-operating-agreement.md  ← cited by profile.md
+
+  [#46 rule, section links] 5 Matches, 0 neighbours
+
+  [weighted, page links] 5 Matches, 3 neighbours
+    0.07  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md
+    0.07  summaries/2024-10-09-articles-of-organization.md  ← cited by profile.md
+    0.07  summaries/2024-10-10-operating-agreement.md  ← cited by profile.md
+
+  [weighted, page links, floor 0.2] 5 Matches, 0 neighbours
+
+  [weighted, page, floor 0.2, match floor 0.33] 5 Matches, 0 neighbours
+
+==============================================================================
+QUERY: What is our EIN?
+
+  [#46 rule, page links] 4 Matches, 4 neighbours
+    0.27  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md; cites/links to/linked from 2024-11-04-sales-tax-registration.md
+    0.07  summaries/2024-10-09-articles-of-organization.md  ← cited by profile.md
+    0.07  summaries/2024-10-10-operating-agreement.md  ← cited by profile.md
+    0.07  summaries/2025-04-01-lease-harborview.md  ← cited by profile.md
+
+  [#46 rule, section links] 4 Matches, 4 neighbours
+    0.07  summaries/2024-10-09-articles-of-organization.md  ← cited by profile.md
+    0.07  summaries/2024-10-10-operating-agreement.md  ← cited by profile.md
+    0.07  summaries/2026-02-20-w9-northwind.md  ← cited by profile.md
+    0.20  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← cites/links to/linked from 2024-11-04-sales-tax-registration.md
+
+  [weighted, page links] 4 Matches, 4 neighbours
+    0.27  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md; cites/links to/linked from 2024-11-04-sales-tax-registration.md
+    0.20  obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+    0.20  entities/department-of-revenue.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+    0.07  summaries/2024-10-09-articles-of-organization.md  ← cited by profile.md
+
+  [weighted, page links, floor 0.2] 4 Matches, 3 neighbours
+    0.27  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md; cites/links to/linked from 2024-11-04-sales-tax-registration.md
+    0.20  obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+    0.20  entities/department-of-revenue.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+
+  [weighted, page, floor 0.2, match floor 0.33] 4 Matches, 3 neighbours
+    0.27  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md; cites/links to/linked from 2024-11-04-sales-tax-registration.md
+    0.20  obligations/2027-06-30-license-renewal-department-of-revenue-sales-tax.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+    0.20  entities/department-of-revenue.md  ← cites/links to 2024-11-04-sales-tax-registration.md
+
+==============================================================================
+QUERY: Did the August hardware purchase clear?
+
+  [#46 rule, page links] 5 Matches, 3 neighbours
+    0.24  profile.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+    0.24  entities/tidewater-community-bank.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+    0.42  expenses/supplies.md  ← cites/links to 2026-09-18-receipt-harbor-hardware.md; cites/links to 2026-08-03-receipt-harbor-hardware.md
+
+  [#46 rule, section links] 5 Matches, 3 neighbours
+    0.24  profile.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+    0.24  entities/tidewater-community-bank.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+    0.42  expenses/supplies.md  ← cites/links to 2026-09-18-receipt-harbor-hardware.md; cites/links to 2026-08-03-receipt-harbor-hardware.md
+
+  [weighted, page links] 5 Matches, 3 neighbours
+    0.42  expenses/supplies.md  ← cites/links to 2026-09-18-receipt-harbor-hardware.md; cites/links to 2026-08-03-receipt-harbor-hardware.md
+    0.24  profile.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+    0.24  entities/tidewater-community-bank.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+
+  [weighted, page links, floor 0.2] 5 Matches, 3 neighbours
+    0.42  expenses/supplies.md  ← cites/links to 2026-09-18-receipt-harbor-hardware.md; cites/links to 2026-08-03-receipt-harbor-hardware.md
+    0.24  profile.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+    0.24  entities/tidewater-community-bank.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+
+  [weighted, page, floor 0.2, match floor 0.33] 5 Matches, 3 neighbours
+    0.42  expenses/supplies.md  ← cites/links to 2026-09-18-receipt-harbor-hardware.md; cites/links to 2026-08-03-receipt-harbor-hardware.md
+    0.24  profile.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+    0.24  entities/tidewater-community-bank.md  ← cites 2026-08-31-bank-statement-tidewater.md; cites 2026-09-30-bank-statement-tidewater.md
+
+==============================================================================
+QUERY: Who signed for the landlord?
+
+  [#46 rule, page links] 5 Matches, 3 neighbours
+    0.83  obligations/2026-12-31-lease-notice-harborview.md  ← cites/links to 2025-04-01-lease-harborview.md; names party harborview-properties.md
+    0.07  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md
+    0.07  summaries/2024-10-09-articles-of-organization.md  ← cited by profile.md
+
+  [#46 rule, section links] 5 Matches, 1 neighbours
+    0.83  obligations/2026-12-31-lease-notice-harborview.md  ← cites/links to 2025-04-01-lease-harborview.md; names party harborview-properties.md
+
+  [weighted, page links] 5 Matches, 3 neighbours
+    0.83  obligations/2026-12-31-lease-notice-harborview.md  ← cites/links to 2025-04-01-lease-harborview.md; names party harborview-properties.md
+    0.07  obligations/2027-01-31-tax-filing-department-of-revenue-sales-tax.md  ← linked from profile.md
+    0.07  summaries/2024-10-09-articles-of-organization.md  ← cited by profile.md
+
+  [weighted, page links, floor 0.2] 5 Matches, 1 neighbours
+    0.83  obligations/2026-12-31-lease-notice-harborview.md  ← cites/links to 2025-04-01-lease-harborview.md; names party harborview-properties.md
+
+  [weighted, page, floor 0.2, match floor 0.33] 5 Matches, 1 neighbours
+    0.83  obligations/2026-12-31-lease-notice-harborview.md  ← cites/links to 2025-04-01-lease-harborview.md; names party harborview-properties.md
+
+==============================================================================
+QUERY: Which receipts does the September bank statement corroborate?
+
+  [#46 rule, page links] 5 Matches, 3 neighbours
+    0.14  summaries/2026-09-01-invoice-lumen-sites-hosting.md  ← cites/linked from 2026-09-30-bank-statement-tidewater.md; cited by profile.md
+    0.07  summaries/2026-09-02-receipt-portside-fuel.md  ← cites/linked from 2026-09-30-bank-statement-tidewater.md
+    0.07  summaries/2026-09-09-receipt-valley-electric.md  ← cites/linked from 2026-09-30-bank-statement-tidewater.md
+
+  [#46 rule, section links] 5 Matches, 3 neighbours
+    0.07  summaries/2026-09-01-invoice-lumen-sites-hosting.md  ← cites 2026-09-30-bank-statement-tidewater.md
+    0.07  summaries/2026-09-02-receipt-portside-fuel.md  ← cites 2026-09-30-bank-statement-tidewater.md
+    0.07  summaries/2026-09-09-receipt-valley-electric.md  ← cites 2026-09-30-bank-statement-tidewater.md
+
+  [weighted, page links] 5 Matches, 3 neighbours
+    0.25  entities/ridgeline-tool-supply.md  ← cites/links to/party of 2026-08-20-invoice-ridgeline-tools-r20931.md
+    0.25  expenses/equipment.md  ← cites/links to 2026-08-20-invoice-ridgeline-tools-r20931.md
+    0.17  summaries/2026-08-03-receipt-harbor-hardware.md  ← cites 2026-08-31-bank-statement-tidewater.md
+
+  [weighted, page links, floor 0.2] 5 Matches, 2 neighbours
+    0.25  entities/ridgeline-tool-supply.md  ← cites/links to/party of 2026-08-20-invoice-ridgeline-tools-r20931.md
+    0.25  expenses/equipment.md  ← cites/links to 2026-08-20-invoice-ridgeline-tools-r20931.md
+
+  [weighted, page, floor 0.2, match floor 0.33] 5 Matches, 2 neighbours
+    0.25  entities/ridgeline-tool-supply.md  ← cites/links to/party of 2026-08-20-invoice-ridgeline-tools-r20931.md
+    0.25  expenses/equipment.md  ← cites/links to 2026-08-20-invoice-ridgeline-tools-r20931.md
