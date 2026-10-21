@@ -398,7 +398,7 @@ calibration set. The calibration alternative is `query-paid-cascade`,
   the Owner's labels are not in, so the judge is still
   [uncalibrated](calibration.md). This row is not a calibration row either.
 
-### Still open: "ingest everything new" stops early and says it is done
+### Fixed after the integration review: "ingest everything new" stops early and says it is done
 
 - **What the case expected.** One turn Ingests all three Inbox Sources in
   order: the PAID duplicate (parks, approved), the plain receipt (one new
@@ -454,7 +454,7 @@ calibration set. The calibration alternative is `query-paid-cascade`,
     300K `maxInputTokensPerSession` figure, but no run hit a continuation
     prompt or `SESSION_TOKEN_LIMIT_REACHED`. How eve counts usage against the
     cap across Approval resumes is not yet explained, so the cap risk for a
-    larger Inbox is still open.
+    larger Inbox is still open (#34).
 - **Repaired after the after-repairs run (review round 1, repair-1e).** Like
   repair-1b, this is outside the before/after numbers, and no row or
   recorded run was edited. In the after-repairs run,
