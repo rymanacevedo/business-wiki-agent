@@ -57,10 +57,10 @@ test("masks card numbers in each common grouping, labelled or not", () => {
   );
 });
 
-test("masks a contiguous card number only when it passes the Luhn check", () => {
+test("masks a contiguous long number whether or not it passes the Luhn check", () => {
   assert.equal(
     maskSource("Charged to 4111111111111111. Tracking 1234567890123456"),
-    "Charged to ****1111. Tracking 1234567890123456"
+    "Charged to ****1111. Tracking ****3456"
   );
 });
 
@@ -193,11 +193,12 @@ test("masks a labelled SSN joined by dashes with spaces around them", () => {
 
 test("a number's groups never join across a line break", () => {
   assert.equal(
-    maskSource("Account: 6615\n2026 0901 1234\nCard 4417\r\n1111 2222"),
-    "Account: 6615\n2026 0901 1234\nCard 4417\r\n1111 2222"
+    maskSource("Account: 6615\n2026 Q3\nCard 4417\r\n1111 on file"),
+    "Account: 6615\n2026 Q3\nCard 4417\r\n1111 on file"
   );
-  assert.deepEqual(maskedValues("Card 4111 1111\n1111 1111"), [
+  assert.deepEqual(maskedValues("Card 4111 1111\n1111 1112"), [
     { value: "4111 1111", masked: "****1111", kind: "account" },
+    { value: "1111 1112", masked: "****1112", kind: "account" },
   ]);
 });
 
@@ -206,12 +207,16 @@ test("a labelled number's groups stop at a date or a short reference", () => {
   assert.equal(maskSource(clear), clear);
 });
 
-test("leaves last-four references and unlabelled numbers clear", () => {
-  const clear = [
-    "Account: 6615, card ending 8820, Card 4417",
-    "Order 20260912001, reference 000123456789",
-  ].join("\n");
+test("leaves last-four references clear", () => {
+  const clear = "Account: 6615, card ending 8820, Card 4417, ****6615 2026";
   assert.equal(maskSource(clear), clear);
+});
+
+test("masks an unlabelled number it cannot identify as safe", () => {
+  assert.equal(
+    maskSource("Order 20260912001, reference 000123456789"),
+    "Order ****2001, reference ****6789"
+  );
 });
 
 test("leaves phones clear in every common shape", () => {
