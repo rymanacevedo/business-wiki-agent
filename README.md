@@ -273,7 +273,15 @@ spaced groups ("021 000 021") left clear; those are masked now too. A
 fourth found the guard could be passed by moving the old fact under History,
 and that double spaces or tabs slipped past Masking. Facts are now held by
 their section and label, and any horizontal whitespace joins a number's
-groups ([`docs/evals/runs/repair-4/`](docs/evals/runs/repair-4/)). Both were fixed test-first; the Bayview row passed
+groups ([`docs/evals/runs/repair-4/`](docs/evals/runs/repair-4/)). A
+fifth found an old fact hidden in an HTML comment beside a new one, and
+Markdown emphasis around a label leaving a bank number clear. Both were
+closed as classes: Profile and Obligation Pages now hold plain Markdown
+only (no HTML, code blocks, quotes, tables, or other constructs that
+render differently from how the guard reads them), and Masking is
+fail-safe, hiding every number of 8 or more digits unless it is positively
+a phone, the EIN, a date, an amount, a ZIP+4, or a document identifier
+([`docs/evals/runs/repair-5/`](docs/evals/runs/repair-5/)). Both were fixed test-first; the Bayview row passed
 2 of 3 live runs after the change
 ([`docs/evals/runs/repair-2/`](docs/evals/runs/repair-2/)).
 

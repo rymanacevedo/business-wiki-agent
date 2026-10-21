@@ -4,9 +4,11 @@ import { mask, maskedValues as listMasked, type MaskedValue } from "./lib/mask";
 export type { MaskedValue };
 
 /**
- * Masking: SSNs become `***-**-NNNN`, financial account, card, and routing
- * numbers become `****NNNN`. Nothing else changes (names, addresses, phones,
- * emails, the EIN stay clear). The rules that find each class are documented
+ * Masking, fail-safe: SSNs become `***-**-NNNN`; labelled account, card, and
+ * routing numbers, and every other run of 8 or more digits, become
+ * `****NNNN`, unless the run is positively a phone, the EIN, a date, an
+ * amount, a ZIP+4, or a document identifier glued to letters. Names,
+ * addresses, emails, and short numbers stay clear. The rules are documented
  * in `lib/mask.ts`.
  */
 export function maskSource(text: string): string {

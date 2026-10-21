@@ -3,6 +3,7 @@ import {
   pageField,
   pageSources,
   paymentStatus,
+  validateFactText,
   validatePage,
 } from "../../packages/page-edits";
 import type { WikiStore } from "../../packages/wiki-store";
@@ -37,8 +38,12 @@ export async function applyChanges(
     ]);
     applied.set(path, { ...entry, next });
   }
-  for (const [path, { before, next }] of applied)
+  for (const [path, { before, next }] of applied) {
+    // Hidden text is refused even on a Page that already breaks another
+    // rule: an approved change must never hide a line from the Owner.
+    validateFactText(path, next);
     if (isValid(path, before)) validatePage(path, next);
+  }
   return applied;
 }
 

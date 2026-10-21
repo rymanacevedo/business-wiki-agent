@@ -135,13 +135,15 @@ function readFacts(body: string[]): {
   let section = "";
   for (const raw of body) {
     const text = raw.trim();
-    const heading = /^(#+)\s/.exec(text);
+    const heading = /^(#{1,6})(?:\s|$)/.exec(text);
     if (heading) {
       section = heading[1].length === 1 ? "" : text;
       continue;
     }
     if (!text.startsWith("- ")) continue;
-    const match = FACT_LINE.exec(text);
+    // Only an unindented bullet is a fact line: an indented one renders
+    // nested under the bullet above it, as a note on that fact.
+    const match = raw.startsWith("- ") ? FACT_LINE.exec(text) : null;
     if (!match) {
       unlabelled.push(text);
       continue;
