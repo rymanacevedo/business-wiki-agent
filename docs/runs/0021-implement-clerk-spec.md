@@ -40,6 +40,10 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
   - The guard checked only that each old fact line survived somewhere, so changing the EIN and moving the original under `## History` skipped the Approval. Facts are now held by section and label: the current line must stay, or become an admitted Conflict, in the same place. A first version also refused a second line under an existing label; live Ingest showed that breaks an Obligation gaining a second Record link, so new lines under a label are allowed.
   - Masking joined groups only with a single space. Any horizontal whitespace now joins them, never a line break, and a labelled number stops at a following date or phone. Masking of the Corpus is byte-identical.
   - Live: the guard-affected rows passed (Bayview certificate, at-ingest Contradiction, all five approvals rows); `ingest/sources/0029` failed again, as in the `after` run, with no guard refusal. The demo was redeployed.
+- **Integration review, round 5** (head 6980c2b) found two more: an old fact hidden in an HTML comment beside a new one, and Markdown emphasis around a label leaving a bank number clear. The human approved a final structural round, closing each class instead of the variant:
+  - repair-5 makes Profile and Obligation Pages plain Markdown only, checked in `validatePage` and on every write path, including approved `change_fact` writes (which had skipped validation on an already-invalid Page). HTML, entities, invisible characters, code, quotes, tables, setext headings and loose indentation are all refused, each with what to write instead. Every fixture Page passes unchanged.
+  - Masking became fail-safe: every number of 8 or more digits is masked unless it is positively a phone, the EIN, a date, an amount, a ZIP+4, or a document identifier. Masking of the Corpus is byte-identical.
+  - Live: the Bayview certificate, the at-ingest Contradiction (4/4) and all five approvals rows passed. The demo was redeployed.
 
 ## Findings worth remembering
 
@@ -49,7 +53,7 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
 - Eve adds a user-role "[Pending approvals]" message (`kind: context.state`) when a turn parks; it is not a turn boundary.
 - `next dev` with `withEve` starts its own eve dev server, which blocks `eve eval` in the same checkout.
 - The free judge is saturated: 53 of 56 baseline judgments were 1.0. It is uncalibrated until the Owner labels `docs/evals/runs/before/calibration.yaml`.
-- A review fix that patches only the reported example invites the next variant: rounds 2–4 each found one. Asking the implementer to attack its own fix before reporting found and closed far more.
+- A review fix that patches only the reported example invites the next variant: rounds 2–4 each found one. Asking the implementer to attack its own fix before reporting found and closed far more, and the lasting fix was changing the defaults: refuse unknown Markdown on fact Pages, mask unknown long numbers.
 - Per-ticket detail lives in the implementers' run notes outside the repo (`clerk-notes/runlog-*.md`); this entry is their summary.
 
 ## What the human checked
@@ -62,16 +66,16 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
 - Upgraded Vercel to Pro to get past the upload limit, and asked for the site to be kept out of search engines.
 - Chose to fix "ingest everything new" and the `full` fixture rather than list them, and picked the `change_fact` result as the carrier for the unfinished-Ingest note.
 - Asked for the edge cases to become their own tickets.
-- Approved a third repair round and a fourth review after round 3's Masking finding, then a root-cause round after round 4.
+- Approved a third repair round and a fourth review after round 3's Masking finding, then a root-cause round after round 4, and a final structural round after round 5, with the agreement to ship with any further gaps listed.
 
 ## Open questions
 
 - Calibration labels, trace share links, the "What I checked myself" list, the pitch sign-off.
-- Left open by repair-4: a second, different line under a label whose original stays is admitted (labels like Record legitimately repeat; Lint should flag a second value); setext headings, same-named sections, and zero-width or fullwidth digits in Masking.
+- Left open by repair-4: a second, different line under a label whose original stays is admitted (labels like Record legitimately repeat; Lint should flag a second value); same-named sections; semantic demotion of a visible fact ("EIN (current)") is Lint's to catch; Masking leaves digits written as entities and unlabelled 6–7 digit account numbers clear.
 - Follow-ups #32–#38, among them the unexplained session token budget (#34) and the Bayview Contradiction proposed as a change (#33).
 
 ## Artifacts
 
 - Branch `spec/15-clerk`, PR #31, tag `eval-baseline`, deployed demo https://business-wiki-agent.vercel.app
-- `docs/evals/runs/after-repairs/`, `docs/evals/runs/repair-1b/`, `docs/evals/runs/repair-1e/`, `docs/evals/runs/repair-2/`, `docs/evals/runs/repair-4/`
+- `docs/evals/runs/after-repairs/`, `docs/evals/runs/repair-1b/`, `docs/evals/runs/repair-1e/`, `docs/evals/runs/repair-2/`, `docs/evals/runs/repair-4/`, `docs/evals/runs/repair-5/`
 - `docs/evals/triage.md`, `docs/evals/before-after.md`, `docs/evals/calibration.md`, `docs/submission-checklist.md`

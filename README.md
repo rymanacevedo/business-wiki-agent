@@ -93,9 +93,10 @@ it writes and maintains itself (Karpathy's "LLM wiki" pattern):
 Trust comes from the shape of the tools, not from promises in the prompt:
 
 - Sources are immutable. The store has no write path under `sources/`.
-- **Masking** happens in `read_source`, before Clerk sees the text: SSNs and
-  account numbers reach Clerk, its Pages, and its traces only as
-  `***-**-NNNN` and `****NNNN`.
+- **Masking** happens in `read_source`, before Clerk sees the text: SSNs,
+  account numbers, and any other long number not positively known to be
+  safe (a phone, the EIN, a date, an amount) reach Clerk, its Pages, and its
+  traces only as `***-**-NNNN` and `****NNNN`.
 - New Pages are free. Changing an **Established Fact** (a Profile or
   Obligation fact, or an Expense Record's payment status) goes through one
   tool, `change_fact`, behind Eve's **Approval** gate. The Owner sees the
@@ -264,26 +265,28 @@ Approval this time, and the Bayview certificate still proposed a
 Contradiction as a change. The other two misses are the known judge
 disagreements. Results are in
 [`docs/evals/runs/after-repairs/`](docs/evals/runs/after-repairs/).
-A second review round found two more. A Contradiction could trim the
-original claim's wording without an Approval, so a Conflict must now keep
-the complete claim and its Citation. Masking missed a card number printed
-4-6-5 and masked a bare phone number, so it now masks by label, card
-grouping, and checksum. A third round found labelled bank numbers printed in
-spaced groups ("021 000 021") left clear; those are masked now too. A
-fourth found the guard could be passed by moving the old fact under History,
-and that double spaces or tabs slipped past Masking. Facts are now held by
-their section and label, and any horizontal whitespace joins a number's
-groups ([`docs/evals/runs/repair-4/`](docs/evals/runs/repair-4/)). A
-fifth found an old fact hidden in an HTML comment beside a new one, and
-Markdown emphasis around a label leaving a bank number clear. Both were
-closed as classes: Profile and Obligation Pages now hold plain Markdown
-only (no HTML, code blocks, quotes, tables, or other constructs that
-render differently from how the guard reads them), and Masking is
-fail-safe, hiding every number of 8 or more digits unless it is positively
-a phone, the EIN, a date, an amount, a ZIP+4, or a document identifier
-([`docs/evals/runs/repair-5/`](docs/evals/runs/repair-5/)). Both were fixed test-first; the Bayview row passed
-2 of 3 live runs after the change
-([`docs/evals/runs/repair-2/`](docs/evals/runs/repair-2/)).
+Four more review rounds followed, each fixed test-first in its own branch:
+
+- **Round 2.** A Contradiction could trim the original claim's wording
+  without an Approval, so a Conflict must now keep the complete claim and
+  its Citation. The Bayview row passed 2 of 3 live runs after the change
+  ([`docs/evals/runs/repair-2/`](docs/evals/runs/repair-2/)). Masking missed
+  a card number printed 4-6-5 and masked a bare phone number.
+- **Rounds 3 and 4** found more number layouts Masking missed (spaced
+  groups, double spaces, tabs). They also found that the guard could be
+  passed by moving the old fact under History. Facts are now held by their
+  section and label
+  ([`docs/evals/runs/repair-4/`](docs/evals/runs/repair-4/)).
+- **Round 5** found an old fact hidden in an HTML comment beside a new one,
+  and Markdown emphasis around a label leaving a bank number clear. Each fix
+  so far had closed one variant, so both were closed as classes. Profile and
+  Obligation Pages now hold plain Markdown only: no HTML, code blocks,
+  quotes, tables, or other constructs that render differently from how the
+  guard reads them. Masking is now fail-safe: it hides every number of 8 or
+  more digits unless the number is positively a phone, the EIN, a date, an
+  amount, a ZIP+4, or a document identifier
+  ([`docs/evals/runs/repair-5/`](docs/evals/runs/repair-5/)). Its output
+  over the Corpus is unchanged.
 
 ### Three narrated failures
 
