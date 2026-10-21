@@ -73,6 +73,20 @@ test("masks account and routing numbers by their label", () => {
   );
 });
 
+test("masks labelled account and routing numbers printed in space-separated groups", () => {
+  assert.equal(
+    maskSource(
+      "Account number: 1234 5678 9012 | Routing number: 021 000 021 | Acct 00 4837 26615"
+    ),
+    "Account number: ****9012 | Routing number: ****0021 | Acct ****6615"
+  );
+});
+
+test("a labelled number's groups stop at a date or a short reference", () => {
+  const clear = "Account: 6615 2026-09-01, Card 4417 on file";
+  assert.equal(maskSource(clear), clear);
+});
+
 test("leaves last-four references and unlabelled numbers clear", () => {
   const clear = [
     "Account: 6615, card ending 8820, Card 4417",
