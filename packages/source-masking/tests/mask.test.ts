@@ -23,6 +23,87 @@ test("masks a card number printed in groups", () => {
   );
 });
 
+test("masks an American Express number printed 4-6-5", () => {
+  assert.equal(maskSource("Card: 3782 822463 10005"), "Card: ****0005");
+});
+
+test("leaves a contiguous phone number clear", () => {
+  assert.equal(maskSource("Phone: 5550142290"), "Phone: 5550142290");
+});
+
+test("masks an SSN printed without dashes after its label", () => {
+  assert.equal(
+    maskSource("SSN: 512406789; Social security number 512 40 6789"),
+    "SSN: ***-**-6789; Social security number ***-**-6789"
+  );
+});
+
+test("masks card numbers in each common grouping, labelled or not", () => {
+  assert.equal(
+    maskSource(
+      [
+        "Paid with 3782 822463 10005",
+        "Diners 3056 930902 5904",
+        "Card 5555-5555-5555-4444",
+        "on file: 4111 1111 1111 1111 123",
+      ].join("\n")
+    ),
+    [
+      "Paid with ****0005",
+      "Diners ****5904",
+      "Card ****4444",
+      "on file: ****1123",
+    ].join("\n")
+  );
+});
+
+test("masks a contiguous card number only when it passes the Luhn check", () => {
+  assert.equal(
+    maskSource("Charged to 4111111111111111. Tracking 1234567890123456"),
+    "Charged to ****1111. Tracking 1234567890123456"
+  );
+});
+
+test("masks account and routing numbers by their label", () => {
+  assert.equal(
+    maskSource(
+      "Acct #: 12345678 | A/C No. 9876543210 | ABA 021000021 | Account 000123456789 2026 | Routing/ACH 021000089"
+    ),
+    "Acct #: ****5678 | A/C No. ****3210 | ABA ****0021 | Account ****6789 2026 | Routing/ACH ****0089"
+  );
+});
+
+test("leaves last-four references and unlabelled numbers clear", () => {
+  const clear = [
+    "Account: 6615, card ending 8820, Card 4417",
+    "Order 20260912001, reference 000123456789",
+  ].join("\n");
+  assert.equal(maskSource(clear), clear);
+});
+
+test("leaves phones clear in every common shape", () => {
+  const clear = [
+    "Phone: 5550142290",
+    "Tel 15550142290",
+    "Fax: 555.014.2290",
+    "Call 555 014 2290 or (555) 014-2290",
+    "Intl +44 20 7183 8750 or +442071838750",
+  ].join("\n");
+  assert.equal(maskSource(clear), clear);
+});
+
+test("leaves the EIN, dates, amounts, ZIP codes, and document numbers clear", () => {
+  const clear = [
+    "EIN 88-1234567; EIN: 881234567",
+    "Dated 09/12/2026, due 2026-10-12, 11/15/2027",
+    "Total $1,212.48; balance 7,784.53; 1000000.00",
+    "ZIP 98101-1234",
+    "License No. BL-2026-1093, Permit No. BP-2025-0918, ST-24-558201",
+    "Policy GL-2025-77410, invoice R-20931, receipt 77120",
+  ].join("\n");
+  assert.equal(maskSource(clear), clear);
+});
+
 test("leaves everything else clear", () => {
   const clear = [
     "EIN 88-1234567, Sam Rivera, 1480 Harbor Ave Ste 210, Portside",
