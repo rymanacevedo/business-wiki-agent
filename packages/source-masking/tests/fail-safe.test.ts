@@ -105,6 +105,19 @@ test("masks an unlabelled long number however its groups are joined", () => {
   );
 });
 
+test("masks a number whose dashes are Markdown-escaped", () => {
+  assert.equal(maskSource("ref 1234\\-5678\\-9012"), "ref ****9012");
+});
+
+test("masks an IBAN, contiguous or grouped, though its digits are glued to letters", () => {
+  assert.equal(
+    maskSource(
+      "IBAN GB29 NWBK 6016 1331 9268 19; pay DE89370400440532013000; Policy GL-2025-77410"
+    ),
+    "IBAN ****6819; pay ****3000; Policy GL-2025-77410"
+  );
+});
+
 test("masks two long numbers side by side as one run", () => {
   assert.equal(
     maskSource("Accounts 1234 5678 9012 3456 7890 1234 on file"),

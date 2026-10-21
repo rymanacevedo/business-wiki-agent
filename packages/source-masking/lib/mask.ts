@@ -8,8 +8,9 @@
  *
  * 1. SSN, by shape: `NNN-NN-NNNN`, not part of a longer number.
  * 2. SSN, by label: 9 digits right after "SSN" or "Social security number".
- * 3. Account, card, or routing number, by label: 6 to 19 digits right after
- *    a label naming one ("Account", "Acct", "A/C", "Routing", "ABA", "RTN",
+ * 3. An IBAN by shape (`GB29 NWBK 6016 1331 9268 19`, contiguous or in
+ *    groups of four); then an account, card, or routing number, by label: 6 to 19 digits right after
+ *    a label naming one ("Account", "Acct", "A/C", "Routing", "ABA", "RTN", "IBAN",
  *    "Card", or a card brand, alone or joined to another by "/" or "&", as in
  *    "ABA/Routing" or "Routing/ACH"), optionally followed by "number", "No.",
  *    or "#". This rule is what hides a 6- or 7-digit account number, and an
@@ -29,7 +30,8 @@
  *    contiguous or in groups joined by any horizontal whitespace (spaces,
  *    tabs, NBSP, thin and other Unicode spaces, zero-width spaces, `&nbsp;`
  *    and other space entities), a dash (ASCII, Unicode, or a dash entity),
- *    or Markdown emphasis and code markers (`*`, `_`, `` ` ``, `~`). Never a
+ *    or Markdown emphasis, code, and escape markers (`*`, `_`, `` ` ``, `~`,
+ *    `\\`). Never a
  *    line break. A run longer than 19 digits is masked whole: it may be two
  *    numbers side by side. A number glued to letters (`BL-2026-1093`,
  *    `LLC-2024-0731558`, `INV20931`) is a document identifier, not a run.
@@ -61,8 +63,8 @@ const H = String.raw`(?:[^\S\n\r\v\f\u2028\u2029]|[\u200B-\u200D\u2060\uFEFF\u00
 // A dash: ASCII, the Unicode hyphens and dashes, minus, or a dash entity.
 const DASH = String.raw`(?:[\-\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]|&(?:hyphen|dash|ndash|mdash|minus);|&#0*(?:45|82(?:0[89]|1[0-3])|8722);|&#[xX]0*(?:2[dD]|201[0-5]|2212);)`;
 
-// Markdown emphasis and code markers.
-const MARK = "[*_`~]";
+// Markdown emphasis and code markers, and the backslash of an escape.
+const MARK = "[*_`~\\\\]";
 
 const GAP = `(?:${H}|${MARK})`;
 
@@ -98,7 +100,7 @@ const SSN_LABEL = new RegExp(
   flags
 );
 
-const LABEL = String.raw`(?:account|acct|a/c|routing|aba|rtn|card|visa|mastercard|amex|american express|discover)`;
+const LABEL = String.raw`(?:account|acct|a/c|routing|aba|rtn|iban|card|visa|mastercard|amex|american express|discover)`;
 
 // The start of another field after a labelled number: a date or a phone.
 const DATE = String.raw`(?:${D}{4}${DASH}${D}{1,2}${DASH}${D}{1,2}|${D}{1,2}${DASH}${D}{1,2}${DASH}${D}{4})(?!\p{Nd})`;
@@ -115,6 +117,14 @@ const ACCOUNT_LABEL = new RegExp(
   String.raw`${W0}${LABEL}(?:${BETWEEN}[/&]${BETWEEN}(?:${LABEL}|ach|wire))*` +
     String.raw`(?:${BETWEEN}(?:number|num|no)${W1})?${BETWEEN}(${LABELLED})${END}`,
   flags
+);
+
+// An IBAN: country code, check digits, and 11 to 30 letters and digits,
+// contiguous or in groups of four. Its digits are glued to letters, so the
+// run rule alone would take it for a document identifier.
+const IBAN = new RegExp(
+  String.raw`(?<![\p{L}\p{Nd}])[A-Z]{2}${D}{2}(?:${H}?[A-Z0-9]{4}){2,7}(?:${H}?[A-Z0-9]{1,4})?(?![\p{L}\p{Nd}])`,
+  "gu"
 );
 
 const PHONE_LABEL = new RegExp(
@@ -179,6 +189,8 @@ function find(text: string): Found[] {
   for (const m of text.matchAll(SSN_SHAPE)) take(m.index ?? 0, m[0], "ssn");
   for (const m of text.matchAll(SSN_LABEL))
     if (count(m[1]) === 9) take(tail(m), m[1], "ssn");
+  for (const m of text.matchAll(IBAN))
+    if (count(m[0]) >= 8) take(m.index ?? 0, m[0], "account");
   for (const m of text.matchAll(ACCOUNT_LABEL)) {
     const n = count(m[1]);
     if (n >= 6 && n <= 19) take(tail(m), m[1], "account");

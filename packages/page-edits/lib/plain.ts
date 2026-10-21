@@ -19,6 +19,7 @@ import { splitPage, topLevelKeys } from "./frontmatter";
  * - a line directly under a bullet that is not a bullet or a heading: it
  *   renders as part of that bullet (a lazy continuation);
  * - blockquotes, tables, link reference and footnote definitions;
+ * - `$$` display math, which the wiki browser renders as LaTeX;
  * - setext headings (a line of `=` or `-` under text);
  * - list markers other than `- ` and one space (`*`, `+`, `1.`, `1)`, `-`
  *   and a tab or five spaces), headings inside a bullet, and `#` runs
@@ -56,6 +57,9 @@ const OTHER_MARKER = /^ {0,3}(?:[*+]|\d{1,9}[.)])(?:\s|$)/;
 // "-" then a tab, or five or more spaces: the bullet's text starts as code.
 const ODD_BULLET = /^\s*-(?:\t| {5,})/;
 const LONE_CR = /\r(?!$)/;
+// Display math in the wiki browser (Streamdown's math plugin): `$$` opens a
+// block whose lines render as LaTeX, where `\phantom` hides them.
+const MATH = /\$\$/;
 const BULLET = /^(\s*)- /;
 const HEADING = /^#{1,6}(?:\s|$)/;
 const HEADING_IN_BULLET = /^\s*-\s+#{1,6}(?:\s|$)/;
@@ -93,6 +97,10 @@ export function validateFactText(path: string, page: string): void {
     if (HTML.test(text))
       found(
         "raw HTML (a tag, an `<!-- comment -->`, or an `<autolink>`) can hide a line; write a link as [text](url)"
+      );
+    if (MATH.test(text))
+      found(
+        "`$$` opens display math, which renders its lines as LaTeX; write amounts with one $"
       );
     if (ENTITY.test(text))
       found(

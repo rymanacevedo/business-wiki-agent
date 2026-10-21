@@ -25,7 +25,7 @@ const NEW_EIN = "- **EIN**: 99-9999999 (src: 2024-10-21-ein-letter)";
 
 const edit = (body: string, from: string, to: string) => {
   assert.ok(body.includes(from), `fixture lacks ${from}`);
-  return body.replace(from, to);
+  return body.replace(from, () => to);
 };
 
 /** Validation refuses `page`, saying why and what to write instead. */
@@ -152,6 +152,11 @@ test("refuses indentation or bullet spacing that renders differently from how it
   // A tab after the marker, or five spaces, start code inside the bullet.
   hides("-\t**EIN**: 99-9999999 (src: 2024-10-21-ein-letter)", /bullet/);
   hides("-      **EIN**: 99-9999999 (src: 2024-10-21-ein-letter)", /bullet/);
+});
+
+test("refuses display math, which the wiki browser renders as LaTeX", () => {
+  hides(`$$\n\\phantom{x}\n${EIN}\n$$`, /display math/);
+  hides(`${EIN} $$\\phantom{88}$$`, /display math/);
 });
 
 test("refuses a lone carriage return, which renders as a line break the guard does not see", () => {
