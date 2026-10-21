@@ -6,15 +6,16 @@ export type { MaskedValue };
 /**
  * Masking: SSNs become `***-**-NNNN`, financial account, card, and routing
  * numbers become `****NNNN`. Nothing else changes (names, addresses, phones,
- * emails, the EIN stay clear).
+ * emails, the EIN stay clear). The rules that find each class are documented
+ * in `lib/mask.ts`.
  */
 export function maskSource(text: string): string {
   return mask(text);
 }
 
 /**
- * The full values Masking hides in `text` (SSNs, then account, card, and
- * routing numbers), each with its masked form: what must never leave the
+ * The full values Masking hides in `text` (SSNs, and account, card, and
+ * routing numbers), in text order, each with its masked form: what must never leave the
  * immutable Source.
  */
 export function maskedValues(text: string): MaskedValue[] {

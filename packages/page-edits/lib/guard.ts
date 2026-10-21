@@ -5,14 +5,20 @@ import {
   topLevelKeys,
 } from "./frontmatter";
 
+/** The fact line a refused edit would change: its label and its claims. */
+type Fact = { label: string; claims: string[] };
+
 /** An edit that would alter an Established Fact outside `change_fact`. */
 export class EstablishedFactError extends Error {
-  constructor(path: string, what: string) {
+  constructor(path: string, what: string, fact?: Fact) {
+    const shape = fact
+      ? `\`- ${fact.label}: ⚠ **Conflict**, unresolved since <Demo Date>: ${fact.claims.join(" or ")} or <new value> (src: <new source>)\``
+      : "`- **Label**: ⚠ **Conflict**, unresolved since <Demo Date>: <current value> (src: <its source>) or <new value> (src: <new source>)`";
     super(
       `update_page cannot change ${what} on ${path}: it is an Established Fact. ` +
         "Propose the change with change_fact (page, old value, new value, Source, reason) and wait for the Owner's Approval. " +
-        "If a new Source disagrees with this fact (a Contradiction, not a Supersession), do not use change_fact: rewrite the line in the Schema's Conflict shape, same label, keeping the current value and its Citation: " +
-        "`- **Label**: ⚠ **Conflict**, unresolved since <Demo Date>: <current value> (src: <its source>) or <new value> (src: <new source>)`; that needs no Approval."
+        "If a new Source disagrees with this fact (a Contradiction, not a Supersession), do not use change_fact: rewrite the line in the Schema's Conflict shape, same label, keeping the current value and its Citation verbatim as one claim, word for word: " +
+        `${shape}; that needs no Approval.`
     );
     this.name = "EstablishedFactError";
   }
@@ -60,7 +66,12 @@ export function guardPageEdit(
       continue;
     }
     if (PLACEHOLDER.test(line) || keptInConflict(line, next.body)) continue;
-    throw new EstablishedFactError(path, `the fact line "${line}"`);
+    const fact = FACT_LINE.exec(line);
+    throw new EstablishedFactError(
+      path,
+      `the fact line "${line}"`,
+      fact ? { label: fact[1], claims: claims(fact[2]).claims } : undefined
+    );
   }
 }
 
@@ -96,35 +107,50 @@ function pageKind(
 /** A fact line that records an absence; filling it in is a first write. */
 const PLACEHOLDER = /not in the wiki/i;
 
+/** `- **Label**: value`, the shape of every Profile and Obligation fact line. */
+const FACT_LINE = /^- (\*\*[^*]+\*\*):\s*(.+)$/;
+
+/** `⚠ **Conflict**[, unresolved since <date>]: <claim> or <claim> ...` */
+const CONFLICT_VALUE = /^(?:⚠\s*)?\*\*Conflict\*\*[^:]*:\s*(.+)$/;
+
+/**
+ * The claims a fact line's value states. A plain value is one claim; a
+ * Conflict's claims are split after each Citation at " or ", so a claim is
+ * its value with its Citations. Whitespace is normalised and a trailing full
+ * stop dropped; nothing else is.
+ */
+function claims(value: string): { conflict: boolean; claims: string[] } {
+  const norm = (claim: string) =>
+    claim.replace(/\s+/g, " ").trim().replace(/\.$/, "");
+  const conflict = CONFLICT_VALUE.exec(value.trim());
+  if (!conflict) return { conflict: false, claims: [norm(value)] };
+  return {
+    conflict: true,
+    claims: conflict[1].split(/(?<=\(src: [^)]+\))\s+or\s+/).map(norm),
+  };
+}
+
 /**
  * A Contradiction may replace a fact line when the new line keeps the same
- * label, is marked `**Conflict**`, and still carries the first recorded value:
- * its Citations, and its numbers (or, with none, its text verbatim).
+ * label, is in the Schema's Conflict shape with at least two claims, and
+ * states the complete original claim (value and Citation, whitespace aside)
+ * as one of them: both claims equally, none primary. If the replaced line was
+ * already a Conflict, every one of its claims must survive. Anything less
+ * changes the Established Fact and needs `change_fact`.
  */
 function keptInConflict(line: string, body: string[]): boolean {
-  const match = /^- (\*\*[^*]+\*\*):\s*(.+)$/.exec(line);
+  const match = FACT_LINE.exec(line);
   if (!match) return false;
   const [, label, value] = match;
-  const citations = value.match(/\(src: [^)]+\)/g) ?? [];
-  const text = value.replace(/\(src: [^)]+\)/g, "");
-  const numbers =
-    text.match(/[\w$.,-]*\d[\w$.,-]*/g)?.map((n) => n.replace(/[.,]+$/, "")) ??
-    [];
-  const keeps = (next: string) =>
-    numbers.length
-      ? numbers.every((n) =>
-          new RegExp(`(^|[^\\w])${n.replace(/[.$]/g, "\\$&")}(?!\\w)`).test(
-            next
-          )
-        )
-      : next.includes(value);
-  return body
-    .map((next) => next.trim())
-    .some(
-      (next) =>
-        next.startsWith(`- ${label}:`) &&
-        next.includes("**Conflict**") &&
-        citations.every((c) => next.includes(c)) &&
-        keeps(next)
+  const original = claims(value).claims;
+  return body.some((next) => {
+    const found = FACT_LINE.exec(next.trim());
+    if (!found || found[1] !== label) return false;
+    const now = claims(found[2]);
+    return (
+      now.conflict &&
+      now.claims.length >= 2 &&
+      original.every((claim) => now.claims.includes(claim))
     );
+  });
 }
