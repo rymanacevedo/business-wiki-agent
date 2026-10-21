@@ -44,6 +44,7 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
   - repair-5 makes Profile and Obligation Pages plain Markdown only, checked in `validatePage` and on every write path, including approved `change_fact` writes (which had skipped validation on an already-invalid Page). HTML, entities, invisible characters, code, quotes, tables, setext headings and loose indentation are all refused, each with what to write instead. Every fixture Page passes unchanged.
   - Masking became fail-safe: every number of 8 or more digits is masked unless it is positively a phone, the EIN, a date, an amount, a ZIP+4, or a document identifier. Masking of the Corpus is byte-identical.
   - Live: the Bayview certificate, the at-ingest Contradiction (4/4) and all five approvals rows passed. The demo was redeployed.
+- **Integration review, round 6** (head 2dba49d) found three more and was not repaired: folded YAML and labelled prose paragraphs let a fact change without an Approval, and Masking leaves period- and slash-grouped numbers clear. As agreed beforehand, the human chose to ship with them listed: follow-ups #39 (guard) and #40 (Masking), and a calibration-set note on #35. The review never passed, so PR #31 was marked ready on the human's decision, not on a passing `--status`.
 
 ## Findings worth remembering
 
@@ -72,7 +73,7 @@ Implement every ticket of spec #15 on the integration branch `spec/15-clerk` (dr
 
 - Calibration labels, trace share links, the "What I checked myself" list, the pitch sign-off.
 - Left open by repair-4: a second, different line under a label whose original stays is admitted (labels like Record legitimately repeat; Lint should flag a second value); same-named sections; semantic demotion of a visible fact ("EIN (current)") is Lint's to catch; Masking leaves digits written as entities and unlabelled 6–7 digit account numbers clear.
-- Follow-ups #32–#38, among them the unexplained session token budget (#34) and the Bayview Contradiction proposed as a change (#33).
+- Follow-ups #32–#40, among them the unexplained session token budget (#34) and the Bayview Contradiction proposed as a change (#33).
 
 ## Artifacts
 

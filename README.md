@@ -265,7 +265,7 @@ Approval this time, and the Bayview certificate still proposed a
 Contradiction as a change. The other two misses are the known judge
 disagreements. Results are in
 [`docs/evals/runs/after-repairs/`](docs/evals/runs/after-repairs/).
-Four more review rounds followed, each fixed test-first in its own branch:
+Five more review rounds followed. The first four were each fixed test-first in its own branch:
 
 - **Round 2.** A Contradiction could trim the original claim's wording
   without an Approval, so a Conflict must now keep the complete claim and
@@ -287,6 +287,10 @@ Four more review rounds followed, each fixed test-first in its own branch:
   amount, a ZIP+4, or a document identifier
   ([`docs/evals/runs/repair-5/`](docs/evals/runs/repair-5/)). Its output
   over the Corpus is unchanged.
+- **Round 6** found three more and was not repaired. The human chose to
+  ship with them listed (below, [#39](https://github.com/rymanacevedo/business-wiki-agent/issues/39)
+  and [#40](https://github.com/rymanacevedo/business-wiki-agent/issues/40)).
+  The integration review therefore never passed.
 
 ### Three narrated failures
 
@@ -530,6 +534,22 @@ run. None of them is trimmed. Each one still open has a follow-up issue.
   sum above the 300K per-session input cap without hitting it, so how eve
   counts usage across Approval resumes is unknown, and a larger Inbox may
   stop mid-Ingest. ([#34](https://github.com/rymanacevedo/business-wiki-agent/issues/34))
+- **The Established Fact guard still has representation gaps.** Review
+  round 6 found three ways to change a fact without an Approval:
+  - folded YAML in an Obligation's frontmatter (`recurs: >-` then
+    `yearly`), compared as written rather than as resolved;
+  - a labelled prose paragraph on the Profile, which the guard doesn't read;
+  - a new "EIN (current)" line beside an unchanged original.
+
+  Clerk writes none of these shapes, and no fixture has one; a crafted edit
+  could. Left open.
+  ([#39](https://github.com/rymanacevedo/business-wiki-agent/issues/39))
+
+- **Masking misses some separators.** A card number grouped with periods
+  (`4111.1111.1111.1111`), a slash (`123/456789`), digits written as HTML
+  entities, and unlabelled 6–7 digit account numbers stay clear. No Source
+  in the Corpus prints these. Found by review round 6 and left open.
+  ([#40](https://github.com/rymanacevedo/business-wiki-agent/issues/40))
 
 ### Limitations we chose
 
