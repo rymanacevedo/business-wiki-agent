@@ -1,0 +1,11 @@
+DOCKSIDE DELI
+09/24/2026 12:12  REG 2  TRN 241212
+--------------------------------
+BLT                        10.25
+COFFEE                      2.50
+SUBTOTAL                   12.75
+TAX 8.0%                    1.02
+TOTAL                      13.77
+DEBIT ************4417     13.77
+AUTH 3E7G  APPROVED
+THANKS!! COME 4GAIN

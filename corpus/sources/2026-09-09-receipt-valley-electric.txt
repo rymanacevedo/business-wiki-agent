@@ -1,0 +1,15 @@
+VALLEY ELECTRIC SUPPLY
+402 C4NAL S7 PORTSIDE
+09/09/2026 10:17  REG 2  TRN 091017
+--------------------------------
+CAPAC1TOR 45/5 MFD         29.70
+  2 @ 14.85
+CONTACTOR 30A  1P          21.40
+THERMAL FUSE 4PK           12.60
+SUBTOTAL                   63.70
+TAX 8.0%                    5.10
+TOTAL                      68.80
+DEBIT ************4417     68.80
+AUTH 2PRK  APPROVED
+NO RETURNS ON ELECTRIC4L
+THANK YOV

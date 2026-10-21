@@ -20,6 +20,14 @@ type Finding = {
 type Axis = { complete: boolean; report: string; findings: Finding[] };
 type Review = { standards: Axis; spec: Axis };
 
+// Codex echoes the prompt and progress on stderr; only its ERROR: lines matter.
+function errorLines(stderr: string): string {
+  return stderr
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith("ERROR:"))
+    .join("\n");
+}
+
 function run(executable: string, args: string[]): string {
   const result = spawnSync(executable, args, {
     encoding: "utf8",
@@ -228,6 +236,8 @@ Skill:\n${skill}`;
         "codex",
         [
           "exec",
+          "-c",
+          'model_reasoning_effort="high"',
           "--enable",
           "multi_agent",
           "--sandbox",
@@ -251,7 +261,7 @@ Skill:\n${skill}`;
       );
       if (result.error || result.status !== 0)
         throw new Error(
-          `Codex review failed: ${result.error?.message || result.stderr || result.status}`
+          `Codex review failed: ${result.error?.message || errorLines(result.stderr) || result.status}`
         );
       const review: unknown = JSON.parse(readFileSync(output, "utf8"));
       validate(review);

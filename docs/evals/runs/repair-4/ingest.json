@@ -1,0 +1,79 @@
+{
+  "label": "repair-4",
+  "slice": "ingest",
+  "cases": [
+    {
+      "id": "ingest/sources/0007",
+      "caseId": "ingest-2026-03-02-insurance-cert-meridian-bayview",
+      "description": "Ingest 2026-03-02-insurance-cert-meridian-bayview (insurance-certificate, contradiction Trap): Same policy's certificate issued to the property-manager client, printing Suite 201 against the lease's Suite 210; same policy number, so not a Supersession.",
+      "class": "trap",
+      "tags": [
+        "trap",
+        "trajectory",
+        "trust"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 1,
+        "page_faithful": 1
+      },
+      "toolCalls": 11,
+      "costUsd": 0.02282755,
+      "traceIds": [
+        "59019685f9c019c83a819ab010a67518"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-50-38.jsonl"
+    },
+    {
+      "id": "ingest/sources/0029",
+      "caseId": "ingest-2026-10-14-insurance-cert-meridian-renewal",
+      "description": "Ingest 2026-10-14-insurance-cert-meridian-renewal (insurance-certificate, supersession Trap): Renewal certificate with new policy GL-2026-80233, 2026-11-15 to 2027-11-15: a legitimate Supersession of the renewal Obligation, needing Approval.",
+      "class": "trap",
+      "tags": [
+        "trap",
+        "trajectory",
+        "trust"
+      ],
+      "verdict": "failed",
+      "gates": [
+        {
+          "name": "parked",
+          "passed": true
+        },
+        {
+          "name": "calledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": false,
+          "message": "no summary Page cites 2026-10-14-insurance-cert-meridian-renewal"
+        }
+      ],
+      "scores": {
+        "extraction": 1,
+        "page_faithful": 0
+      },
+      "toolCalls": 5,
+      "costUsd": 0.010013399999999999,
+      "traceIds": [
+        "6475d60acbee0a33f8e7d914f6345c15"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-50-38.jsonl"
+    }
+  ]
+}

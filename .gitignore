@@ -1,7 +1,19 @@
 node_modules/
 .claude/worktrees/
 
+# local WikiStore backend (bun run wiki:seed)
+.wiki-store/
+
 # secrets and tool state (Eve scaffold ignores the same)
 .env*
+!.env.example
 .vercel/
 .eve/
+
+# Eve build output
+.next/
+.output/
+.nitro/
+dist/
+*.tsbuildinfo
+.DS_Store

@@ -14,10 +14,20 @@ import { test } from "node:test";
 
 const command = resolve("scripts/review-spec.ts");
 
+// A pre-commit hook exports GIT_DIR, GIT_INDEX_FILE and friends; inherited,
+// they point the fixture's git at the real repository instead of its temp dir.
+const cleanEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_"))
+);
+
 function fixture() {
   const cwd = mkdtempSync(join(tmpdir(), "spec-review-test-"));
   const git = (...args: string[]) => {
-    const result = spawnSync("git", args, { cwd, encoding: "utf8" });
+    const result = spawnSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      env: cleanEnv,
+    });
     assert.equal(result.status, 0, result.stderr);
     return result.stdout.trim();
   };
@@ -38,11 +48,12 @@ function fixture() {
 const fs = require('node:fs');
 const args = process.argv.slice(2);
 const prompt = fs.readFileSync(0, 'utf8');
-if (!prompt.includes('AC: display a greeting.') || !args.includes('read-only') || args.includes('--ephemeral')) process.exit(9);
+if (!prompt.includes('AC: display a greeting.') || !args.includes('read-only') || args.includes('--ephemeral') || !args.includes('model_reasoning_effort="high"')) process.exit(9);
 if (process.env.REVIEW_MUTATE_SPEC) fs.appendFileSync(process.env.REVIEW_MUTATE_SPEC, ' New AC');
 if (process.env.REVIEW_RESPONSE !== 'NO_OUTPUT') fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], process.env.REVIEW_RESPONSE);
 if (process.env.REVIEW_STARTED) fs.writeFileSync(process.env.REVIEW_STARTED, 'ready');
 if (process.env.REVIEW_RELEASE) while (!fs.existsSync(process.env.REVIEW_RELEASE)) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+if (process.env.REVIEW_EXIT !== '0') process.stderr.write('Reading prompt from stdin...\\nERROR: stream disconnected\\nnoise\\nERROR: retry limit reached\\n');
 process.exit(Number(process.env.REVIEW_EXIT || 0));
 `
   );
@@ -66,7 +77,7 @@ require('node:fs').writeSync(1, JSON.stringify({ number: 42, title: 'Greeting', 
       cwd,
       encoding: "utf8",
       env: {
-        ...process.env,
+        ...cleanEnv,
         PATH: `${bin}:${process.env.PATH}`,
         REVIEW_RESPONSE:
           typeof response === "string" ? response : JSON.stringify(response),
@@ -105,6 +116,22 @@ test("a complete clean review approves only the captured commit", () => {
       "passed"
     );
     assert.equal(f.review(clean, ["--status"]).status, 0);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("a failed run reports only Codex's ERROR lines", () => {
+  const f = fixture();
+  try {
+    const result = f.review(clean, [], "1");
+    assert.equal(result.status, 2, result.stdout);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, "incomplete");
+    assert.equal(
+      report.error,
+      "Codex review failed: ERROR: stream disconnected\nERROR: retry limit reached"
+    );
   } finally {
     f.cleanup();
   }
@@ -289,7 +316,7 @@ test("concurrent reviews cannot replace the active review's blocking result", as
   const child = spawn("bun", [command, "--base", f.base, "--spec", "spec.md"], {
     cwd: f.cwd,
     env: {
-      ...process.env,
+      ...cleanEnv,
       PATH: `${f.bin}:${process.env.PATH}`,
       REVIEW_RESPONSE: JSON.stringify(blocking),
       REVIEW_STARTED: started,

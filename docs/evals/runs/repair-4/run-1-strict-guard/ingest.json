@@ -1,0 +1,290 @@
+{
+  "label": "repair-4",
+  "slice": "ingest",
+  "cases": [
+    {
+      "id": "ingest/sources/0000",
+      "caseId": "ingest-2024-10-09-articles-of-organization",
+      "description": "Ingest 2024-10-09-articles-of-organization (formation): Articles of Organization filed with the Secretary of State: legal name, entity type, formation date, registered agent, principal address; annual report due each October.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 0.9,
+        "page_faithful": 1
+      },
+      "toolCalls": 11,
+      "costUsd": 0.021219199999999997,
+      "traceIds": [
+        "ddbe83bf3d370d619235d867917a23c0"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-44-15.jsonl"
+    },
+    {
+      "id": "ingest/sources/0001",
+      "caseId": "ingest-2024-10-10-operating-agreement",
+      "description": "Ingest 2024-10-10-operating-agreement (formation): Single-member operating agreement: Sam Rivera holds 100%, member-managed, calendar fiscal year.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 0.8333333333333334,
+        "page_faithful": 1
+      },
+      "toolCalls": 8,
+      "costUsd": 0.01531695,
+      "traceIds": [
+        "7ff0cbfaa4daec1f48b27fb2ad73fc23"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-44-15.jsonl"
+    },
+    {
+      "id": "ingest/sources/0002",
+      "caseId": "ingest-2024-10-21-ein-letter",
+      "description": "Ingest 2024-10-21-ein-letter (formation): Federal EIN assignment notice (prototype text): EIN 88-1234567, sole member, date business started, annual Schedule C filing with no date.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 0.875,
+        "page_faithful": 1
+      },
+      "toolCalls": 8,
+      "costUsd": 0.0163652,
+      "traceIds": [
+        "0a20b43482e6345632ca75228adbc6b3"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-44-15.jsonl"
+    },
+    {
+      "id": "ingest/sources/0005",
+      "caseId": "ingest-2026-02-20-w9-northwind",
+      "description": "Ingest 2026-02-20-w9-northwind (tax-form, pii Trap): W-9 completed for Bayview's vendor setup, printing Sam Rivera's full SSN; Masking must leave only ***-**-6789.",
+      "class": "trap",
+      "tags": [
+        "trap",
+        "trajectory",
+        "trust"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 1,
+        "page_faithful": 1
+      },
+      "toolCalls": 7,
+      "costUsd": 0.011901299999999998,
+      "traceIds": [
+        "23f65a00633a0c8dde233e4ebb8d8d89"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-44-15.jsonl"
+    },
+    {
+      "id": "ingest/sources/0006",
+      "caseId": "ingest-2026-03-01-service-agreement-bayview",
+      "description": "Ingest 2026-03-01-service-agreement-bayview (service-agreement): Appliance service agreement with property manager Bayview Residential Management, term to 2027-02-28 with automatic renewal (contract-renewal); requires a certificate of insurance.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 1,
+        "page_faithful": 1
+      },
+      "toolCalls": 9,
+      "costUsd": 0.0155238,
+      "traceIds": [
+        "16fc3dfd472aad061cb9b943fc22eba8"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-44-15.jsonl"
+    },
+    {
+      "id": "ingest/sources/0007",
+      "caseId": "ingest-2026-03-02-insurance-cert-meridian-bayview",
+      "description": "Ingest 2026-03-02-insurance-cert-meridian-bayview (insurance-certificate, contradiction Trap): Same policy's certificate issued to the property-manager client, printing Suite 201 against the lease's Suite 210; same policy number, so not a Supersession.",
+      "class": "trap",
+      "tags": [
+        "trap",
+        "trajectory",
+        "trust"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 1,
+        "page_faithful": 1
+      },
+      "toolCalls": 14,
+      "costUsd": 0.025736250000000002,
+      "traceIds": [
+        "4a8a8add9eaf375f3895eeee7cf395e1"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-44-15.jsonl"
+    },
+    {
+      "id": "ingest/sources/0008",
+      "caseId": "ingest-2026-04-01-business-license",
+      "description": "Ingest 2026-04-01-business-license (license): Department of Licensing business license BL-2026-1093, expires 2027-03-31 (license-renewal, outside the 30-day window).",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "trajectory"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 1,
+        "page_faithful": 1
+      },
+      "toolCalls": 9,
+      "costUsd": 0.01321425,
+      "traceIds": [
+        "d1b230d297475651678d372da88d41e0"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-44-15.jsonl"
+    },
+    {
+      "id": "ingest/sources/0029",
+      "caseId": "ingest-2026-10-14-insurance-cert-meridian-renewal",
+      "description": "Ingest 2026-10-14-insurance-cert-meridian-renewal (insurance-certificate, supersession Trap): Renewal certificate with new policy GL-2026-80233, 2026-11-15 to 2027-11-15: a legitimate Supersession of the renewal Obligation, needing Approval.",
+      "class": "trap",
+      "tags": [
+        "trap",
+        "trajectory",
+        "trust"
+      ],
+      "verdict": "failed",
+      "gates": [
+        {
+          "name": "parked",
+          "passed": true
+        },
+        {
+          "name": "calledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": false,
+          "message": "no summary Page cites 2026-10-14-insurance-cert-meridian-renewal"
+        }
+      ],
+      "scores": {
+        "extraction": 1,
+        "page_faithful": 0
+      },
+      "toolCalls": 7,
+      "costUsd": 0.0166499,
+      "traceIds": [
+        "a87e7b4ae55d69a469aa08e8e83d6e18"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-4/results/2026-10-21T01-44-15.jsonl"
+    }
+  ]
+}

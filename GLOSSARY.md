@@ -131,7 +131,7 @@ A newer Source of the same kind that legitimately replaces an established fact, 
 _Avoid_: Update, renewal, replacement, overwrite
 
 **Masking**:
-Reducing an SSN or financial account number to a non-identifying form before Clerk ever reads it, so the full value exists only in the Source.
+Reducing an SSN, a financial account number, or any other long number not positively known to be safe (a phone, the EIN, a date, an amount) to a non-identifying form before Clerk ever reads it, so the full value exists only in the Source.
 _Avoid_: Redaction, scrubbing, anonymisation, PII filter
 
 **Suspicious Content**:

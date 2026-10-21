@@ -1,0 +1,18 @@
+Ridgeline Tool Supply
+55 Foundry Ln, Portside  |  (555) 010-5530  |  sales@ridgelinetools.example
+
+INVOICE R-20931
+Invoice date: August 20, 2026
+Bill to: Northwind Repair LLC, 1480 Harbor Ave Ste 210, Portside
+Terms: Paid at order
+
+Description                                      Qty     Amount
+Digital manifold gauge set, 4-valve                1     289.00
+
+Subtotal                                                 289.00
+Tax (8.0% on parts)                                       23.12
+Total                                                    312.12
+
+Paid in full by debit card ending 4417 on 08/20/2026. Balance due: $0.00
+
+Questions about this invoice? Contact sales@ridgelinetools.example.
