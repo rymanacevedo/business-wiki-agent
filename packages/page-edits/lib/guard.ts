@@ -63,12 +63,11 @@ export function guardPageEdit(
  * Every fact line of `before` must still be the current fact of its label in
  * its section of `after`: the same line, or a Conflict that keeps every claim
  * of it (see `keeps`). A copy elsewhere (under `## History`, in another
- * section, under another label) is not the current fact. A section may gain
- * new labels freely, and an existing label may gain a line that restates its
- * value from another Source or is such a Conflict; any other second line for
- * the label would compete with the Established Fact. A placeholder (`not in
- * the wiki`) may be filled in. Bullets with no label (History lines, First
- * recorded notes) must survive somewhere on the Page.
+ * section, under another label) is not the current fact. New lines are first
+ * writes, under a new label or an existing one (an Obligation's `**Record**`
+ * gains a line per certificate). A placeholder (`not in the wiki`) may be
+ * filled in. Bullets with no label (History lines, First recorded notes) must
+ * survive somewhere on the Page.
  */
 function guardFactLines(path: string, before: string[], after: string[]) {
   const old = readFacts(before);
@@ -101,18 +100,6 @@ function guardFactLines(path: string, before: string[], after: string[]) {
           `the fact line "${fact.text}" under ${where(fact)}`,
           fact,
           "A fact line stays under its label in its section: a copy under `## History` or elsewhere does not keep it. "
-        );
-    }
-    for (const line of unmatched) {
-      const admitted = facts.some(
-        (fact) => keeps(line, fact) || sameValue(line, fact)
-      );
-      if (!admitted)
-        throw new EstablishedFactError(
-          path,
-          `${line.label} under ${where(line)} by adding a second line for it, "${line.text}"`,
-          facts[0],
-          "If the new line is a different fact, or this fact in another Source's own terms, give it its own label (e.g. `**Entity type (Articles of Organization)**`): a new label is a first write and needs no Approval. "
         );
     }
   }
@@ -222,20 +209,5 @@ function keeps(line: FactLine, fact: FactLine): boolean {
     now.conflict &&
     now.claims.length >= 2 &&
     fact.claims.every((claim) => now.claims.includes(claim))
-  );
-}
-
-/**
- * A plain line restating a plain fact's value, Citations aside: the same fact
- * seen in another Source.
- */
-function sameValue(line: FactLine, fact: FactLine): boolean {
-  const plain = (value: string) => !claims(value).conflict;
-  const bare = (value: string) =>
-    claims(value.replace(/\(src: [^)]+\)/g, "")).claims.join();
-  return (
-    plain(line.value) &&
-    plain(fact.value) &&
-    bare(line.value) === bare(fact.value)
   );
 }

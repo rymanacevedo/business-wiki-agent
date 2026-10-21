@@ -376,10 +376,16 @@ test("rejects moving a fact line into another section, changed or not", () => {
   );
 });
 
-test("rejects a second line for a label that competes with its fact", () => {
-  const before = FULL();
-  rejects("profile.md", before, edit(before, EIN, `${EIN}\n${NEW_EIN}`));
-  rejects("profile.md", before, edit(before, EIN, `${NEW_EIN}\n${EIN}`));
+test("allows a further line under a label whose fact line stays, as an Obligation gains a second Record link", () => {
+  const path =
+    "obligations/2026-11-15-insurance-renewal-meridian-mutual-insurance-company.md";
+  const before = fixture("full", path);
+  const record =
+    "- **Record**: [certificate](../summaries/2025-11-15-insurance-cert-meridian.md) (src: 2025-11-15-insurance-cert-meridian)";
+  const bayview =
+    "- **Record**: [certificate to Bayview](../summaries/2026-03-02-insurance-cert-meridian-bayview.md) (src: 2026-03-02-insurance-cert-meridian-bayview)";
+  guardPageEdit(path, before, edit(before, record, `${record}\n${bayview}`));
+  rejects(path, before, edit(before, record, bayview));
 });
 
 test("allows a second line restating a fact's value from another Source", () => {
@@ -502,7 +508,6 @@ test("rejects a Conflict that drops a claim of a Conflict already on the Page", 
   );
   assert.notEqual(dropped, line);
   rejects("profile.md", before, edit(before, line, dropped));
-  rejects("profile.md", before, edit(before, line, `${line}\n${dropped}`));
 });
 
 test("a value that merely mentions 'not in the wiki' is not a placeholder", () => {
@@ -550,18 +555,19 @@ test("every fixture Profile and Obligation Page passes its own guard, unchanged 
   }
 });
 
-test("the refusal of a second line for a label offers its own label or a Conflict", () => {
+test("the refusal of a fact moved into History names its section and the Conflict to write there", () => {
   const before = FULL();
   assert.throws(
     () =>
       guardPageEdit(
         "profile.md",
         before,
-        edit(before, EIN, `${EIN}\n${NEW_EIN}`)
+        `${edit(before, EIN, NEW_EIN)}\n## History\n\n${EIN}\n`
       ),
     (error: unknown) =>
       error instanceof EstablishedFactError &&
-      error.message.includes("its own label") &&
+      error.message.includes(`"${EIN}" under ## Identity`) &&
+      error.message.includes("a copy under `## History`") &&
       error.message.includes(
         "`- **EIN**: ⚠ **Conflict**, unresolved since <Demo Date>: 88-1234567 (src: 2024-10-21-ein-letter) or <new value>"
       )
