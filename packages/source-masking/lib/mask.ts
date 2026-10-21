@@ -9,7 +9,8 @@
  * 2. SSN, by label: 9 digits (contiguous or `NNN NN NNNN`) right after
  *    "SSN" or "Social security number".
  * 3. Account, card, or routing number, by label: 6 to 19 digits, contiguous,
- *    joined by dashes, or in a card grouping (rule 4), right after a label
+ *    joined by dashes, in groups of 2 to 6 joined by single spaces (as banks
+ *    print "021 000 021"), or in a card grouping (rule 4), right after a label
  *    naming one ("Account", "Acct", "A/C", "Routing", "ABA", "RTN", "Card",
  *    or a card brand, alone or joined to another by "/" or "&", as in
  *    "ABA/Routing" or "Routing/ACH"), optionally followed by "number",
@@ -55,10 +56,14 @@ const CARD_GROUPING = `${grouped(" ")}|${grouped("-")}`;
 
 const LABEL = String.raw`(?:account|acct|a/c|routing|aba|rtn|card|visa|mastercard|amex|american express|discover)`;
 
+// A bank's grouping after a label, as in "021 000 021" or "1234 5678 9012":
+// groups of 2 to 6 digits joined by single spaces.
+const SPACED = String.raw`\d{2,6}(?: \d{2,6})+`;
+
 const ACCOUNT_LABEL = new RegExp(
   String.raw`\b${LABEL}(?:\s*[/&]\s*(?:${LABEL}|ach|wire))*` +
     String.raw`(?:\s*(?:number|num|no\.?|#))?\s*[:#]?\s*` +
-    `(${CARD_GROUPING}|\\d+(?:-\\d+)*)${END}`,
+    `(${CARD_GROUPING}|${SPACED}|\\d+(?:-\\d+)*)${END}`,
   "gi"
 );
 
