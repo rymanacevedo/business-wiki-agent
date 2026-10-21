@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { test } from "node:test";
 import { EstablishedFactError, guardPageEdit } from "../index";
 import { obligation, profile, record } from "./fixtures";
@@ -126,7 +128,7 @@ test("rejects a Contradiction that drops the first recorded value", () => {
   );
 });
 
-test("accepts a Contradiction that keeps the first value's numbers and Citation but trims its wording", () => {
+test("rejects a Contradiction that keeps the first value's numbers and Citation but trims its wording", () => {
   const before = edit(
     profile,
     "- **Premises suite**: Suite 210 (src: 2025-04-01-lease-harborview)",
@@ -137,7 +139,64 @@ test("accepts a Contradiction that keeps the first value's numbers and Citation 
     "- **Premises suite**: 1480 Harbor Avenue, Suite 210, Portside (src: 2025-04-01-lease-harborview)",
     "- **Premises suite**: ⚠ **Conflict**, unresolved since 2026-10-17: 1480 Harbor Avenue, Suite 210 (src: 2025-04-01-lease-harborview) or 1480 Harbor Avenue, Suite 201 (src: 2026-03-02-insurance-cert-meridian-bayview)"
   );
-  guardPageEdit("profile.md", before, after);
+  rejects("profile.md", before, after);
+});
+
+test("accepts a Contradiction that keeps the first claim whole, whitespace aside", () => {
+  const after = edit(
+    profile,
+    "- **Premises suite**: Suite 210 (src: 2025-04-01-lease-harborview)",
+    "- **Premises suite**: ⚠ **Conflict**, unresolved since 2026-10-17: Suite  210  (src: 2025-04-01-lease-harborview)  or Suite 201 (src: 2026-03-02-insurance-cert-meridian-bayview)."
+  );
+  guardPageEdit("profile.md", profile, after);
+});
+
+test("every Contradiction in the base and full fixtures is admitted from its first recorded claim", () => {
+  const conflicts = ["base", "full"].flatMap((wiki) =>
+    fixture(wiki, "profile.md")
+      .split("\n")
+      .filter((line) => line.includes("**Conflict**"))
+      .map((line) => ({ wiki, line }))
+  );
+  assert.ok(conflicts.length >= 2, "the fixtures carry the Contradictions");
+  for (const { wiki, line } of conflicts) {
+    const after = fixture(wiki, "profile.md");
+    const [, label, first] =
+      /^- (\*\*[^*]+\*\*): ⚠ \*\*Conflict\*\*[^:]*: (.+?\(src: [^)]+\)) or /.exec(
+        line
+      ) ?? [];
+    assert.ok(first, `cannot read the first claim of ${line}`);
+    const before = edit(after, line, `- ${label}: ${first}`);
+    guardPageEdit("profile.md", before, after);
+  }
+});
+
+test("an existing Conflict may gain a claim but not lose one", () => {
+  const conflict =
+    "- **Premises suite**: ⚠ **Conflict**, unresolved since 2026-10-17: Suite 210 (src: 2025-04-01-lease-harborview) or Suite 201 (src: 2025-11-15-insurance-cert-meridian)";
+  const before = edit(
+    profile,
+    "- **Premises suite**: Suite 210 (src: 2025-04-01-lease-harborview)",
+    conflict
+  );
+  guardPageEdit(
+    "profile.md",
+    before,
+    edit(
+      before,
+      conflict,
+      `${conflict} or Suite 212 (src: 2026-03-02-insurance-cert-meridian-bayview)`
+    )
+  );
+  rejects(
+    "profile.md",
+    before,
+    edit(
+      before,
+      conflict,
+      "- **Premises suite**: ⚠ **Conflict**, unresolved since 2026-10-17: Suite 210 (src: 2025-04-01-lease-harborview) or Suite 212 (src: 2026-03-02-insurance-cert-meridian-bayview)"
+    )
+  );
 });
 
 test("rejects a Contradiction that changes the first value's number", () => {
@@ -244,4 +303,17 @@ test("rejects rewriting a block payment as an inline mapping that marks it paid"
     record,
     withPayment("  payment: { status: paid, due: 2026-10-12, evidence: [] }\n")
   );
+});
+
+const fixture = (wiki: string, name: string) =>
+  readFileSync(join(__dirname, "../../../fixtures", wiki, name), "utf8");
+
+test("rejects a Conflict that replaces a Profile fact while keeping only its numbers and Citation", () => {
+  const before = fixture("full", "profile.md");
+  const after = edit(
+    before,
+    "- **Member (operating agreement)**: Sam Rivera (sole Member; 100% membership interest) (src: 2024-10-10-operating-agreement)",
+    "- **Member (operating agreement)**: ⚠ **Conflict**, unresolved since 2026-10-18: Alex Smith, 100% (src: 2024-10-10-operating-agreement) or Chris Jones (src: 2026-03-02-insurance-cert-meridian-bayview)"
+  );
+  rejects("profile.md", before, after);
 });
