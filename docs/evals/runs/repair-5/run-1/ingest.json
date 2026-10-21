@@ -1,0 +1,42 @@
+{
+  "label": "repair-5",
+  "slice": "ingest",
+  "cases": [
+    {
+      "id": "ingest/sources/0007",
+      "caseId": "ingest-2026-03-02-insurance-cert-meridian-bayview",
+      "description": "Ingest 2026-03-02-insurance-cert-meridian-bayview (insurance-certificate, contradiction Trap): Same policy's certificate issued to the property-manager client, printing Suite 201 against the lease's Suite 210; same policy number, so not a Supersession.",
+      "class": "trap",
+      "tags": [
+        "trap",
+        "trajectory",
+        "trust"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "score [page]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "extraction": 1,
+        "page_faithful": 1
+      },
+      "toolCalls": 11,
+      "costUsd": 0.0218161,
+      "traceIds": [
+        "16bc448676929f709d813937a4d7573b"
+      ],
+      "resultsJsonl": "docs/evals/runs/repair-5/results/2026-10-21T02-29-12.jsonl"
+    }
+  ]
+}
