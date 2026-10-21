@@ -92,7 +92,15 @@ _Avoid_: Confirmation, permission, sign-off, consent
 
 **Citation**:
 A reference from a Page or an answer back to the Source or Page it came from.
-_Avoid_: Reference, link, footnote
+_Avoid_: Reference, footnote
+
+**Link**:
+A typed relation from one Page to another, derived from a Citation, a Markdown link, or a frontmatter field such as `sources`, `vendor`, or `superseded_by`. Clerk never writes a Link by hand; it follows from what the Pages already say.
+_Avoid_: Edge, relationship, backlink, graph
+
+**Neighbourhood**:
+The Pages within a small number of Links of a Page that matched a Query, returned with it so an answer can connect facts across Pages.
+_Avoid_: Subgraph, context window, related pages, hops
 
 ### The seed corpus
 
