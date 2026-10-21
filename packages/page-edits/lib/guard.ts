@@ -10,12 +10,12 @@ type Fact = { label: string; claims: string[] };
 
 /** An edit that would alter an Established Fact outside `change_fact`. */
 export class EstablishedFactError extends Error {
-  constructor(path: string, what: string, fact?: Fact) {
+  constructor(path: string, what: string, fact?: Fact, hint = "") {
     const shape = fact
       ? `\`- ${fact.label}: ⚠ **Conflict**, unresolved since <Demo Date>: ${fact.claims.join(" or ")} or <new value> (src: <new source>)\``
       : "`- **Label**: ⚠ **Conflict**, unresolved since <Demo Date>: <current value> (src: <its source>) or <new value> (src: <new source>)`";
     super(
-      `update_page cannot change ${what} on ${path}: it is an Established Fact. ` +
+      `update_page cannot change ${what} on ${path}: it is an Established Fact. ${hint}` +
         "Propose the change with change_fact (page, old value, new value, Source, reason) and wait for the Owner's Approval. " +
         "If a new Source disagrees with this fact (a Contradiction, not a Supersession), do not use change_fact: rewrite the line in the Schema's Conflict shape, same label, keeping the current value and its Citation verbatim as one claim, word for word: " +
         `${shape}; that needs no Approval.`
@@ -56,24 +56,56 @@ export function guardPageEdit(
         throw new EstablishedFactError(path, `the Obligation's ${key}`);
   }
 
+  guardFactLines(path, old.body, next.body);
+}
+
+/**
+ * Every fact line of `before` must still be the current fact of its label in
+ * its section of `after`: the same line, or a Conflict that keeps every claim
+ * of it (see `keeps`). A copy elsewhere (under `## History`, in another
+ * section, under another label) is not the current fact. New lines are first
+ * writes, under a new label or an existing one (an Obligation's `**Record**`
+ * gains a line per certificate). A placeholder (`not in the wiki`) may be
+ * filled in. Bullets with no label (History lines, First recorded notes) must
+ * survive somewhere on the Page.
+ */
+function guardFactLines(path: string, before: string[], after: string[]) {
+  const old = readFacts(before);
+  const now = readFacts(after);
+
   const remaining = new Map<string, number>();
-  for (const line of factLines(next.body))
+  for (const line of now.unlabelled)
     remaining.set(line, (remaining.get(line) ?? 0) + 1);
-  for (const line of factLines(old.body)) {
+  for (const line of old.unlabelled) {
     const count = remaining.get(line) ?? 0;
-    if (count > 0) {
-      remaining.set(line, count - 1);
-      continue;
+    if (count > 0) remaining.set(line, count - 1);
+    else if (!PLACEHOLDER.test(line))
+      throw new EstablishedFactError(path, `the line "${line}"`);
+  }
+
+  for (const [key, lines] of old.facts) {
+    const facts = lines.filter((fact) => !isPlaceholder(fact));
+    if (facts.length === 0) continue;
+    const next = now.facts.get(key) ?? [];
+    const unmatched = [...next];
+    for (const fact of facts) {
+      const at = unmatched.findIndex((line) => line.text === fact.text);
+      if (at !== -1) {
+        unmatched.splice(at, 1);
+        continue;
+      }
+      if (!next.some((line) => keeps(line, fact)))
+        throw new EstablishedFactError(
+          path,
+          `the fact line "${fact.text}" under ${where(fact)}`,
+          fact,
+          "A fact line stays under its label in its section: a copy under `## History` or elsewhere does not keep it. "
+        );
     }
-    if (PLACEHOLDER.test(line) || keptInConflict(line, next.body)) continue;
-    const fact = FACT_LINE.exec(line);
-    throw new EstablishedFactError(
-      path,
-      `the fact line "${line}"`,
-      fact ? { label: fact[1], claims: claims(fact[2]).claims } : undefined
-    );
   }
 }
+
+const where = (fact: FactLine) => fact.section || "the Page's top";
 
 /** Frontmatter keys that are Established Facts on an Obligation Page. */
 const OBLIGATION_KEYS = [
@@ -86,11 +118,40 @@ const OBLIGATION_KEYS = [
   "done_on",
 ];
 
-/** Bullet lines of a Profile or Obligation body, trimmed. */
-function factLines(body: string[]): string[] {
-  return body
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("- "));
+/** A labelled fact line: its section heading, label, value, and claims. */
+type FactLine = Fact & { section: string; text: string; value: string };
+
+/**
+ * The body's bullets, trimmed: labelled fact lines keyed by section heading
+ * and label, and unlabelled bullets. A section is the nearest heading below
+ * the Page title (`##` or deeper), as written; above the first one it is "".
+ */
+function readFacts(body: string[]): {
+  facts: Map<string, FactLine[]>;
+  unlabelled: string[];
+} {
+  const facts = new Map<string, FactLine[]>();
+  const unlabelled: string[] = [];
+  let section = "";
+  for (const raw of body) {
+    const text = raw.trim();
+    const heading = /^(#+)\s/.exec(text);
+    if (heading) {
+      section = heading[1].length === 1 ? "" : text;
+      continue;
+    }
+    if (!text.startsWith("- ")) continue;
+    const match = FACT_LINE.exec(text);
+    if (!match) {
+      unlabelled.push(text);
+      continue;
+    }
+    const [, label, value] = match;
+    const key = JSON.stringify([section, label]);
+    const line = { section, label, value, text, claims: claims(value).claims };
+    facts.set(key, [...(facts.get(key) ?? []), line]);
+  }
+  return { facts, unlabelled };
 }
 
 function pageKind(
@@ -104,8 +165,12 @@ function pageKind(
   return null;
 }
 
-/** A fact line that records an absence; filling it in is a first write. */
+/** A line that records an absence; filling it in is a first write. */
 const PLACEHOLDER = /not in the wiki/i;
+
+/** A fact whose value records an absence: `- **Label**: not in the wiki`. */
+const isPlaceholder = (fact: FactLine) =>
+  /^not in the wiki\b/i.test(fact.value);
 
 /** `- **Label**: value`, the shape of every Profile and Obligation fact line. */
 const FACT_LINE = /^- (\*\*[^*]+\*\*):\s*(.+)$/;
@@ -131,26 +196,18 @@ function claims(value: string): { conflict: boolean; claims: string[] } {
 }
 
 /**
- * A Contradiction may replace a fact line when the new line keeps the same
- * label, is in the Schema's Conflict shape with at least two claims, and
- * states the complete original claim (value and Citation, whitespace aside)
- * as one of them: both claims equally, none primary. If the replaced line was
- * already a Conflict, every one of its claims must survive. Anything less
- * changes the Established Fact and needs `change_fact`.
+ * A Contradiction may replace a fact line when the new line, under the same
+ * label in the same section, is in the Schema's Conflict shape with at least
+ * two claims and states the complete original claim (value and Citation,
+ * whitespace aside) as one of them: both claims equally, none primary. If the
+ * replaced line was already a Conflict, every one of its claims must survive.
+ * Anything less changes the Established Fact and needs `change_fact`.
  */
-function keptInConflict(line: string, body: string[]): boolean {
-  const match = FACT_LINE.exec(line);
-  if (!match) return false;
-  const [, label, value] = match;
-  const original = claims(value).claims;
-  return body.some((next) => {
-    const found = FACT_LINE.exec(next.trim());
-    if (!found || found[1] !== label) return false;
-    const now = claims(found[2]);
-    return (
-      now.conflict &&
-      now.claims.length >= 2 &&
-      original.every((claim) => now.claims.includes(claim))
-    );
-  });
+function keeps(line: FactLine, fact: FactLine): boolean {
+  const now = claims(line.value);
+  return (
+    now.conflict &&
+    now.claims.length >= 2 &&
+    fact.claims.every((claim) => now.claims.includes(claim))
+  );
 }

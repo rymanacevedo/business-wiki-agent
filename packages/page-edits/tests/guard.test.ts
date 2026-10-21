@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { EstablishedFactError, guardPageEdit } from "../index";
@@ -335,6 +335,14 @@ test("rejects rewriting a block payment as an inline mapping that marks it paid"
 const fixture = (wiki: string, name: string) =>
   readFileSync(join(__dirname, "../../../fixtures", wiki, name), "utf8");
 
+const EIN = "- **EIN**: 88-1234567 (src: 2024-10-21-ein-letter)";
+
+test("rejects changing a current fact while moving the original line into History", () => {
+  const before = fixture("full", "profile.md");
+  const after = `${edit(before, EIN, EIN.replace("88-1234567", "99-7654321"))}\n## History\n\n${EIN}\n`;
+  rejects("profile.md", before, after);
+});
+
 test("rejects a Conflict that replaces a Profile fact while keeping only its numbers and Citation", () => {
   const before = fixture("full", "profile.md");
   const after = edit(
@@ -343,4 +351,225 @@ test("rejects a Conflict that replaces a Profile fact while keeping only its num
     "- **Member (operating agreement)**: ⚠ **Conflict**, unresolved since 2026-10-18: Alex Smith, 100% (src: 2024-10-10-operating-agreement) or Chris Jones (src: 2026-03-02-insurance-cert-meridian-bayview)"
   );
   rejects("profile.md", before, after);
+});
+
+const FULL = () => fixture("full", "profile.md");
+const NEW_EIN = EIN.replace("88-1234567", "99-7654321");
+
+test("rejects moving a fact line into another section, changed or not", () => {
+  const before = FULL();
+  const moved = (line: string) =>
+    edit(
+      edit(before, `${EIN}\n`, ""),
+      "## Addresses\n",
+      `## Addresses\n\n${line}\n`
+    );
+  rejects("profile.md", before, moved(EIN));
+  rejects(
+    "profile.md",
+    before,
+    edit(
+      moved(EIN),
+      "- **Date business started",
+      `${NEW_EIN}\n- **Date business started`
+    )
+  );
+});
+
+test("allows a further line under a label whose fact line stays, as an Obligation gains a second Record link", () => {
+  const path =
+    "obligations/2026-11-15-insurance-renewal-meridian-mutual-insurance-company.md";
+  const before = fixture("full", path);
+  const record =
+    "- **Record**: [certificate](../summaries/2025-11-15-insurance-cert-meridian.md) (src: 2025-11-15-insurance-cert-meridian)";
+  const bayview =
+    "- **Record**: [certificate to Bayview](../summaries/2026-03-02-insurance-cert-meridian-bayview.md) (src: 2026-03-02-insurance-cert-meridian-bayview)";
+  guardPageEdit(path, before, edit(before, record, `${record}\n${bayview}`));
+  rejects(path, before, edit(before, record, bayview));
+});
+
+test("allows a second line restating a fact's value from another Source", () => {
+  const before = FULL();
+  guardPageEdit(
+    "profile.md",
+    before,
+    edit(
+      before,
+      EIN,
+      `${EIN}\n- **EIN**: 88-1234567 (src: 2026-02-20-w9-northwind)`
+    )
+  );
+});
+
+test("allows copying a fact into History while the current line stays", () => {
+  const before = FULL();
+  guardPageEdit(
+    "profile.md",
+    before,
+    `${before}\n## History\n\n${EIN}\n- 2026-10-18 EIN confirmed\n`
+  );
+});
+
+test("allows reordering fact lines within a section and reordering sections", () => {
+  const before = FULL();
+  const identity =
+    "- **Legal name (EIN letter)**: NORTHWIND REPAIR LLC (src: 2024-10-21-ein-letter)";
+  const swapped = edit(
+    edit(before, `${identity}\n`, ""),
+    `${EIN}\n`,
+    `${EIN}\n${identity}\n`
+  );
+  guardPageEdit("profile.md", before, swapped);
+  const banking = /## Banking\n[\s\S]*?(?=\n## )/.exec(before)![0];
+  const moved = edit(
+    edit(before, banking, ""),
+    "## Identity",
+    `${banking}\n\n## Identity`
+  );
+  guardPageEdit("profile.md", before, moved);
+});
+
+test("rejects renaming a fact's label, in case, wording, or spacing", () => {
+  const before = FULL();
+  for (const label of [
+    "- **Ein**:",
+    "- **EIN (EIN letter)**:",
+    "- **EIN** :",
+    "- ** EIN**:",
+  ])
+    rejects("profile.md", before, edit(before, "- **EIN**:", label));
+  rejects(
+    "profile.md",
+    before,
+    edit(before, EIN, EIN.replace(": 88", ":  88"))
+  );
+});
+
+test("rejects renaming the section that holds a fact but allows renaming the Page title", () => {
+  const before = FULL();
+  rejects(
+    "profile.md",
+    before,
+    edit(before, "## Identity", "## Identity and tax")
+  );
+  rejects("profile.md", before, edit(before, "## Identity", "### Identity"));
+  guardPageEdit(
+    "profile.md",
+    before,
+    edit(before, "# Northwind Repair LLC", "# Northwind Repair")
+  );
+});
+
+test("a fact is held by its label within its section: the same label elsewhere is another fact", () => {
+  const identity = "- **EIN**: 88-1234567 (src: 2024-10-21-ein-letter)";
+  const addresses = "- **EIN**: 77-0000000 (src: 2026-02-20-w9-northwind)";
+  const before = edit(
+    profile,
+    "## Addresses\n",
+    `## Addresses\n\n${addresses}\n`
+  );
+  rejects("profile.md", before, edit(before, identity, addresses));
+  rejects(
+    "profile.md",
+    before,
+    edit(
+      edit(edit(before, identity, "@@"), addresses, identity),
+      "@@",
+      addresses
+    )
+  );
+  guardPageEdit("profile.md", before, before);
+});
+
+test("rejects a Conflict for a fact written under another section", () => {
+  const before = FULL();
+  const conflict =
+    "- **EIN**: ⚠ **Conflict**, unresolved since 2026-10-18: 88-1234567 (src: 2024-10-21-ein-letter) or 99-7654321 (src: 2026-02-20-w9-northwind)";
+  rejects(
+    "profile.md",
+    before,
+    edit(
+      edit(before, `${EIN}\n`, ""),
+      "## Addresses\n",
+      `## Addresses\n\n${conflict}\n`
+    )
+  );
+  guardPageEdit("profile.md", before, edit(before, EIN, conflict));
+});
+
+test("rejects a Conflict that drops a claim of a Conflict already on the Page", () => {
+  const before = FULL();
+  const line = before
+    .split("\n")
+    .find((l) => l.startsWith("- **Principal office**:"))!;
+  const dropped = line.replace(
+    " or 1480 Harbor Ave, Suite 201, Portside (src: 2026-03-02-insurance-cert-meridian-bayview)",
+    " or Suite 999 (src: 2026-10-14-insurance-cert-meridian-renewal)"
+  );
+  assert.notEqual(dropped, line);
+  rejects("profile.md", before, edit(before, line, dropped));
+});
+
+test("a value that merely mentions 'not in the wiki' is not a placeholder", () => {
+  const before = edit(
+    profile,
+    "(src: 2024-10-21-ein-letter)",
+    "(src: 2024-10-21-ein-letter); W-9 not in the wiki yet"
+  );
+  rejects("profile.md", before, edit(before, "88-1234567", "99-7654321"));
+});
+
+test("rejects moving an Obligation fact line into its History", () => {
+  const due = "- **Due**: 2026-11-15 (src: 2025-11-15-insurance-cert-meridian)";
+  rejects(
+    OBLIGATION,
+    obligation,
+    edit(
+      edit(obligation, due, due.replace("2026-11-15", "2027-11-15")),
+      "## History\n",
+      `## History\n\n${due}\n`
+    )
+  );
+  rejects(
+    OBLIGATION,
+    obligation,
+    edit(obligation, "- 2026-10-17 created from the certificate summary\n", "")
+  );
+});
+
+test("every fixture Profile and Obligation Page passes its own guard, unchanged and with a section appended", () => {
+  const pages = ["base", "full", "prototype", "empty"].flatMap((wiki) => {
+    const root = join(__dirname, "../../../fixtures", wiki);
+    const obligations = existsSync(join(root, "obligations"))
+      ? readdirSync(join(root, "obligations")).map((f) => `obligations/${f}`)
+      : [];
+    return ["profile.md", ...obligations].map((path) => ({
+      path,
+      body: readFileSync(join(root, path), "utf8"),
+    }));
+  });
+  assert.ok(pages.length > 20);
+  for (const { path, body } of pages) {
+    guardPageEdit(path, body, body);
+    guardPageEdit(path, body, `${body}\n## Related\n\n- [Index](index.md)\n`);
+  }
+});
+
+test("the refusal of a fact moved into History names its section and the Conflict to write there", () => {
+  const before = FULL();
+  assert.throws(
+    () =>
+      guardPageEdit(
+        "profile.md",
+        before,
+        `${edit(before, EIN, NEW_EIN)}\n## History\n\n${EIN}\n`
+      ),
+    (error: unknown) =>
+      error instanceof EstablishedFactError &&
+      error.message.includes(`"${EIN}" under ## Identity`) &&
+      error.message.includes("a copy under `## History`") &&
+      error.message.includes(
+        "`- **EIN**: ⚠ **Conflict**, unresolved since <Demo Date>: 88-1234567 (src: 2024-10-21-ein-letter) or <new value>"
+      )
+  );
 });

@@ -82,6 +82,125 @@ test("masks labelled account and routing numbers printed in space-separated grou
   );
 });
 
+test("masks a labelled number whose groups are joined by repeated spaces or tabs", () => {
+  assert.equal(
+    maskSource("Account number: 1234  5678  9012"),
+    "Account number: ****9012"
+  );
+  assert.equal(
+    maskSource("Routing number: 021\t000\t021"),
+    "Routing number: ****0021"
+  );
+});
+
+test("masks numbers whose groups are joined by Unicode spaces or mixed runs of whitespace", () => {
+  assert.equal(
+    maskSource(
+      [
+        "Account number: 1234 5678 9012",
+        "Routing: 021 000 021",
+        "Acct 00 \t 4837　 26615",
+        "Card 4111  1111\t1111  1111",
+        "Paid with 3782\t822463\t10005",
+        "SSN: 512 40\t\t6789; Social security number 512  40  6789",
+      ].join("\n")
+    ),
+    [
+      "Account number: ****9012",
+      "Routing: ****0021",
+      "Acct ****6615",
+      "Card ****1111",
+      "Paid with ****0005",
+      "SSN: ***-**-6789; Social security number ***-**-6789",
+    ].join("\n")
+  );
+});
+
+test("masks spaced numbers after every label shape, at a line's or the text's end", () => {
+  assert.equal(
+    maskSource(
+      [
+        "Acct #: 1234  5678",
+        "Account No. 1234\t5678",
+        "Account Number #: 1234  5678",
+        "Acct. No.: 00  4837  26615",
+        "Account number:\t\t1234  5678  9012",
+        "ABA/Routing #  021  000  021",
+        "| Account number | 1234  5678  9012 |",
+        "Routing | 021\t000\t021",
+        "Account 1234  5678",
+      ].join("\n")
+    ),
+    [
+      "Acct #: ****5678",
+      "Account No. ****5678",
+      "Account Number #: ****5678",
+      "Acct. No.: ****6615",
+      "Account number:\t\t****9012",
+      "ABA/Routing #  ****0021",
+      "| Account number | ****9012 |",
+      "Routing | ****0021",
+      "Account ****5678",
+    ].join("\n")
+  );
+});
+
+test("a spaced labelled number stops at the next field", () => {
+  assert.equal(
+    maskSource(
+      "Account number: 1234  5678  9012\t\tRouting number: 021\t000\t021  Balance 7,784.53"
+    ),
+    "Account number: ****9012\t\tRouting number: ****0021  Balance 7,784.53"
+  );
+  assert.equal(
+    maskSource("Account: 6615\t\t2026-09-01 | Account ****6789\t2026"),
+    "Account: 6615\t\t2026-09-01 | Account ****6789\t2026"
+  );
+  assert.equal(
+    maskSource("Card 4417  71.75 and Account: 6615  09/01/2026"),
+    "Card 4417  71.75 and Account: 6615  09/01/2026"
+  );
+});
+
+test("masks a card grouping joined by a mix of spaces and dashes", () => {
+  assert.equal(
+    maskSource("Card 4111 - 1111 - 1111 - 1111; on file 5555-5555 5555-4444"),
+    "Card ****1111; on file ****4444"
+  );
+});
+
+test("masks a labelled number whose groups mix dashes and whitespace", () => {
+  assert.equal(
+    maskSource(
+      "Routing: 021 - 000 - 021 | Routing number: 021-000 021 | Account 1234 5678-9012"
+    ),
+    "Routing: ****0021 | Routing number: ****0021 | Account ****9012"
+  );
+});
+
+test("a labelled number's groups stop at a following date or phone", () => {
+  const clear =
+    "Account 6615 555-014-2290; Account: 6615 10-01-2026; Card 4417 2026-09-01; Account 6615 - 2026-09-01";
+  assert.equal(maskSource(clear), clear);
+});
+
+test("masks a labelled SSN joined by dashes with spaces around them", () => {
+  assert.equal(
+    maskSource("SSN: 512 - 40 - 6789; SSN 512 -40- 6789"),
+    "SSN: ***-**-6789; SSN ***-**-6789"
+  );
+});
+
+test("a number's groups never join across a line break", () => {
+  assert.equal(
+    maskSource("Account: 6615\n2026 0901 1234\nCard 4417\r\n1111 2222"),
+    "Account: 6615\n2026 0901 1234\nCard 4417\r\n1111 2222"
+  );
+  assert.deepEqual(maskedValues("Card 4111 1111\n1111 1111"), [
+    { value: "4111 1111", masked: "****1111", kind: "account" },
+  ]);
+});
+
 test("a labelled number's groups stop at a date or a short reference", () => {
   const clear = "Account: 6615 2026-09-01, Card 4417 on file";
   assert.equal(maskSource(clear), clear);
