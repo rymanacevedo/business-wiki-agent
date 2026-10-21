@@ -129,3 +129,29 @@ test("a payment Obligation that cites the invoice but does not link the Record s
   const [problem] = await check([markPaid]);
   assert.match(problem ?? "", /stays active/);
 });
+
+const hideStatus = {
+  page: OBLIGATION,
+  old_value: "- **Status**: active",
+  new_value: "<!-- - **Status**: active -->\n- **Status**: done",
+};
+
+test("an approved change cannot hide a fact line in an HTML comment", async () => {
+  const [problem] = await check([hideStatus]);
+  assert.match(problem ?? "", /raw HTML/);
+});
+
+test("a Page already invalid for another reason still cannot gain hidden text", async () => {
+  const store = createWikiStore({ namespace: "t" });
+  const current = await store.read(OBLIGATION);
+  await store.write(
+    OBLIGATION,
+    obligation.replace(
+      "- **Status**: active",
+      "- **Status**: active\n- **Note**: uncited"
+    ),
+    { etag: current!.etag }
+  );
+  const [problem] = await check([hideStatus]);
+  assert.match(problem ?? "", /raw HTML/);
+});

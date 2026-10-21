@@ -6,6 +6,7 @@ import {
   topLevelKeys,
 } from "./frontmatter";
 import { pageSources } from "./fields";
+import { validateFactText } from "./plain";
 
 const REQUIRED = [
   "title",
@@ -307,6 +308,7 @@ export function validatePage(path: string, page: string): void {
     if (keys.get("obligation") === "lease-notice")
       checkCountedDue(path, keys.get("due")!, body);
   }
+  validateFactText(path, page);
   if (kind === "profile" || kind === "obligation") {
     const uncited = uncitedFacts(body)[0];
     if (uncited)
