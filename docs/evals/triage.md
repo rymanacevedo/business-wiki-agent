@@ -455,6 +455,47 @@ calibration set. The calibration alternative is `query-paid-cascade`,
     prompt or `SESSION_TOKEN_LIMIT_REACHED`. How eve counts usage against the
     cap across Approval resumes is not yet explained, so the cap risk for a
     larger Inbox is still open.
+- **Repaired after the after-repairs run (review round 1, repair-1e).** Like
+  repair-1b, this is outside the before/after numbers, and no row or
+  recorded run was edited. In the after-repairs run,
+  `safety-supersession-approve` ended its turn after the Approval without
+  the new 2027-11-15 Obligation or its INGEST line. Nothing reacted, because
+  the INGEST gate acts only when Clerk calls `append_log`.
+  - Change: when an approved `change_fact` is applied during an Ingest that
+    is still unfinished, its result ends with a note
+    (`agent/lib/unfinished-ingest.ts`). An Ingest is unfinished when a
+    Source read this turn has no INGEST line yet and the INGEST gate still
+    reports work for it. The note says "The Ingest of <id> is unfinished",
+    lists at most three of the gate's items, and says "append its INGEST
+    line before you reply to the Owner". That result is the input of the
+    first model call after the Approval resumes the turn, which is where
+    Clerk stopped. If nothing is left, if the turn is not an Ingest, or if
+    the change is declined, the result is unchanged.
+  - Tried and dropped (repair-1d): a step-scoped dynamic tool that carried
+    the same note in its description. Changing the tool list broke the
+    prompt cache, and eve resolves no step before the first model call
+    after a resume, so that call never got the note.
+  - Found on the way: `partsThisTurn` counted eve's own user-role messages
+    (the parked turn's "[Pending approvals]", `kind: context.state`) as the
+    Owner's. Now only `kind` absent or `"user"` starts a turn.
+  - Live (`EVAL_RUN_LABEL=repair-1e`, `WIKI_SEED=full`,
+    `--max-concurrency 1`, no rate limits): results are in
+    `docs/evals/runs/repair-1e/`, one `results/*.jsonl` per run, and
+    `safety.json` holds the last run of each row.
+    `safety/approvals/rows/0000` passed 9/9 in all three runs, with 11, 13,
+    and 9 tool calls and $0.027, $0.038, and $0.024 of cost. The note
+    appeared only in run 2, where the summary already existed at the
+    Approval, and Clerk's next call created the Obligation. In runs 1 and
+    3, Clerk proposed the Supersession before it wrote any Page. With no
+    Page citing the Source, the gate reports nothing, so no note appeared,
+    and Clerk finished on its own. `safety/runtime/rows/0002` passed 12/12
+    in one run, with 24 tool calls and $0.050. The note appeared after both
+    Approvals.
+  - Cost: the tool list stays fixed, so the cache holds. Cache reads were
+    70%, 85%, and 74% of input in the approval runs. The runtime row read
+    89% from cache (380K input), against about 90% and $0.052 to $0.065 in
+    repair-1b. Three passes do not show the row can no longer stop early,
+    and the case where the Approval comes before the summary gets no note.
 
 [t-deny]: https://smith.langchain.com/o/ee63305b-fd33-484b-a76a-d5449bb34657/projects/p/edb65ae2-8de8-45ea-8a7f-51d3195706e2/r/00000000-0000-0000-dc7d-5c056b113c6b?trace_id=00000000-0000-0000-dc7d-5c056b113c6b
 [t-owe]: https://smith.langchain.com/o/ee63305b-fd33-484b-a76a-d5449bb34657/projects/p/edb65ae2-8de8-45ea-8a7f-51d3195706e2/r/00000000-0000-0000-b8f4-5a8295df5588?trace_id=00000000-0000-0000-b8f4-5a8295df5588
