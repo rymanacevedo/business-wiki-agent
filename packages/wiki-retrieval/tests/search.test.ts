@@ -152,3 +152,35 @@ describe("the result's rules", () => {
     assert.deepEqual((await retrieval.search({ query: "zzzqqq" })).pages, []);
   });
 });
+
+describe("the kind prior on Matches (the bench's option)", () => {
+  const QUERY = "What do we owe Cascade Appliance Parts?";
+  const CASCADE = "entities/cascade-appliance-parts.md";
+  const PRIOR = ["profile", "obligation", "summary", "entity", "ledger"];
+
+  test("off by default: the vendor's entity hub outranks its invoice and Obligation", async () => {
+    const [first] = (await retrieval.search({ query: QUERY })).pages;
+    assert.equal(first?.path, CASCADE);
+  });
+
+  test("on: the same Matches, by kind (profile, obligation, summary, entity, ledger), then fused rank", async () => {
+    const off = (await retrieval.search({ query: QUERY })).pages;
+    const on = (
+      await createRetrieval({ store, kindPrior: true }).search({ query: QUERY })
+    ).pages;
+    assert.deepEqual(
+      on.map((p) => p.path).sort(),
+      off.map((p) => p.path).sort()
+    );
+    const expected = [...off].sort(
+      (a, b) =>
+        PRIOR.indexOf(a.kind) - PRIOR.indexOf(b.kind) ||
+        off.indexOf(a) - off.indexOf(b)
+    );
+    assert.deepEqual(
+      on.map((p) => p.path),
+      expected.map((p) => p.path)
+    );
+    assert.notEqual(on[0]?.path, CASCADE);
+  });
+});

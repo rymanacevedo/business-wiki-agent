@@ -26,6 +26,7 @@
     "corpus:generate": "bun scripts/corpus-generate.ts",
     "eval:diff": "bun scripts/eval-diff.ts",
     "eval:calibration": "bun scripts/eval-calibration-report.ts",
+    "bench:retrieval": "bun scripts/retrieval-bench.ts",
     "dev:web": "next dev apps/web",
     "build:web": "next build apps/web"
   },

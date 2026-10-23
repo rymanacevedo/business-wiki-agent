@@ -1,6 +1,7 @@
 // Sections to Matches: collapse to Pages by best section, filter, cap, excerpt.
 
 import type { LexicalIndex, SectionHit } from "./bm25";
+import { kindRank } from "./kinds";
 import type { MemoPage } from "./memo";
 import type { ResultPage } from "./result";
 import type { Section } from "./sections";
@@ -48,6 +49,8 @@ export type MatchOptions = {
   limit: number;
   /** Drop Pages whose best section scores under this fraction of the top section. */
   matchFloor: number;
+  /** Order the Matches by the kind prior first, fused rank second. */
+  kindPrior: boolean;
 };
 
 /** Ranked section hits to at most `limit` Match Pages. */
@@ -55,7 +58,7 @@ export function matches(
   hits: SectionHit[],
   pages: ReadonlyMap<string, MemoPage>,
   index: LexicalIndex,
-  { query, kind, limit, matchFloor }: MatchOptions
+  { query, kind, limit, matchFloor, kindPrior }: MatchOptions
 ): ResultPage[] {
   const terms = [...new Set(tokenise(query, { query: true }))];
   const floor = (hits[0]?.score ?? 0) * matchFloor;
@@ -78,5 +81,8 @@ export function matches(
       score,
     });
   }
-  return out;
+  // A stable sort: within a kind, fused order stands.
+  return kindPrior
+    ? out.sort((a, b) => kindRank(a.kind) - kindRank(b.kind))
+    : out;
 }
