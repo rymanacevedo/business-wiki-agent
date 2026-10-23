@@ -2,12 +2,14 @@
  * The Query and Lint slices' deterministic checks: answer text in, named
  * checks out. `checkAnswer(expectation, answer)` covers a Query row's
  * `must_include`, `must_not_include`, and `cites`; `retrievalMetrics(cites,
- * toolCalls)` scores what `search_wiki` returned against the same `cites`.
+ * toolCalls)` scores what `search_wiki` returned against the same `cites`;
+ * `matches(pattern, text)` is the pattern rule they share.
  */
 export {
   checkAnswer,
   type AnswerExpectation,
   type Check,
+  matches,
   type Pattern,
 } from "./lib/answer";
 export { judgedPages } from "./lib/pages";

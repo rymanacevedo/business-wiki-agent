@@ -1,15 +1,9 @@
 // One Link hop from the Matches (decision #46, items 2, 4, 9, 10).
 
+import { kindRank as prior } from "./kinds";
 import type { LinkTable } from "./links";
 import type { MemoPage } from "./memo";
 import type { ResultPage } from "./result";
-
-/** Ties after reach and best reaching Match: profile, obligation, summary, entity, ledger. */
-const KIND_PRIOR = ["profile", "obligation", "summary", "entity", "ledger"];
-const prior = (kind: string) => {
-  const i = KIND_PRIOR.indexOf(kind);
-  return i === -1 ? KIND_PRIOR.length : i;
-};
 
 /**
  * How neighbours rank by reach. `count` (the default): the number of

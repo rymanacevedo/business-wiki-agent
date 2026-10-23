@@ -593,3 +593,92 @@ describe("one search answers from one snapshot of the Pages", () => {
     });
   });
 });
+
+describe("a Link-bearing search answers from one snapshot of the Pages", () => {
+  const SNAP = "summaries/zz-linked-invoice.md";
+  const OLD_PARTY = "entities/zz-old-party.md";
+  const NEW_PARTY = "entities/zz-new-party.md";
+  const ask = { query: "zquorblat invoice", limit: 1, neighbourhood: true };
+
+  const body = (party: string, amount: string) =>
+    `---\ntitle: Linked invoice\nkind: summary\nstatus: active\nflags: []\n---\n\n- ZQUORBLAT invoice amount ${amount}, billed by [the party](../${party})\n`;
+
+  async function replace(text: string) {
+    const current = await store.read(SNAP);
+    await store.write(SNAP, text, { etag: current?.etag ?? null });
+  }
+
+  /** An adapter that holds only its first call until `release`. */
+  function firstCallPaused() {
+    let release = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    let waiting = () => {};
+    const entered = new Promise<void>((r) => (waiting = r));
+    let calls = 0;
+    const embed: Embed = async (texts) => {
+      if (calls++ === 0) {
+        waiting();
+        await gate;
+      }
+      return fakeEmbed(texts);
+    };
+    return { embed, release, entered };
+  }
+
+  /** The search's revision, read off its Match excerpt and its neighbours. */
+  function revisionOf(result: { pages: ResultPage[] }) {
+    const match = result.pages.find((p) => p.path === SNAP);
+    assert.equal(match?.role, "match");
+    const excerpt = match?.excerpt?.join("\n") ?? "";
+    const near = result.pages
+      .filter((p) => p.role === "neighbour")
+      .map((p) => p.path);
+    if (excerpt.includes("100.00")) {
+      assert.ok(near.includes(OLD_PARTY), "the old Link reaches the old party");
+      assert.ok(!near.includes(NEW_PARTY), "no Link of the new revision");
+      return "old";
+    }
+    assert.ok(excerpt.includes("999.00"));
+    assert.ok(near.includes(NEW_PARTY), "the new Link reaches the new party");
+    assert.ok(!near.includes(OLD_PARTY), "no Link of the old revision");
+    return "new";
+  }
+
+  beforeEach(async () => {
+    for (const [path, title] of [
+      [OLD_PARTY, "Old party"],
+      [NEW_PARTY, "New party"],
+    ]) {
+      const current = await store.read(path);
+      await store.write(
+        path,
+        `---\ntitle: ${title}\nkind: entity\nstatus: active\nflags: []\n---\n\n- A vendor.\n`,
+        { etag: current?.etag ?? null }
+      );
+    }
+    await replace(body(OLD_PARTY, "100.00"));
+    await rebuildCache(store, fakeEmbed);
+  });
+
+  test("a newer search refreshes while the first embeds: each hops over its own revision's Links", async () => {
+    const { embed, release, entered } = firstCallPaused();
+    const retrieval = createRetrieval({ store, embed });
+    const first = retrieval.search(ask);
+    await entered;
+    await replace(body(NEW_PARTY, "999.00"));
+    const second = retrieval.search(ask);
+    // Let the second search's refresh land before the first resumes.
+    await retrieval.flagged("conflict");
+    release();
+    assert.equal(revisionOf(await first), "old");
+    assert.equal(revisionOf(await second), "new");
+  });
+
+  test("a hop after a lexical-only search at a newer revision still reads the newer Links", async () => {
+    const retrieval = createRetrieval({ store, embed: fakeEmbed });
+    assert.equal(revisionOf(await retrieval.search(ask)), "old");
+    await replace(body(NEW_PARTY, "999.00"));
+    await retrieval.search({ query: "zquorblat invoice" });
+    assert.equal(revisionOf(await retrieval.search(ask)), "new");
+  });
+});

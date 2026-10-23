@@ -60,13 +60,22 @@ export type RetrievalOptions = {
   embed?: Embed;
   /** BM25 parameters; defaults `k1 = 1.2`, `b = 0.5`. */
   bm25?: Bm25Options;
-  /** Matches scoring under this fraction of the top score drop; default a third. */
+  /**
+   * Matches scoring under this fraction of the top score drop; default a
+   * third. This default, the count rule and the prior off are the bench's
+   * chosen configuration (`docs/evals/retrieval-bench.md`, ticket #60).
+   */
   matchFloor?: number;
   /**
    * How neighbours rank by reach: `{ rule: "count" }` (the default, distinct
    * reaching Matches) or `{ rule: "weighted", floor }` for the bench.
    */
   reach?: Reach;
+  /**
+   * Order Matches by kind (profile, obligation, summary, entity, ledger),
+   * then fused rank, after the floor and the cap. Off by default.
+   */
+  kindPrior?: boolean;
 };
 
 /** The Schema's flags. */
@@ -109,6 +118,7 @@ export function createRetrieval({
   bm25,
   matchFloor = 1 / 3,
   reach = { rule: "count" },
+  kindPrior = false,
 }: RetrievalOptions): Retrieval {
   const memo = createMemo(store);
   const semantic = embed && createSemantic(store, embed);
@@ -162,6 +172,7 @@ export function createRetrieval({
         kind,
         limit: Math.max(0, Math.min(limit, MAX_MATCHES, MAX_PAGES)),
         matchFloor,
+        kindPrior,
       });
       const near = links
         ? hop(found, pages, links, { room: MAX_PAGES - found.length, reach })
