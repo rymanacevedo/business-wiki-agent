@@ -53,7 +53,7 @@ export function blobBackend(client: BlobClient = vercelBlob): Backend {
       });
       if (!result?.stream) return null;
       const body = await new Response(result.stream).text();
-      return { body, etag: result.blob.etag };
+      return { body, etag: strong(result.blob.etag) };
     },
     async put(key, body, ifMatch) {
       try {
@@ -106,6 +106,16 @@ export function blobBackend(client: BlobClient = vercelBlob): Backend {
         );
     },
   };
+}
+
+/**
+ * `get` reports a weak etag (`W/"..."`) for a body of about 1 KB or more,
+ * which the service sends compressed; `list`, `head` and `put` report the
+ * strong one. Keep the strong form so a read's etag matches the manifest's
+ * and is a valid `ifMatch`.
+ */
+function strong(etag: string): string {
+  return etag.startsWith("W/") ? etag.slice(2) : etag;
 }
 
 function contentType(key: string): string {

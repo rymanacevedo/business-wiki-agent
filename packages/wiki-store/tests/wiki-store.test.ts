@@ -278,6 +278,21 @@ test("on Blob, manifest takes the etags from the listing and reads nothing", asy
   assert.deepEqual({ get: calls.get, list: calls.list }, { get: 0, list: 1 });
 });
 
+test("on Blob, a large Page's read etag is the manifest's and a write with it succeeds", async () => {
+  const { client } = fakeBlob();
+  const wiki = createWikiStore({
+    namespace: "demo",
+    env: { VERCEL: "1" },
+    blob: client,
+  });
+  const body = `# Index\n${"- a line of the Index\n".repeat(100)}`;
+  await wiki.write("index.md", body, { etag: null });
+  const read = await wiki.read("index.md");
+  const [listed] = await wiki.manifest("");
+  assert.equal(read?.etag, listed.etag);
+  await wiki.write("index.md", `${body}- one more\n`, { etag: read!.etag });
+});
+
 test("under eve dev and eve eval the store never touches Blob, even with VERCEL set", async () => {
   // eve dev and eve eval (without --url) run tools in a child process that
   // always has EVE_DEV=1 (eve 0.80.1 createDevelopmentServer).
