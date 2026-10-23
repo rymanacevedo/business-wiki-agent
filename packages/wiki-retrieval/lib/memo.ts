@@ -1,6 +1,7 @@
 // The in-process memo: every indexable Page's parsed form, kept current by
 // comparing the store's etag manifest on every call.
 
+import { createHash } from "node:crypto";
 import type { WikiStore } from "../../wiki-store";
 import { splitPage } from "../../page-edits";
 import { readFrontmatter } from "./frontmatter";
@@ -21,6 +22,8 @@ export function indexable(path: string): boolean {
 export type MemoPage = {
   path: string;
   etag: string;
+  /** sha256 hex of the body: the embedding cache's key, the same on every backend. */
+  hash: string;
   title: string;
   kind: string;
   status: string;
@@ -31,12 +34,13 @@ export type MemoPage = {
   sections: Section[];
 };
 
-function parse(path: string, text: string, etag: string): MemoPage {
+export function parsePage(path: string, text: string, etag: string): MemoPage {
   const { frontmatter, body } = splitPage(text);
   const read = readFrontmatter(frontmatter);
   return {
     path,
     etag,
+    hash: createHash("sha256").update(text).digest("hex"),
     title: read.value("title") ?? path,
     kind: read.value("kind") ?? "unknown",
     status: read.value("status") ?? "unknown",
@@ -75,19 +79,30 @@ async function pool<T>(
   if (failure) throw failure.error;
 }
 
+/**
+ * The Pages at one revision of the memo. Never changed once returned: a
+ * caller that awaits mid-way still holds the revision it started from,
+ * whatever refreshes run meanwhile.
+ */
+export type Snapshot = {
+  pages: ReadonlyMap<string, MemoPage>;
+  /** Changes whenever the Pages do, so derived indexes know when to rebuild. */
+  version: number;
+};
+
 export type Memo = {
   /**
    * Bring the memo level with the store: one `manifest("")`, then a read of
-   * each new or changed Page only, deleted Pages dropped. Returns the Pages
-   * and a version that changes whenever they do, so derived indexes know
-   * when to rebuild.
+   * each new or changed Page only, deleted Pages dropped. Returns a Snapshot
+   * of the result; a refresh that throws publishes none.
    */
-  refresh(): Promise<{ pages: Map<string, MemoPage>; version: number }>;
+  refresh(): Promise<Snapshot>;
 };
 
 export function createMemo(store: WikiStore): Memo {
   const pages = new Map<string, MemoPage>();
   let version = 0;
+  let snapshot: Snapshot = { pages: new Map(), version };
   let queue: Promise<unknown> = Promise.resolve();
 
   async function sync() {
@@ -105,11 +120,14 @@ export function createMemo(store: WikiStore): Memo {
     const stale = manifest.filter((e) => pages.get(e.path)?.etag !== e.etag);
     await pool(stale, READS_IN_FLIGHT, async ({ path }) => {
       const entry = await store.read(path);
-      if (entry) pages.set(path, parse(path, entry.body, entry.etag));
+      if (entry) pages.set(path, parsePage(path, entry.body, entry.etag));
       else pages.delete(path);
       version++;
     });
-    return { pages, version };
+    // Copy on change only: `pages` keeps mutating, the Snapshot never does.
+    if (snapshot.version !== version)
+      snapshot = { pages: new Map(pages), version };
+    return snapshot;
   }
 
   return {

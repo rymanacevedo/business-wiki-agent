@@ -31,6 +31,9 @@ before(async () => {
   process.env.WIKI_STORE_DIR = root;
   process.env.WIKI_NAMESPACE = "t";
   delete process.env.CLERK_EVAL_RUN;
+  // Lexical-only: these tests never call the Gateway. The package's tests
+  // cover the embedding Rung with a fake adapter.
+  process.env.CLERK_RETRIEVAL_EMBEDDINGS = "0";
   await seedNamespace({
     namespace: "t",
     fixtureDir: resolve("fixtures/full"),

@@ -33,14 +33,31 @@ export async function drive(
   message: string,
   session?: EveEvalSession
 ): Promise<EveEvalTurn> {
+  return (await driveSegments(t, caseId, message, session)).turn;
+}
+
+/**
+ * `drive`, also returning every segment the turn took, first to last: each
+ * continuation (a session-limit answer, a retry after a rate limit) is a new
+ * eve turn whose `toolCalls` hold only that segment's calls.
+ */
+export async function driveSegments(
+  t: Context,
+  caseId: string,
+  message: string,
+  session?: EveEvalSession
+): Promise<{ turn: EveEvalTurn; segments: EveEvalTurn[] }> {
   const headers = headersFor(caseId);
-  return settle(
+  const segments: EveEvalTurn[] = [];
+  const turn = await settle(
     t,
     caseId,
     session
       ? await session.send(message, { headers })
-      : await t.send(message, { headers })
+      : await t.send(message, { headers }),
+    segments
   );
+  return { turn, segments };
 }
 
 /** Send a follow-up on the turn's session and keep it going the same way. */
@@ -93,10 +110,12 @@ export async function answer(
 async function settle(
   t: Context,
   caseId: string,
-  first: EveEvalTurn
+  first: EveEvalTurn,
+  segments: EveEvalTurn[] = []
 ): Promise<EveEvalTurn> {
   const headers = headersFor(caseId);
   let turn = first;
+  segments.push(turn);
   for (let round = 0; round < 6 && !t.signal.aborted; round++) {
     const limit = turn.inputRequests.find((r) => r.kind === "session-limit");
     if (limit) {
@@ -109,6 +128,7 @@ async function settle(
         [{ requestId: limit.requestId, optionId: option.id }],
         { headers }
       );
+      segments.push(turn);
       continue;
     }
     if (!failedOnRateLimit(turn)) break;
@@ -118,6 +138,7 @@ async function settle(
       "Continue where you stopped. Finish the same request.",
       { headers }
     );
+    segments.push(turn);
   }
   return turn;
 }

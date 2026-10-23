@@ -1,5 +1,10 @@
 import type { EveEvalContext, EveEvalStreamEvent } from "eve/evals";
-import type { Check } from "../../packages/answer-checks";
+import {
+  retrievalMetrics,
+  type Check,
+  type Pattern,
+  type ToolCallOutput,
+} from "../../packages/answer-checks";
 
 /** The tools a Query or Lint must never call: they write the Wiki. */
 export const WRITE_TOOLS = [
@@ -15,6 +20,20 @@ export function gateChecks(t: EveEvalContext<unknown>, checks: Check[]) {
     t.score({ score: check.passed ? 1 : 0, message: check.detail })
       .label(check.name)
       .gate(1);
+}
+
+/**
+ * Record what retrieval did in the row (spec #53): five soft 0/1 scores from
+ * `search_wiki`'s full `execute` outputs, with no gate. A row without `cites`
+ * records only `searched`, `rung_embedding` and `hop_added`.
+ */
+export function scoreRetrieval(
+  t: EveEvalContext<unknown>,
+  cites: readonly Pattern[],
+  calls: readonly ToolCallOutput[]
+) {
+  for (const [label, score] of Object.entries(retrievalMetrics(cites, calls)))
+    t.score({ score }).label(label);
 }
 
 /** The first tool call the model requested in the run, or undefined. */

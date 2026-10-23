@@ -53,7 +53,7 @@ export type MatchOptions = {
 /** Ranked section hits to at most `limit` Match Pages. */
 export function matches(
   hits: SectionHit[],
-  pages: Map<string, MemoPage>,
+  pages: ReadonlyMap<string, MemoPage>,
   index: LexicalIndex,
   { query, kind, limit, matchFloor }: MatchOptions
 ): ResultPage[] {
