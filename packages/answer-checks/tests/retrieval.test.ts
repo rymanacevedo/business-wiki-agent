@@ -142,3 +142,43 @@ test("only search_wiki outputs count; a call that never resolved searched but re
   assert.equal(metrics.expected_in_result, 0);
   assert.equal(retrievalMetrics([], [read]).searched, 0);
 });
+
+test("a Source id names its summary Page exactly, never another Page whose path contains it", () => {
+  const reminder = "obligations/2026-08-22-receipt-dockside-deli-reminder.md";
+  const metrics = retrievalMetrics(
+    ["2026-08-22-receipt-dockside-deli"],
+    [search({ matches: [reminder] })]
+  );
+  assert.equal(metrics.expected_in_result, 0);
+  assert.equal(metrics.expected_via_hop_only, 0);
+});
+
+test("a summary reached only as a neighbour is via the hop only, even when a Page containing its id was a Match", () => {
+  const metrics = retrievalMetrics(
+    ["2026-08-22-receipt-dockside-deli"],
+    [
+      search({
+        hopRan: true,
+        matches: ["obligations/2026-08-22-receipt-dockside-deli-reminder.md"],
+        neighbours: ["summaries/2026-08-22-receipt-dockside-deli.md"],
+      }),
+    ]
+  );
+  assert.equal(metrics.expected_in_result, 1);
+  assert.equal(metrics.expected_via_hop_only, 1);
+});
+
+test("a Source id in any case resolves to its summary; a Page path still matches as a substring", () => {
+  const metrics = retrievalMetrics(
+    [["2026-08-22-RECEIPT-DOCKSIDE-DELI", "nowhere.md"], "entities/dockside"],
+    [
+      search({
+        matches: [
+          "summaries/2026-08-22-receipt-dockside-deli.md",
+          "entities/dockside-deli.md",
+        ],
+      }),
+    ]
+  );
+  assert.equal(metrics.expected_in_result, 1);
+});

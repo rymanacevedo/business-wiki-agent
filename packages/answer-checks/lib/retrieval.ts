@@ -42,10 +42,32 @@ function searchOf(call: ToolCallOutput): Search | undefined {
 const bit = (b: boolean) => (b ? 1 : 0);
 
 /**
+ * A `cites` alternative that is a Source id: the Corpus's date-prefixed
+ * file stem (`2026-09-12-invoice-cascade-parts-4471`), no folder, no `.md`
+ * in any case. Anything else is a path pattern, a case-insensitive substring.
+ */
+const SOURCE_ID = /^\d{4}-\d{2}-\d{2}-[a-z0-9.-]+$/i;
+const isSourceId = (p: string) => SOURCE_ID.test(p) && !/\.md$/i.test(p);
+
+/**
+ * True when one `cites` entry is satisfied by one result path: a nested list
+ * is any-of, a Source id names exactly its summary Page (`summaries/<id>.md`),
+ * and any other pattern matches the path as `matches` does.
+ */
+export function citesPath(pattern: Pattern, path: string): boolean {
+  if (typeof pattern !== "string")
+    return pattern.some((p) => citesPath(p, path));
+  return isSourceId(pattern)
+    ? path.toLowerCase() === `summaries/${pattern.toLowerCase()}.md`
+    : matches(pattern, path);
+}
+
+/**
  * What retrieval did in one row, read from `search_wiki`'s structured outputs
  * (never its rendered text) across every call. `cites` keeps the dataset's
- * semantics: every top-level entry is required, a nested list is any-of, and
- * each matches result paths by substring (a Source id names its summary Page).
+ * semantics: every top-level entry is required, a nested list is any-of, a
+ * Source id names exactly its summary Page, and any other pattern matches
+ * result paths by substring (`citesPath`).
  */
 export function retrievalMetrics(
   cites: readonly Pattern[],
@@ -62,7 +84,7 @@ export function retrievalMetrics(
   const matched = searches.flatMap((s) => s.matches);
   const neighbours = searches.flatMap((s) => s.neighbours);
   const found = (pattern: Pattern, paths: string[]) =>
-    paths.some((path) => matches(pattern, path));
+    paths.some((path) => citesPath(pattern, path));
   const inMatches = cites.map((p) => found(p, matched));
   const inNeighbours = cites.map((p) => found(p, neighbours));
   const inResult = cites.every((_, i) => inMatches[i] || inNeighbours[i]);
