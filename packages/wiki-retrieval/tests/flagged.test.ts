@@ -199,3 +199,92 @@ test("a Page with a malformed frontmatter is still searchable by its body", asyn
   assert.equal(result.pages[0]?.path, "entities/broken.md");
   assert.deepEqual(await retrieval.flagged("needs-owner"), []);
 });
+
+/** `path` with `flags: []` swapped for `flags: [flag]`, written back. */
+async function flag(path: string, flags: string) {
+  const page = await store.read(path);
+  assert.ok(page);
+  const body = page.body.replace(/^flags: \[\]$/m, `flags: ${flags}`);
+  assert.notEqual(body, page.body, path);
+  await store.write(path, body, { etag: page.etag });
+}
+
+test("a cold instance lists a flagged scaffolding Page; search still never returns one", async () => {
+  await flag("index.md", "[needs-owner]");
+  const retrieval = createRetrieval({ store });
+  assert.deepEqual(await retrieval.flagged("needs-owner"), [
+    { path: "index.md", kind: "index", status: "active" },
+  ]);
+  for (const query of ["Index", "index needs-owner", "wiki schema", "log"]) {
+    const { pages } = await retrieval.search({ query, neighbourhood: true });
+    assert.ok(
+      !pages.some((p) => ["index.md", "log.md", "SCHEMA.md"].includes(p.path)),
+      query
+    );
+  }
+});
+
+test("flagged follows index.md, log.md and SCHEMA.md as their flags come and go", async () => {
+  const retrieval = createRetrieval({ store });
+  await retrieval.search({ query: "cash" });
+  assert.deepEqual(await retrieval.flagged("needs-owner"), []);
+  await flag("index.md", "[needs-owner]");
+  await flag("log.md", "[needs-owner, conflict]");
+  await flag("SCHEMA.md", "\n  - suspicious-content");
+  assert.deepEqual(
+    (await retrieval.flagged("needs-owner")).map((p) => p.path),
+    ["index.md", "log.md"]
+  );
+  assert.deepEqual(
+    (await retrieval.flagged("conflict")).map((p) => p.path),
+    ["log.md", "profile.md"]
+  );
+  assert.deepEqual(
+    (await retrieval.flagged("suspicious-content")).map((p) => p.path),
+    ["SCHEMA.md", "summaries/2026-10-02-invoice-eastside-auto-3381.md"]
+  );
+  const index = await store.read("index.md");
+  assert.ok(index);
+  await store.write(
+    "index.md",
+    index.body.replace("flags: [needs-owner]", "flags: []"),
+    { etag: index.etag }
+  );
+  assert.deepEqual(
+    (await retrieval.flagged("needs-owner")).map((p) => p.path),
+    ["log.md"]
+  );
+  const { pages } = await retrieval.search({ query: "schema log index" });
+  assert.ok(
+    !pages.some((p) => ["index.md", "log.md", "SCHEMA.md"].includes(p.path))
+  );
+});
+
+test("flagged never lists a Source or a cache/ file, whatever its flags line", async () => {
+  const flagged =
+    "---\ntitle: X\nkind: entity\nstatus: active\nflags: [needs-owner]\n---\n\nX\n";
+  const extra = new Map([
+    ["sources/receipt.md", flagged],
+    ["sources/nested/receipt.md", flagged],
+    ["cache/notes.md", flagged],
+  ]);
+  // A store whose manifest carries them anyway, as a careless backend might.
+  const leaky: WikiStore = {
+    ...store,
+    async manifest(prefix) {
+      const entries = await store.manifest(prefix);
+      return [
+        ...entries,
+        ...[...extra.keys()].map((path) => ({ path, etag: "x1" })),
+      ];
+    },
+    async read(path) {
+      const body = extra.get(path);
+      return body === undefined ? store.read(path) : { body, etag: "x1" };
+    },
+  };
+  assert.deepEqual(
+    await createRetrieval({ store: leaky }).flagged("needs-owner"),
+    []
+  );
+});

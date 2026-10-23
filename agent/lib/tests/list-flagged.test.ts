@@ -70,6 +70,28 @@ test("no flagged Page says so; flagged Pages past five are all listed, by path",
   );
 });
 
+test("a flagged scaffolding Page is listed like any other", async () => {
+  const store = wiki();
+  const index = await store.read("index.md");
+  assert.ok(index);
+  await store.write(
+    "index.md",
+    index.body.replace("flags: []", "flags: [conflict]"),
+    { etag: index.etag }
+  );
+  assert.equal(
+    await tool.execute({ flag: "conflict" }, {}),
+    "index.md · index · active\nprofile.md · profile · active"
+  );
+  const flagged = await store.read("index.md");
+  assert.ok(flagged);
+  await store.write("index.md", index.body, { etag: flagged.etag });
+  assert.equal(
+    await tool.execute({ flag: "conflict" }, {}),
+    "profile.md · profile · active"
+  );
+});
+
 test("flag takes only the Schema's three flags", () => {
   for (const flag of ["conflict", "suspicious-content", "needs-owner"])
     assert.equal(tool.inputSchema.safeParse({ flag }).success, true);

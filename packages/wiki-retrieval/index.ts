@@ -78,13 +78,16 @@ export type FlaggedPage = { path: string; kind: string; status: string };
 export type Retrieval = {
   /** Rank the Wiki's sections for a Query; the store is re-checked first. */
   search(options: SearchOptions): Promise<RetrievalResult>;
-  /** Every Page carrying `flag`, sorted by path: exhaustive, not ranked. */
+  /**
+   * Every Page carrying `flag`, sorted by path: exhaustive, not ranked. The
+   * scaffolding Pages count here (never Sources); they never reach `search`.
+   */
   flagged(flag: Flag): Promise<FlaggedPage[]>;
 };
 
 /**
- * Retrieval over one WikiStore's Pages (never `index.md`, `log.md`,
- * `SCHEMA.md` or `sources/`). Keep one instance per namespace: it holds the
+ * Retrieval over one WikiStore's Pages (never `sources/`; `index.md`,
+ * `log.md` and `SCHEMA.md` only in `flagged`). Keep one instance per namespace: it holds the
  * section index and the Link table between calls and revalidates them
  * against the store's etag manifest on every call, so edits are searchable
  * (and linked) at once.
@@ -171,8 +174,9 @@ export function createRetrieval({
       };
     },
     async flagged(flag) {
-      const { pages } = await memo.refresh();
-      return [...pages.values()]
+      // Every Page that can carry a flag: scaffolding included, Sources never.
+      const { pages, scaffolding } = await memo.refresh({ scaffolding: true });
+      return [...pages.values(), ...scaffolding.values()]
         .filter((p) => p.flags.includes(flag))
         .map(({ path, kind, status }) => ({ path, kind, status }))
         .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
