@@ -19,12 +19,13 @@ Fix the two blockers PR #67 left to this ticket. Then run the labelled after run
     - `>` followed by a tab;
     - marked's rule that HTML interrupts a paragraph only unindented, outside list items.
   - Of 2,400 random 40 KB documents, the base leaked 2,085 Links and lost about 1,800. The fix leaks 5 and loses 7.
-  - There are 22 variant tests at the package interface plus a bounded-time test (27 after review round 1).
+  - There are 22 variant tests at the package interface plus a bounded-time test (29 after the review rounds).
 - **Review round 1** (`review:spec --base origin/main --ticket 63 --ticket 53`, exit 1). Standards had 0 findings. Spec had one blocker: a bullet padded with two spaces (`-  ` followed by a fence) gave a content indent of 2 where marked uses 3, so a fence's Link leaked. Repaired test-first, with three padded-marker cases checked against marked:
   - the content indent is now marked's (marker width plus 1 to 4 columns, tabs expanded; 5 or more, or a blank, counts as 1);
   - lazy lines follow marked's rule (not after a blank, indented code, a fence opener, a heading or a rule), and an HTML start ends an item;
   - the wider fuzz, with padded and tabbed markers, found inline HTML comments spanning a cut. The open-span state now tracks a comment (shared `step` for chunk and piece cuts, the advisory from PR #67), and a forced cut inside one reopens it;
   - padded-marker fuzz over 2,400 documents: base about 17,000 leaked Links, now 18.
+- **Review round 2** (exit 1). Standards had 0 findings again. Spec had one blocker: a list item's fence inside a quote, continued by lines without `>` (`> - ` then a fence, then `  code` lines). marked reads those lazy lines into the quote's list, but the chunker ended the fence. Repaired test-first: inside a raw block, a line without `>` continues a quote whose next container is a list item, unless it ends marked's lazy run (blank, heading, `>`, fence, bullet or `1.` item, a block-level HTML start, or a rule). Two cases were checked against marked. A quote-and-list fuzz (1,200 documents): base 1,408 leaked Links, now 0.
 - **`eval:diff --block` wrote over the spec #15 page.** A named block now writes `before-after.<name>.md`. Pipes inside table cells are escaped.
 - **The runs.** All ran from c46854a with the bench's configuration committed: `retrieval-after` (both invocations), `retrieval-after-lexical`, and two reruns each, under both rankers, of the three rows that decide the embeddings rule. Then `retrieval-after-hop` over lexical-only.
 - **The rules.**

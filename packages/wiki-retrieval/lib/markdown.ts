@@ -179,6 +179,19 @@ const lazyAfter = (rest: string) =>
     rest
   );
 
+/** The block tags `marked` lets interrupt a paragraph. */
+const BLOCK_TAGS =
+  "address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul";
+
+/**
+ * A line that ends a quote's lazy continuation, as `marked` reads one (its
+ * paragraph's interruptions): blank, a thematic break, heading, quote,
+ * fence, a bullet or `1.` list item, or an HTML block start.
+ */
+const ENDS_QUOTE_LAZY = new RegExp(
+  `^(?: {0,3}(?:(?:(?:-[\\t ]*){3,}|(?:_[ \\t]*){3,}|(?:\\*[ \\t]*){3,})$|#{1,6}(?:\\s|$)|>|\`{3,}(?=[^\`]*$)|~{3,}|(?:[*+-]|1[.)])[ \\t])|</?(?:${BLOCK_TAGS})(?: |/?>|$)|<(?:script|pre|style|textarea|!--)|[ \\t]*$)`
+);
+
 /**
  * `line` past the containers of `path` it continues: `rest` is what follows
  * them, `depth` how many of them it continues. A blank line continues every
@@ -186,11 +199,15 @@ const lazyAfter = (rest: string) =>
  * unindented line continues the list items it falls short of, as `marked`
  * reads code in a list item, unless a quote is inside them or it ends them.
  * The caller says whether the previous line allows that (`lazyAfter`).
+ * With `quoteLazy` (the previous line had content), a line without `>`
+ * continues a quote whose next container is a list item, as `marked` reads
+ * the quote's lazy lines into that list, unless it ends the lazy run.
  */
 function enter(
   line: string,
   path: readonly Container[],
-  lazy = false
+  lazy = false,
+  quoteLazy = false
 ): { rest: string; depth: number } {
   if (line.trim() === "") {
     const { first } = quotes(path);
@@ -201,8 +218,13 @@ function enter(
     const container = path[depth]!;
     if (container.quote) {
       const end = markerEnd(rest, 0);
-      if (end < 0 || !rest.slice(0, end).includes(">")) return { rest, depth };
-      rest = past(rest, end);
+      if (end > 0 && rest.slice(0, end).includes(">")) rest = past(rest, end);
+      // `marked` re-reads a quote's last list with the lazy lines after it.
+      else if (
+        !(quoteLazy && path[depth + 1]?.quote === false) ||
+        ENDS_QUOTE_LAZY.test(rest)
+      )
+        return { rest, depth };
     } else {
       const next = dedent(rest, container.indent);
       if (next !== null) rest = next;
@@ -350,15 +372,18 @@ function chunks(markdown: string): string[] {
   let inCode = false;
   /** Inside a raw block, the next line may continue its list items unindented. */
   let lazy = false;
+  /** Inside a raw block, the next line may continue its quotes without `>`. */
+  let quoteLazy = false;
   /** The chunk was cut mid-paragraph inside a list item and opened outside it. */
   let detached = false;
   for (const unbounded of markdown.split("\n")) {
     const line = shallow(unbounded);
     const empty = line.trim() === "";
     if (raw !== null) {
-      const { rest, depth } = enter(line, raw.path, lazy);
+      const { rest, depth } = enter(line, raw.path, lazy, quoteLazy);
       if (depth === raw.path.length) {
         lazy = lazyAfter(rest);
+        quoteLazy = rest.trim() !== "";
         if (raw.closes(rest)) {
           containers = raw.path;
           raw = null;
@@ -425,6 +450,7 @@ function chunks(markdown: string): string[] {
     if (closes) {
       raw = { path: containers, closes };
       lazy = lazyAfter(opened.rest);
+      quoteLazy = opened.rest.trim() !== "";
     }
     if (empty) spans = closed();
     // A raw block's opener is part of the block: nothing in it stays open.

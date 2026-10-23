@@ -297,7 +297,7 @@ describe("code inside containers on a long Page", () => {
     });
 });
 
-describe("list items padded past one space, as marked reads them", () => {
+describe("list items as marked reads them: padding and lazy lines", () => {
   const A = "summaries/2026-08-31-bank-statement-tidewater.md";
   const B = "summaries/2026-09-12-invoice-cascade-parts-4472.md";
   const many = (line: string) =>
@@ -323,6 +323,18 @@ describe("list items padded past one space, as marked reads them", () => {
         // Five spaces: the content starts one column in, as indented code.
         name: "a bullet and five spaces",
         body: `-     \`\`\`\n  content\n\n${many("      content")}\n      [A](../${A})\n\n[B](../${B})`,
+        want: [false, true],
+      },
+      {
+        // The quote's lines without `>` still continue its list item, so
+        // A is code; the dedented fence leaves the quote and holds B.
+        name: "a list item's fence in a quote, continued without `>`",
+        body: `> - \`\`\`\n${many("  code")}\n  [A](../${A})\n  \`\`\`\n\n[B](../${B})`,
+        want: [false, false],
+      },
+      {
+        name: "an ordered item's fence in a quote, closed back inside it",
+        body: `> 1. \`\`\`\n${many("   code")}\n   [A](../${A})\n>    \`\`\`\n\n[B](../${B})`,
         want: [false, true],
       },
     ];
