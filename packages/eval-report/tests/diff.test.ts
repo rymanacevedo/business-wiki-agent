@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { join } from "node:path";
 import { test } from "node:test";
-import { diffRuns, rewriteReadmeBlock, type Run } from "../diff";
+import { diffRuns, readRun, rewriteReadmeBlock, type Run } from "../diff";
 import type { CaseReport } from "../index";
 
 function row(
@@ -223,4 +224,108 @@ test("the README block between the markers is replaced, and only that block", ()
     () => rewriteReadmeBlock("# no markers\n", "x"),
     /eval-diff:start/
   );
+});
+
+test("a named block is rewritten between its own markers, leaving the default block alone", () => {
+  const readme = [
+    "<!-- eval-diff:start -->",
+    "slice table",
+    "<!-- eval-diff:end -->",
+    "",
+    "<!-- eval-diff:retrieval:start -->",
+    "<!-- eval-diff:retrieval:end -->",
+    "",
+  ].join("\n");
+
+  assert.equal(
+    rewriteReadmeBlock(readme, "| retrieval |", "retrieval"),
+    [
+      "<!-- eval-diff:start -->",
+      "slice table",
+      "<!-- eval-diff:end -->",
+      "",
+      "<!-- eval-diff:retrieval:start -->",
+      "| retrieval |",
+      "<!-- eval-diff:retrieval:end -->",
+      "",
+    ].join("\n")
+  );
+  assert.equal(
+    rewriteReadmeBlock(readme, "| new |"),
+    readme.replace("slice table", "| new |")
+  );
+});
+
+test("a named block whose markers are missing fails and names the pair", () => {
+  assert.throws(
+    () =>
+      rewriteReadmeBlock(
+        "<!-- eval-diff:start -->\n<!-- eval-diff:end -->\n",
+        "x",
+        "retrieval"
+      ),
+    /README has no <!-- eval-diff:retrieval:start --> \.\.\. <!-- eval-diff:retrieval:end --> block/
+  );
+});
+
+test("the before/after page has a By tag table, after By class, with one row per tag", () => {
+  const tagged: Run = {
+    label: "after",
+    slices: [
+      ...after.slices,
+      {
+        label: "after",
+        slice: "query",
+        cases: [
+          row("query/0001", {
+            verdict: "failed",
+            tags: ["normal", "retrieval", "retrieval:semantic"],
+          }),
+        ],
+      },
+    ],
+  };
+  const { markdown, readmeBlock } = diffRuns(before, tagged);
+
+  const section = markdown.slice(
+    markdown.indexOf("## By tag"),
+    markdown.indexOf("## Labelled scores")
+  );
+  assert.ok(
+    markdown.indexOf("## By class") < markdown.indexOf("## By tag"),
+    markdown
+  );
+  assert.equal(
+    section.trim(),
+    [
+      "## By tag",
+      "",
+      "A case carries several tags, so a case counts once in every tag it has.",
+      "",
+      "| Tag | Cases | Pass rate before | Pass rate after |",
+      "| --- | --- | --- | --- |",
+      "| normal | 3 | 1/2 (50%) | 2/3 (67%) |",
+      "| retrieval | 1 | n/a | 0/1 (0%) |",
+      "| retrieval:semantic | 1 | n/a | 0/1 (0%) |",
+      "| trap | 1 | 0/1 (0%) | 1/1 (100%) |",
+    ].join("\n")
+  );
+  assert.ok(!readmeBlock.includes("| Tag |"), "the README block is unchanged");
+});
+
+test("a self-diff of the committed retrieval-before run reads the retrieval rows as a group", async () => {
+  const runs = join(__dirname, "../../../docs/evals/runs");
+  const run = await readRun(runs, "retrieval-before");
+  const { markdown } = diffRuns(run, run);
+
+  // Counted by hand from docs/evals/runs/retrieval-before/query.json.
+  for (const line of [
+    "| retrieval | 8 | 7/8 (88%) | 7/8 (88%) |",
+    "| retrieval:absent | 2 | 2/2 (100%) | 2/2 (100%) |",
+    "| retrieval:lexical | 2 | 2/2 (100%) | 2/2 (100%) |",
+    "| retrieval:neighbourhood | 2 | 2/2 (100%) | 2/2 (100%) |",
+    "| retrieval:semantic | 2 | 1/2 (50%) | 1/2 (50%) |",
+  ])
+    assert.ok(markdown.includes(line), line);
+  assert.ok(markdown.includes("| **total** | 73 |"), "73 cases in all");
 });

@@ -229,6 +229,13 @@ curl -sN https://business-wiki-agent.vercel.app/eve/v1/session/<sessionId>/strea
   namespace, seeded from `base` (Ingest and Safety at-ingest) or `full`
   (everything else).
 
+The retrieval table below is written by
+`bun run eval:diff retrieval-before retrieval-after --block retrieval`; it is
+empty until the after run lands.
+
+<!-- eval-diff:retrieval:start -->
+<!-- eval-diff:retrieval:end -->
+
 ## What broke and what changed
 
 The baseline (`before`, git tag `eval-baseline`) ran the agent as first
