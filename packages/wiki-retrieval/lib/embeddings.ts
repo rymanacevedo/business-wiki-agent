@@ -129,13 +129,34 @@ export function missing(
   );
 }
 
-/** Call `embed` and check it answered one vector of the right size per text. */
+/**
+ * The model reads at most 8,191 tokens per input and rejects the whole batch
+ * over one longer text. A token covers at least one UTF-8 byte, so a text cut
+ * to this many bytes always fits; fixture sections are under 1,700.
+ */
+const MAX_INPUT_BYTES = 8000;
+
+/** `text` cut to `MAX_INPUT_BYTES` at a character boundary. */
+function input(text: string): string {
+  const bytes = Buffer.from(text);
+  if (bytes.byteLength <= MAX_INPUT_BYTES) return text;
+  let end = MAX_INPUT_BYTES;
+  // Back up over continuation bytes (10xxxxxx) to the start of a character.
+  while (end > 0 && (bytes[end] & 0xc0) === 0x80) end--;
+  return bytes.subarray(0, end).toString("utf8");
+}
+
+/**
+ * Call `embed` and check it answered one vector of the right size per text.
+ * Each text is cut to what the model accepts, so one long section (or
+ * Query) never fails the batch it travels in.
+ */
 export async function embedChecked(
   embed: Embed,
   texts: string[]
 ): Promise<Float32Array[]> {
   if (texts.length === 0) return [];
-  const out = await embed(texts);
+  const out = await embed(texts.map(input));
   if (!Array.isArray(out) || out.length !== texts.length)
     throw new Error(
       `embed returned ${out?.length} vectors for ${texts.length} texts`

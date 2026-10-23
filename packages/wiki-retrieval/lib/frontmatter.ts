@@ -14,16 +14,27 @@ export type Frontmatter = {
 };
 
 const SKIPPED_KEYS = new Set(["created", "updated"]);
-const NONE: Frontmatter = { value: () => undefined, flags: [], facts: [] };
+/**
+ * Most map entries one frontmatter's facts fold from. Aliases can make a
+ * small frontmatter name an exponential number of entries (`&a` used ten
+ * times in `&b`, used ten times in `&c`...); real Pages fold a dozen.
+ */
+export const MAX_FOLDED_ENTRIES = 1000;
+export const EMPTY_FRONTMATTER: Frontmatter = {
+  value: () => undefined,
+  flags: [],
+  facts: [],
+};
 
 /**
  * Read `frontmatter` lines as YAML. A malformed frontmatter reads as empty:
  * no facts, no flags, no title (validatePage refuses such a write, so only
- * a hand edit can leave one).
+ * a hand edit can leave one). Aliases are followed, but never back into a
+ * map already being folded, and never past `MAX_FOLDED_ENTRIES` entries.
  */
 export function readFrontmatter(frontmatter: string[]): Frontmatter {
   const doc = parseFrontmatter(frontmatter);
-  if (!doc || !isMap(doc.contents)) return NONE;
+  if (!doc || !isMap(doc.contents)) return EMPTY_FRONTMATTER;
   const source = frontmatter.join("\n");
   const resolve = (node: unknown) =>
     isAlias(node) ? node.resolve(doc as Document) : node;
@@ -48,12 +59,17 @@ export function readFrontmatter(frontmatter: string[]): Frontmatter {
     if (isScalar(pair.key)) top.set(String(pair.key.value), pair.value);
 
   const facts: string[] = [];
+  /** The maps being folded, outermost first: an alias back into one is a cycle. */
+  const open = new Set<unknown>();
+  let entries = 0;
   // Keys under `payment` read `payment.<key>`; lists read `key: [a, b]`;
   // maps inside lists (the allocation rows) and empty values are skipped.
   const fold = (map: unknown, parent: string | undefined) => {
     const node = resolve(map);
-    if (!isMap(node)) return;
+    if (!isMap(node) || open.has(node)) return;
+    open.add(node);
     for (const pair of node.items) {
+      if (++entries > MAX_FOLDED_ENTRIES) break;
       if (!isScalar(pair.key)) continue;
       const key = String(pair.key.value);
       if (parent === undefined && SKIPPED_KEYS.has(key)) continue;
@@ -68,6 +84,7 @@ export function readFrontmatter(frontmatter: string[]): Frontmatter {
         if (scalar !== undefined) facts.push(`${name}: ${scalar}`);
       }
     }
+    open.delete(node);
   };
   fold(doc.contents, undefined);
 

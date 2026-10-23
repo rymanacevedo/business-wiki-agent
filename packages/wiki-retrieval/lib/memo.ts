@@ -4,7 +4,7 @@
 import { createHash } from "node:crypto";
 import type { WikiStore } from "../../wiki-store";
 import { splitPage } from "../../page-edits";
-import { readFrontmatter } from "./frontmatter";
+import { EMPTY_FRONTMATTER, readFrontmatter } from "./frontmatter";
 import { sectionsOf, type Section } from "./sections";
 
 /** Scaffolding Pages: never Matches, never neighbours, never indexed. */
@@ -34,9 +34,42 @@ export type MemoPage = {
   sections: Section[];
 };
 
+/**
+ * One Page's parsed form. Whatever its text holds, this never throws: a
+ * frontmatter that cannot be read leaves the body searchable, and a Page
+ * that cannot be parsed at all is kept with no sections (and a warning), so
+ * one Page never fails the refresh of the whole namespace.
+ */
 export function parsePage(path: string, text: string, etag: string): MemoPage {
+  try {
+    return parsed(path, text, etag);
+  } catch (error) {
+    console.warn(
+      `wiki-retrieval: ${path} could not be indexed, skipped: ${error instanceof Error ? error.message : String(error)}`
+    );
+    return {
+      path,
+      etag,
+      hash: "",
+      title: path,
+      kind: "unknown",
+      status: "unknown",
+      flags: [],
+      frontmatter: [],
+      body: [],
+      sections: [],
+    };
+  }
+}
+
+function parsed(path: string, text: string, etag: string): MemoPage {
   const { frontmatter, body } = splitPage(text);
-  const read = readFrontmatter(frontmatter);
+  let read = EMPTY_FRONTMATTER;
+  try {
+    read = readFrontmatter(frontmatter);
+  } catch {
+    // Read as malformed: no facts, no flags, the body still indexed.
+  }
   return {
     path,
     etag,

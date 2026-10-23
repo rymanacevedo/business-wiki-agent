@@ -63,18 +63,31 @@ function frontmatterOf(page: MemoPage): Record<string, unknown> {
 }
 
 /**
+ * Most body characters read for Links. The Markdown lexer is quadratic on
+ * some inputs (a long run of unclosed emphasis); the largest Page in the
+ * fixtures is under 7,000 characters, so this only cuts a pathological one.
+ */
+const MAX_LINK_BODY = 16_000;
+
+/**
  * A Page body read as Markdown: every link's target (inline or reference
  * style) and the prose text outside code, where Citations count. Code
- * spans, code blocks and backslash escapes carry no Link.
+ * spans, code blocks and backslash escapes carry no Link. Only the first
+ * `MAX_LINK_BODY` characters are read, and a body the lexer cannot read
+ * (it overflows the stack on deep nesting) carries no Links at all.
  */
 function readBody(markdown: string): { prose: string; targets: string[] } {
   const targets: string[] = [];
   const prose: string[] = [];
-  walkTokens(Lexer.lex(markdown), (token) => {
-    if (token.type === "link") targets.push(token.href);
-    else if (token.type === "text" && !("tokens" in token && token.tokens))
-      prose.push(token.text);
-  });
+  try {
+    walkTokens(Lexer.lex(markdown.slice(0, MAX_LINK_BODY)), (token) => {
+      if (token.type === "link") targets.push(token.href);
+      else if (token.type === "text" && !("tokens" in token && token.tokens))
+        prose.push(token.text);
+    });
+  } catch {
+    return { prose: "", targets: [] };
+  }
   return { prose: prose.join("\n"), targets };
 }
 
@@ -114,6 +127,15 @@ function outgoing(page: MemoPage): Map<string, Set<LinkKind>> {
   return out;
 }
 
+/** `outgoing`, with a Page whose Links cannot be read carrying none. */
+function linksOf(page: MemoPage): Map<string, Set<LinkKind>> {
+  try {
+    return outgoing(page);
+  } catch {
+    return new Map();
+  }
+}
+
 export type Adjacent = { page: string; labels: string[] };
 
 /** The Links among one Snapshot's Pages. Never changed once built. */
@@ -146,7 +168,7 @@ export function createLinker(): Linker {
         const entry =
           last?.etag === page.etag
             ? last
-            : { etag: page.etag, to: outgoing(page) };
+            : { etag: page.etag, to: linksOf(page) };
         from.set(page.path, entry);
         for (const target of entry.to.keys()) {
           const sources = into.get(target) ?? new Set<string>();
