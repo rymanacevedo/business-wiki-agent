@@ -3,6 +3,12 @@
 // session in Source-id order, check the result, and write it to fixtures/<name>.
 // Usage: bun run wiki:build-fixture [--fixture full|base] [--port 2080]
 //          [--ns build-<fixture>] [--resume | --redo-from <source-id>] [--no-write]
+//        bun run wiki:build-fixture --embed-only [--fixture full|base]
+// After writing the Pages, the embed step writes the fixture's
+// cache/embeddings.json through the AI Gateway (AI_GATEWAY_API_KEY).
+// --embed-only runs that step alone over the existing fixture directory: no
+// Ingest, no other file touched, and only sections whose Page changed are
+// embedded again.
 // --resume keeps the namespace and skips Sources already Ingested;
 // --redo-from restores the snapshot taken just before that Source and goes on.
 // One session per Source keeps every session far under the 300K input-token
@@ -10,12 +16,14 @@
 // done). Any Approval is denied so the build never blocks; it is reported.
 // The namespace holds only the plan's Sources, so the Inbox stays unIngested.
 import { spawn, type ChildProcess } from "node:child_process";
-import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { ingestProblems } from "../agent/lib/ingest-check";
 import { loadCorpus } from "../packages/corpus";
 import { checkWiki } from "../packages/wiki-check";
+import { CACHE_PATH } from "../packages/wiki-retrieval";
+import { gatewayEmbed } from "../packages/wiki-retrieval/gateway";
 import { createWikiStore, type WikiStore } from "../packages/wiki-store";
 import { seedNamespace } from "../packages/wiki-store/seed";
 import {
@@ -23,6 +31,7 @@ import {
   holdBackSources,
   type BuiltFixture,
 } from "./lib/build-plan";
+import { embedFixture } from "./lib/fixture-embed";
 
 const ROOT = resolve(__dirname, "..");
 const RATE_LIMIT_WAIT_MS = 75_000;
@@ -242,6 +251,11 @@ async function readNamespace(store: WikiStore): Promise<Map<string, string>> {
   return pages;
 }
 
+async function embedStep(dir: string) {
+  const { embedded, path } = await embedFixture(dir, gatewayEmbed);
+  log(`embedded ${embedded} sections into ${path}`);
+}
+
 async function main(): Promise<number> {
   const { values } = parseArgs({
     options: {
@@ -252,12 +266,18 @@ async function main(): Promise<number> {
       "redo-from": { type: "string" },
       "no-write": { type: "boolean", default: false },
       trace: { type: "boolean", default: false },
+      "embed-only": { type: "boolean", default: false },
     },
   });
   const fixture = values.fixture as BuiltFixture;
   if (fixture !== "full" && fixture !== "base") {
     console.error("--fixture must be full or base");
     return 64;
+  }
+  const fixtureDir = resolve(ROOT, "fixtures", fixture);
+  if (values["embed-only"]) {
+    await embedStep(fixtureDir);
+    return 0;
   }
   const namespace = values.ns ?? `build-${fixture}`;
   const plan = buildPlan(loadCorpus().manifest, fixture);
@@ -323,13 +343,22 @@ async function main(): Promise<number> {
   log(`report: ${reportPath}`);
   for (const p of problems) console.log(`PROBLEM ${p}`);
   if (!values["no-write"]) {
-    const dir = resolve(ROOT, "fixtures", fixture);
+    const dir = fixtureDir;
+    // Keep the old cache: the embed step reuses every vector still current.
+    const cache = await readFile(resolve(dir, CACHE_PATH), "utf8").catch(
+      () => null
+    );
     await rm(dir, { recursive: true, force: true });
     for (const [path, body] of pages) {
       await mkdir(dirname(resolve(dir, path)), { recursive: true });
       await writeFile(resolve(dir, path), body);
     }
     log(`wrote ${pages.size} Pages to fixtures/${fixture}`);
+    if (cache !== null) {
+      await mkdir(dirname(resolve(dir, CACHE_PATH)), { recursive: true });
+      await writeFile(resolve(dir, CACHE_PATH), cache);
+    }
+    await embedStep(dir);
   }
   return problems.length || reports.some((r) => !r.done) ? 1 : 0;
 }
