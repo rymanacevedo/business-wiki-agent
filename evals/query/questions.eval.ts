@@ -76,12 +76,12 @@ export default cases.map((c) =>
         t.skip("the Query slice runs from WIKI_SEED=full");
 
       let turn: EveEvalTurn | undefined;
-      const toolCalls: EveEvalTurn["toolCalls"][number][] = [];
+      // The last prompt's calls, across every segment drive took to settle it.
+      let toolCalls: EveEvalTurn["toolCalls"][number][] = [];
       for (const prompt of c.prompts) {
         const driven = await driveSegments(t, c.caseId, prompt, turn?.session);
         turn = driven.turn;
-        for (const segment of driven.segments)
-          toolCalls.push(...segment.toolCalls);
+        toolCalls = driven.segments.flatMap((segment) => segment.toolCalls);
       }
       if (!turn) return;
       // A multi-turn row checks its last turn; the trajectory covers the run.
@@ -91,7 +91,8 @@ export default cases.map((c) =>
 
       const answer = turn.message ?? "";
       gateChecks(t, checkAnswer(c, answer));
-      // toolCalls[].output is search_wiki's full execute object, not the text.
+      // A multi-turn row scores its last turn, like the gates; each output is
+      // search_wiki's full execute object, not the text the model saw.
       scoreRetrieval(t, c.cites, toolCalls);
       if (c.judges.length === 0) return;
 
