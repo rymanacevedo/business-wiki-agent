@@ -105,6 +105,72 @@ for (const [name, space] of Object.entries(backends))
       assert.equal((await wiki.list("")).length, 5);
     });
 
+    test("manifest lists each path under the prefix with the etag read returns, sorted", async () => {
+      const wiki = store("demo");
+      for (const path of ["obligations/b.md", "obligations/a.md", "index.md"])
+        await wiki.write(path, `# ${path}\n`, { etag: null });
+      const manifest = await wiki.manifest("obligations/");
+      assert.deepEqual(
+        manifest.map((entry) => entry.path),
+        ["obligations/a.md", "obligations/b.md"]
+      );
+      for (const { path, etag } of manifest)
+        assert.equal(etag, (await wiki.read(path))?.etag);
+      assert.equal((await wiki.manifest("")).length, 3);
+      assert.deepEqual(await wiki.manifest("nothing/"), []);
+      await assert.rejects(wiki.manifest("../"), WikiPathError);
+    });
+
+    test("manifest shows a changed etag after a write", async () => {
+      const wiki = store("demo");
+      await wiki.write("index.md", "v1", { etag: null });
+      const [before] = await wiki.manifest("");
+      await wiki.write("index.md", "v2", { etag: before.etag });
+      const [after] = await wiki.manifest("");
+      assert.notEqual(after.etag, before.etag);
+      assert.equal(after.etag, (await wiki.read("index.md"))?.etag);
+    });
+
+    test("list and manifest never show a path under the hidden cache/ prefix", async () => {
+      const wiki = store("demo");
+      await wiki.write("index.md", "# Index\n", { etag: null });
+      await wiki.write("cache/embeddings.json", "{}", { etag: null });
+      await wiki.write("cache/nested/x.md", "x", { etag: null });
+      await wiki.write("cache-notes.md", "not hidden", { etag: null });
+      assert.deepEqual(await wiki.list(""), ["cache-notes.md", "index.md"]);
+      assert.deepEqual(await wiki.list("cache/"), []);
+      assert.deepEqual(await wiki.list("cache"), ["cache-notes.md"]);
+      assert.deepEqual(
+        (await wiki.manifest("")).map((entry) => entry.path),
+        ["cache-notes.md", "index.md"]
+      );
+      assert.deepEqual(await wiki.manifest("cache/"), []);
+    });
+
+    test("the cache file reads and writes with etag guards like any path", async () => {
+      const wiki = store("demo");
+      const path = "cache/embeddings.json";
+      assert.equal(await wiki.read(path), null);
+      const first = await wiki.write(path, '{"v":1}', { etag: null });
+      assert.deepEqual(await wiki.read(path), {
+        body: '{"v":1}',
+        etag: first.etag,
+      });
+      await assert.rejects(
+        wiki.write(path, "{}", { etag: null }),
+        WikiConflictError
+      );
+      const second = await wiki.write(path, '{"v":2}', { etag: first.etag });
+      await assert.rejects(
+        wiki.write(path, '{"v":3}', { etag: first.etag }),
+        WikiConflictError
+      );
+      assert.deepEqual(await wiki.read(path), {
+        body: '{"v":2}',
+        etag: second.etag,
+      });
+    });
+
     test("namespaces sharing a root never see each other's Pages", async () => {
       const shared = space();
       const demo = store("demo", shared);
@@ -196,6 +262,35 @@ test("on Vercel the store keeps Pages in Blob under wiki/<namespace>/", async ()
     env: { WIKI_STORE_DIR: root },
   });
   assert.deepEqual(await local.list(""), []);
+});
+
+test("on Blob, manifest takes the etags from the listing and reads nothing", async () => {
+  const { client, calls } = fakeBlob(1000);
+  const wiki = createWikiStore({
+    namespace: "demo",
+    env: { VERCEL: "1" },
+    blob: client,
+  });
+  for (const path of ["index.md", "profile.md", "cache/embeddings.json"])
+    await wiki.write(path, "x", { etag: null });
+  calls.get = calls.list = 0;
+  assert.equal((await wiki.manifest("")).length, 2);
+  assert.deepEqual({ get: calls.get, list: calls.list }, { get: 0, list: 1 });
+});
+
+test("on Blob, a large Page's read etag is the manifest's and a write with it succeeds", async () => {
+  const { client } = fakeBlob();
+  const wiki = createWikiStore({
+    namespace: "demo",
+    env: { VERCEL: "1" },
+    blob: client,
+  });
+  const body = `# Index\n${"- a line of the Index\n".repeat(100)}`;
+  await wiki.write("index.md", body, { etag: null });
+  const read = await wiki.read("index.md");
+  const [listed] = await wiki.manifest("");
+  assert.equal(read?.etag, listed.etag);
+  await wiki.write("index.md", `${body}- one more\n`, { etag: read!.etag });
 });
 
 test("under eve dev and eve eval the store never touches Blob, even with VERCEL set", async () => {

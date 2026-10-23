@@ -8,7 +8,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import type { Backend, Entry } from "./backend";
+import { byKey, type Backend, type Entry } from "./backend";
 import { WikiConflictError } from "./errors";
 
 /** The local store's root directory: `WIKI_STORE_DIR`, else `./.wiki-store`. */
@@ -61,6 +61,17 @@ export function localBackend(root: string): Backend {
         .map((file) => relative(root, file).split(sep).join("/"))
         .filter((key) => key.startsWith(prefix))
         .sort();
+    },
+    // The same content hash `get` returns, so it costs a read of every file.
+    async manifest(prefix) {
+      const keys = await this.list(prefix);
+      const entries = await Promise.all(
+        keys.map(async (key) => {
+          const entry = await readEntry(join(root, key));
+          return entry && { key, etag: entry.etag };
+        })
+      );
+      return entries.filter((entry) => entry !== null).sort(byKey);
     },
     async remove(keys) {
       await Promise.all(

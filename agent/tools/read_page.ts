@@ -1,5 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
+import { isCache } from "../../packages/wiki-store";
 import { SOURCES, wiki } from "../lib/config";
 
 const MAX_PAGES = 12;
@@ -23,7 +24,11 @@ export default defineTool({
         "Sources are not Pages; use read_source with the Source id."
       );
     const pages = await Promise.all(
-      clean.map(async (path) => ({ path, page: await store.read(path) }))
+      clean.map(async (path) => ({
+        path,
+        // Retrieval's cache shares the namespace but is never a Page.
+        page: isCache(path.toLowerCase()) ? null : await store.read(path),
+      }))
     );
     const missing = (path: string) =>
       `No Page at ${path}. Check the Index for the path.`;

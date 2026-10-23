@@ -1,10 +1,11 @@
 import { maskSource } from "../../source-masking";
-import { WikiPathError, type WikiStore } from "../../wiki-store";
+import { isCache, WikiPathError, type WikiStore } from "../../wiki-store";
 
 /**
  * The Page or Source a `/wiki/[...path]` route names: the Index for the
  * root, a Source by bare id (Citations carry no extension), null otherwise.
- * A Source body is masked exactly as `read_source` hands it to Clerk.
+ * A Source body is masked exactly as `read_source` hands it to Clerk. The
+ * retrieval cache under `cache/` is not a Page and never opens.
  */
 export async function openWikiPage(
   store: WikiStore,
@@ -16,6 +17,8 @@ export async function openWikiPage(
   } catch {
     return null;
   }
+  // Lower-cased so a case-insensitive local disk cannot alias the prefix.
+  if (isCache(path.toLowerCase())) return null;
   const candidates =
     path === ""
       ? ["index.md"]

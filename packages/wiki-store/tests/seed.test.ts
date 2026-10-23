@@ -102,6 +102,35 @@ for (const [name, space] of Object.entries(backends))
       assert.deepEqual(await other.list(""), ["index.md"]);
     });
 
+    test("a fixture's cache/embeddings.json lands in the namespace, is not counted as a Page, and a forced reseed restores it", async () => {
+      const { env, blob } = space();
+      const fixtureDir = tree({
+        "index.md": "# Index\n",
+        "cache/embeddings.json": '{"model":"m"}',
+      });
+      const sourcesDir = tree({});
+      const seed = (force = false) =>
+        seedNamespace({
+          namespace: "demo",
+          fixtureDir,
+          sourcesDir,
+          env,
+          blob,
+          force,
+        });
+      const wiki = createWikiStore({ namespace: "demo", env, blob });
+      assert.deepEqual(await seed(), { pages: 1, sources: 0, backend: name });
+      const cache = await wiki.read("cache/embeddings.json");
+      assert.equal(cache?.body, '{"model":"m"}');
+      assert.deepEqual(await wiki.list(""), ["index.md"]);
+      await wiki.write("cache/embeddings.json", "{}", { etag: cache!.etag });
+      await seed(true);
+      assert.equal(
+        (await wiki.read("cache/embeddings.json"))?.body,
+        '{"model":"m"}'
+      );
+    });
+
     test("a fixture that carries its own sources/ is refused", async () => {
       await assert.rejects(
         seedNamespace({

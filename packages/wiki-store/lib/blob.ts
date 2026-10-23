@@ -1,6 +1,6 @@
 import * as vercelBlob from "@vercel/blob";
 import { BlobError, BlobPreconditionFailedError } from "@vercel/blob";
-import type { Backend } from "./backend";
+import { byKey, type Backend, type KeyEtag } from "./backend";
 import { WikiConflictError } from "./errors";
 
 /**
@@ -28,7 +28,7 @@ export type BlobClient = {
     }
   ): Promise<{ etag: string }>;
   list(options: { prefix?: string; cursor?: string; limit?: number }): Promise<{
-    blobs: { pathname: string }[];
+    blobs: { pathname: string; etag: string }[];
     cursor?: string;
     hasMore: boolean;
   }>;
@@ -53,7 +53,7 @@ export function blobBackend(client: BlobClient = vercelBlob): Backend {
       });
       if (!result?.stream) return null;
       const body = await new Response(result.stream).text();
-      return { body, etag: result.blob.etag };
+      return { body, etag: strong(result.blob.etag) };
     },
     async put(key, body, ifMatch) {
       try {
@@ -80,16 +80,24 @@ export function blobBackend(client: BlobClient = vercelBlob): Backend {
       }
     },
     async list(prefix) {
-      const keys: string[] = [];
+      return (await this.manifest(prefix)).map(({ key }) => key);
+    },
+    // The listing already carries each blob's etag: one list operation per
+    // 1,000 keys, no reads.
+    async manifest(prefix) {
+      const entries: KeyEtag[] = [];
       let cursor: string | undefined;
       do {
         const page = await client.list({ prefix: ROOT + prefix, cursor });
-        keys.push(
-          ...page.blobs.map((blob) => blob.pathname.slice(ROOT.length))
+        entries.push(
+          ...page.blobs.map((blob) => ({
+            key: blob.pathname.slice(ROOT.length),
+            etag: blob.etag,
+          }))
         );
         cursor = page.hasMore ? page.cursor : undefined;
       } while (cursor);
-      return keys.sort();
+      return entries.sort(byKey);
     },
     async remove(keys) {
       for (let i = 0; i < keys.length; i += DELETE_BATCH)
@@ -100,8 +108,18 @@ export function blobBackend(client: BlobClient = vercelBlob): Backend {
   };
 }
 
+/**
+ * `get` reports a weak etag (`W/"..."`) for a body of about 1 KB or more,
+ * which the service sends compressed; `list`, `head` and `put` report the
+ * strong one. Keep the strong form so a read's etag matches the manifest's
+ * and is a valid `ifMatch`.
+ */
+function strong(etag: string): string {
+  return etag.startsWith("W/") ? etag.slice(2) : etag;
+}
+
 function contentType(key: string): string {
-  return key.endsWith(".txt")
-    ? "text/plain; charset=utf-8"
-    : "text/markdown; charset=utf-8";
+  if (key.endsWith(".txt")) return "text/plain; charset=utf-8";
+  if (key.endsWith(".json")) return "application/json; charset=utf-8";
+  return "text/markdown; charset=utf-8";
 }
