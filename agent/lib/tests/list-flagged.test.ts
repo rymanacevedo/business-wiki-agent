@@ -5,7 +5,9 @@ import { join, resolve } from "node:path";
 import { after, before, test } from "node:test";
 import { WRITE_TOOLS } from "../../../evals/lib/answers";
 import { seedNamespace } from "../../../packages/wiki-store/seed";
-import { wiki } from "../config";
+import lint from "../../skills/lint";
+import readPage from "../../tools/read_page";
+import { READ_PAGE_MAX, wiki } from "../config";
 import listFlagged from "../../tools/list_flagged";
 
 // list_flagged is Lint's exhaustive flag scan: every Page carrying the flag,
@@ -78,4 +80,29 @@ test("flag takes only the Schema's three flags", () => {
 test("list_flagged is a read tool: in no write-tool list", () => {
   assert.ok(readdirSync(resolve("agent/tools")).includes("list_flagged.ts"));
   assert.equal(WRITE_TOOLS.includes("list_flagged"), false);
+});
+
+test("Lint reads a flagged list longer than read_page's cap in several calls", async () => {
+  const read = readPage as unknown as {
+    inputSchema: { safeParse: (input: unknown) => { success: boolean } };
+  };
+  const paths = (n: number) =>
+    Array.from({ length: n }, (_, i) => `entities/p${i}.md`);
+  assert.equal(
+    read.inputSchema.safeParse({ paths: paths(READ_PAGE_MAX) }).success,
+    true
+  );
+  assert.equal(
+    read.inputSchema.safeParse({ paths: paths(READ_PAGE_MAX + 1) }).success,
+    false
+  );
+  const { markdown } = lint as unknown as { markdown: string };
+  for (const step of ["2. **Unresolved", "3. **Suspicious"]) {
+    const text = markdown.slice(markdown.indexOf(step)).split(/\n\d\. /)[0];
+    assert.match(text, /list_flagged/);
+    assert.ok(
+      text.includes(`at most ${READ_PAGE_MAX} paths a call`),
+      `${step} batches its reads`
+    );
+  }
 });

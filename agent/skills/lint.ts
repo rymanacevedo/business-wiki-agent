@@ -1,5 +1,5 @@
 import { defineSkill } from "eve/skills";
-import { clerkConfig } from "../lib/config";
+import { clerkConfig, READ_PAGE_MAX } from "../lib/config";
 
 const { demoDate } = clerkConfig;
 
@@ -16,11 +16,13 @@ A Lint reads and reports; it changes nothing.
 1. \`read_page(["SCHEMA.md"])\` and \`read_index\` (it gives the Demo Date),
    together in one step.
 2. **Unresolved Contradictions**: \`list_flagged("conflict")\`, then
-   one \`read_page\` call with every Page listed; every fact line in the Schema's Contradiction
+   one \`read_page\` call with every Page listed (at most ${READ_PAGE_MAX} paths a call:
+   split a longer list); every fact line in the Schema's Contradiction
    shape on a Page whose \`flags\` include \`conflict\` is one item: the fact, both
    values with their Citations.
 3. **Suspicious Content**: \`list_flagged("suspicious-content")\`, then
-   one \`read_page\` call with every Page listed; every Page whose \`flags\` include
+   one \`read_page\` call with every Page listed (at most ${READ_PAGE_MAX} paths a call:
+   split a longer list); every Page whose \`flags\` include
    \`suspicious-content\` is one item, quoting a few words of the flagged text.
 4. **Obligations**: take every line in the Index's Obligations section that
    says \`(active)\`; \`done\` and \`superseded\` Obligations are never listed. For

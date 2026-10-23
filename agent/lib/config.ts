@@ -65,6 +65,9 @@ export function retrieval(ctx?: SessionCtx): Retrieval {
   return instance;
 }
 
+/** Most Pages one `read_page` call opens; Lint batches longer lists. */
+export const READ_PAGE_MAX = 12;
+
 export const SOURCES = "sources/";
 export const SUMMARIES = "summaries/";
 

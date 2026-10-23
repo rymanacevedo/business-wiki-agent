@@ -16,10 +16,14 @@ Move Lint's flag scans from `search_wiki`, which is ranked and capped at five, t
 - In the README, `list_flagged` joined the diagram's Read tools box, and the `tools/` count went from ten to eleven.
 - Live check, limited to 3 rows because the Gateway is shared: `lint/checks/0000`, `0003` and `0004` passed with the `full` seed. The local traces show the model calling `list_flagged` with `conflict`, `suspicious-content` and, on the "Are any Pages flagged?" row, `needs-owner`. The run artifact was not committed.
 - I merged #56's YAML repair (393ff55). Its conflict with my test in `flagged.test.ts` was resolved by keeping both sides.
+- Review round 1 (Codex, `--ticket 59 --ticket 53`, b25b258) exited 1. Standards had 0 findings; Spec had 2 blockers.
+  - Blocker 1: steps 2 and 3 said "one `read_page` call with every Page listed", but `read_page` caps a call at 12 paths, so 13 flagged Pages could not be read as written. Repaired test-first. One `READ_PAGE_MAX` (12) in `agent/lib/config.ts` now feeds both `read_page`'s schema and the skill, whose steps 2 and 3 say "at most 12 paths a call: split a longer list". The test passes 12 paths to `read_page`, rejects 13, and checks that both steps carry the phrase. A mutation of step 3 turned it red. `lint/checks/0000` passed live again (23/23).
+  - Blocker 2: the AC's full 5-row Lint slice did not run. The implementer brief caps live checks at 3 rows and gives full slices to #63, so it was left there.
 
 ## Findings worth remembering
 
-- The full 5-row Lint slice did not run here. #63 runs it.
+- The full 5-row Lint slice did not run here. #63 runs it. Rows 0001 and 0002 (overdue, next 30 days) do not touch steps 2 and 3, though they load the same skill.
+- `read_page`'s 12-path cap and the Lint skill now share one constant; change it in `agent/lib/config.ts`.
 - Unprompted, the model also scans `needs-owner` when asked for flagged Pages, since the enum offers it.
 
 ## What the human checked
