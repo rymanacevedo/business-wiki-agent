@@ -10,11 +10,14 @@ import {
 } from "./lib/embeddings";
 import { fuse } from "./lib/fusion";
 import { MAX_MATCHES, MAX_PAGES, matches } from "./lib/matches";
+import { createLinkTable, type LinkView } from "./lib/links";
 import { createMemo, indexable, parsePage, type MemoPage } from "./lib/memo";
+import { neighbourhood as hop, type Reach } from "./lib/neighbourhood";
 import type { RetrievalResult } from "./lib/result";
 import { createSemantic, EmbedUnavailable } from "./lib/semantic";
 
 export type { ResultPage, RetrievalResult } from "./lib/result";
+export type { Reach } from "./lib/neighbourhood";
 export { renderResult } from "./lib/render";
 
 /** The Page kinds a Match can have: the Schema's kinds less the scaffolding. */
@@ -33,7 +36,10 @@ export type SearchOptions = {
   kind?: MatchKind;
   /** Most Matches to return, at most (and by default) 5. */
   limit?: number;
-  /** Run the one-Link hop to the Neighbourhood. Not built yet: `hopRan` stays false. */
+  /**
+   * Add the Neighbourhood: the Pages one Link from a Match, after every
+   * Match, up to 8 Pages in all. Off unless `true`; `hopRan` says whether it ran.
+   */
   neighbourhood?: boolean;
 };
 
@@ -56,6 +62,11 @@ export type RetrievalOptions = {
   bm25?: Bm25Options;
   /** Matches scoring under this fraction of the top score drop; default a third. */
   matchFloor?: number;
+  /**
+   * How neighbours rank by reach: `{ rule: "count" }` (the default, distinct
+   * reaching Matches) or `{ rule: "weighted", floor }` for the bench.
+   */
+  reach?: Reach;
 };
 
 /** The Schema's flags. */
@@ -73,8 +84,9 @@ export type Retrieval = {
 /**
  * Retrieval over one WikiStore's Pages (never `index.md`, `log.md`,
  * `SCHEMA.md` or `sources/`). Keep one instance per namespace: it holds the
- * section index between calls and revalidates it against the store's etag
- * manifest on every call, so edits are searchable at once.
+ * section index and the Link table between calls and revalidates them
+ * against the store's etag manifest on every call, so edits are searchable
+ * (and linked) at once.
  */
 let warned = false;
 
@@ -92,15 +104,19 @@ export function createRetrieval({
   embed,
   bm25,
   matchFloor = 1 / 3,
+  reach = { rule: "count" },
 }: RetrievalOptions): Retrieval {
   const memo = createMemo(store);
   const semantic = embed && createSemantic(store, embed);
-  // The index of the newest Snapshot seen, kept between calls.
-  let built: { version: number; index: LexicalIndex } | null = null;
+  const links = createLinkTable();
+  // What the newest Snapshot seen derives, kept between calls: its index,
+  // and its Link view once a search first hops.
+  let built: { version: number; index: LexicalIndex; links?: LinkView } | null =
+    null;
   return {
-    async search({ query, kind, limit = MAX_MATCHES }) {
-      // One Snapshot answers the whole search: hits, Page metadata and
-      // excerpts. `pages` and `index` are locals, so a refresh by another
+    async search({ query, kind, limit = MAX_MATCHES, neighbourhood = false }) {
+      // One Snapshot answers the whole search: hits, Page metadata, excerpts
+      // and Links. `pages` and `derived` are locals, so a refresh by another
       // call while this one awaits the embedding Rung cannot reach them.
       const { pages, version } = await memo.refresh();
       if (built?.version !== version)
@@ -111,7 +127,8 @@ export function createRetrieval({
             bm25
           ),
         };
-      const { index } = built;
+      const derived = built;
+      const { index } = derived;
       const lexical = index.rank(query);
       let hits = lexical;
       let rung: RetrievalResult["rung"] = "lexical";
@@ -136,7 +153,18 @@ export function createRetrieval({
         limit: Math.max(0, Math.min(limit, MAX_MATCHES, MAX_PAGES)),
         matchFloor,
       });
-      return { rung, degraded, hopRan: false, pages: found };
+      const near = neighbourhood
+        ? hop(found, pages, (derived.links ??= links.view(pages)), {
+            room: MAX_PAGES - found.length,
+            reach,
+          })
+        : [];
+      return {
+        rung,
+        degraded,
+        hopRan: neighbourhood,
+        pages: [...found, ...near],
+      };
     },
     async flagged(flag) {
       const { pages } = await memo.refresh();
