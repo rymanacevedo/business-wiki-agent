@@ -298,3 +298,45 @@ describe("the committed fixture caches", () => {
       }
     });
 });
+
+describe("edits and failures during a search", () => {
+  test("a Page edited while its sections embed is embedded again for its new text", async () => {
+    await rebuildCache(store, fakeEmbed);
+    await edit(DELI, (body) => `${body}\n- FIRST EDIT tip\n`);
+    let release = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    const paused: Embed = async (texts) => {
+      if (!(texts.length === 1 && texts[0] === QUERY)) await gate;
+      return fakeEmbed(texts);
+    };
+    const retrieval = createRetrieval({ store, embed: paused });
+    const searching = retrieval.search({ query: QUERY });
+    await new Promise((r) => setTimeout(r, 20));
+    await edit(DELI, (body) => body.replace("FIRST EDIT", "SECOND EDIT"));
+    await retrieval.flagged("conflict"); // refreshes the instance's Pages
+    release();
+    await searching;
+    const { counts, embed } = countingEmbed(new Set([QUERY]));
+    await createRetrieval({ store, embed }).search({ query: QUERY });
+    assert.ok(
+      counts.sectionTexts.some((t) => t.includes("SECOND EDIT")),
+      "the second edit's text was never embedded"
+    );
+  });
+
+  test("a cache that cannot be read fails the search; it is not an embedding failure", async () => {
+    const broken: WikiStore = {
+      ...store,
+      async read(path) {
+        if (path === CACHE) throw new Error("blob read failed");
+        return store.read(path);
+      },
+    };
+    const { counts, embed } = countingEmbed(new Set([QUERY]));
+    await assert.rejects(
+      createRetrieval({ store: broken, embed }).search({ query: QUERY }),
+      /blob read failed/
+    );
+    assert.equal(counts.calls, 0);
+  });
+});

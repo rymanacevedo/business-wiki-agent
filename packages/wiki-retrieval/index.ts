@@ -12,7 +12,7 @@ import { fuse } from "./lib/fusion";
 import { MAX_MATCHES, MAX_PAGES, matches } from "./lib/matches";
 import { createMemo, indexable, parsePage, type MemoPage } from "./lib/memo";
 import type { RetrievalResult } from "./lib/result";
-import { createSemantic } from "./lib/semantic";
+import { createSemantic, EmbedUnavailable } from "./lib/semantic";
 
 export type { ResultPage, RetrievalResult } from "./lib/result";
 export { renderResult } from "./lib/render";
@@ -120,6 +120,7 @@ export function createRetrieval({
             rung = "embedding";
           }
         } catch (error) {
+          if (!(error instanceof EmbedUnavailable)) throw error;
           degraded = true;
           warnDegraded(error);
         }

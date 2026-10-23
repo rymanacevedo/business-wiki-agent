@@ -17,14 +17,23 @@ import {
 } from "./embeddings";
 import { FUSE_TOP } from "./fusion";
 
+/** Thrown when the adapter fails: the one failure that degrades a search. */
+export class EmbedUnavailable extends Error {
+  constructor(readonly cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause));
+    this.name = "EmbedUnavailable";
+  }
+}
+
 /** Most sections embedded in one search; the rest are lexical-only for that call. */
 export const EMBED_PER_SEARCH = 20;
 
 export type Semantic = {
   /**
    * The sections nearest the query. Embeds the query once and at most 20
-   * sections whose Page is new or changed, then persists them. Throws only
-   * when `embed` does (or the cache cannot be read).
+   * sections whose Page is new or changed, then persists them. Throws
+   * `EmbedUnavailable` when `embed` fails; a cache that cannot be read
+   * throws its own error, which fails the search rather than degrading it.
    */
   rank(
     query: string,
@@ -55,16 +64,26 @@ export function createSemantic(store: WikiStore, embed: Embed): Semantic {
     }
   }
 
-  async function rank(query: string, pages: Map<string, EmbeddablePage>) {
+  async function rank(query: string, live: Map<string, EmbeddablePage>) {
+    // The Pages as they are now: a refresh during the embed call replaces
+    // entries in the live map, and a vector must carry the hash of the text
+    // it was made from, or an edit would be certified as embedded.
+    const pages = new Map(live);
     const cache = await load();
     const todo = missing(cache, pages.values()).slice(0, EMBED_PER_SEARCH);
-    const [[queryVector], fresh] = await Promise.all([
-      embedChecked(embed, [query]),
-      embedChecked(
-        embed,
-        todo.map((s) => s.text)
-      ),
-    ]);
+    let queryVector: Float32Array;
+    let fresh: Float32Array[];
+    try {
+      [[queryVector], fresh] = await Promise.all([
+        embedChecked(embed, [query]),
+        embedChecked(
+          embed,
+          todo.map((s) => s.text)
+        ),
+      ]);
+    } catch (error) {
+      throw new EmbedUnavailable(error);
+    }
     if (todo.length > 0) {
       record(cache, pages, todo, fresh);
       await persist(cache);
