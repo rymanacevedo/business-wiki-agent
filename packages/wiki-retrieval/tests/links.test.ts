@@ -170,4 +170,70 @@ flags: []
       [["summaries/2026-09-12-invoice-cascade-parts-4472.md", ["linked from"]]]
     );
   });
+  test("a long ordinary Page keeps a Link past its first 16,000 characters", async () => {
+    const filler = Array.from(
+      { length: 400 },
+      (_, i) => `Line ${i} of ordinary prose about the zquorblat invoice.`
+    ).join("\n\n");
+    await store.write(
+      NEW,
+      `---
+title: Pay invoice zquorblat
+kind: obligation
+status: active
+flags: []
+---
+
+${filler}
+
+- **Record**: [Invoice 4472](../summaries/2026-09-12-invoice-cascade-parts-4472.md)
+`,
+      { etag: null }
+    );
+    assert.ok((await store.read(NEW))!.body.length > 20_000);
+    const result = await createRetrieval({ store }).search({
+      query: "zquorblat",
+      kind: "obligation",
+      limit: 1,
+      neighbourhood: true,
+    });
+    assert.equal(result.pages[0].path, NEW);
+    assert.ok(
+      via(result, "summaries/2026-09-12-invoice-cascade-parts-4472.md")
+    );
+  });
+  test("a long ordinary Page keeps a reference definition written at its end", async () => {
+    const filler = Array.from(
+      { length: 400 },
+      (_, i) => `- Line ${i} of an ordinary list about the zquorblat invoice.`
+    ).join("\n");
+    await store.write(
+      NEW,
+      `---
+title: Pay invoice zquorblat
+kind: obligation
+status: active
+flags: []
+---
+
+See [Invoice 4472][record] for the total.
+
+${filler}
+
+[record]: ../summaries/2026-09-12-invoice-cascade-parts-4472.md
+`,
+      { etag: null }
+    );
+    assert.ok((await store.read(NEW))!.body.length > 20_000);
+    const result = await createRetrieval({ store }).search({
+      query: "zquorblat",
+      kind: "obligation",
+      limit: 1,
+      neighbourhood: true,
+    });
+    assert.equal(result.pages[0].path, NEW);
+    assert.ok(
+      via(result, "summaries/2026-09-12-invoice-cascade-parts-4472.md")
+    );
+  });
 });

@@ -1,8 +1,8 @@
 // The Link table (decision #46): four kinds derived from what a Page already
 // says, collapsed per Page pair, followed both ways.
 
-import { Lexer, walkTokens } from "marked";
 import { parseFrontmatter } from "../../page-edits";
+import { readBody } from "./markdown";
 import type { MemoPage } from "./memo";
 
 export const LINK_KINDS = ["cites", "links", "party", "supersedes"] as const;
@@ -60,35 +60,6 @@ function frontmatterOf(page: MemoPage): Record<string, unknown> {
   } catch {
     return {};
   }
-}
-
-/**
- * Most body characters read for Links. The Markdown lexer is quadratic on
- * some inputs (a long run of unclosed emphasis); the largest Page in the
- * fixtures is under 7,000 characters, so this only cuts a pathological one.
- */
-const MAX_LINK_BODY = 16_000;
-
-/**
- * A Page body read as Markdown: every link's target (inline or reference
- * style) and the prose text outside code, where Citations count. Code
- * spans, code blocks and backslash escapes carry no Link. Only the first
- * `MAX_LINK_BODY` characters are read, and a body the lexer cannot read
- * (it overflows the stack on deep nesting) carries no Links at all.
- */
-function readBody(markdown: string): { prose: string; targets: string[] } {
-  const targets: string[] = [];
-  const prose: string[] = [];
-  try {
-    walkTokens(Lexer.lex(markdown.slice(0, MAX_LINK_BODY)), (token) => {
-      if (token.type === "link") targets.push(token.href);
-      else if (token.type === "text" && !("tokens" in token && token.tokens))
-        prose.push(token.text);
-    });
-  } catch {
-    return { prose: "", targets: [] };
-  }
-  return { prose: prose.join("\n"), targets };
 }
 
 /** Every Link a Page carries, by target, before dangling targets are known. */

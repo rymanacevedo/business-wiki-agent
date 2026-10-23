@@ -186,6 +186,37 @@ describe("bodies that break the Markdown parser", () => {
     await stillServes(path, "emphasis");
   });
 
+  test("one line of thousands of nested markers stays bounded", async () => {
+    const path = "entities/onelinenest.md";
+    await store.write(
+      path,
+      page({ word: "onelinenest", body: "> - 1. ".repeat(20_000) + "x" }),
+      { etag: null }
+    );
+    await stillServes(path, "onelinenest");
+  });
+
+  test("a list item's 500 KB paragraph stays bounded and keeps its last Link", async () => {
+    const path = "entities/longitem.md";
+    const dental = "entities/bayside-family-dental.md";
+    await store.write(
+      path,
+      page({
+        word: "longitem",
+        body: `- a\n${"    word\n".repeat(60_000)}    [Dental](bayside-family-dental.md)`,
+      }),
+      { etag: null }
+    );
+    const retrieval = await stillServes(path, "longitem");
+    const own = await retrieval.search({
+      query: "longitem",
+      neighbourhood: true,
+    });
+    assert.ok(
+      own.pages.some((p) => p.path === dental && p.role === "neighbour")
+    );
+  });
+
   test("deeply nested lists stay bounded", async () => {
     const path = "entities/nestedlists.md";
     await store.write(
