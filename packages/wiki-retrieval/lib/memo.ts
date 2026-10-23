@@ -4,12 +4,8 @@
 import { createHash } from "node:crypto";
 import type { WikiStore } from "../../wiki-store";
 import { splitPage } from "../../page-edits";
-import {
-  frontmatterValue,
-  listItem,
-  sectionise,
-  type Section,
-} from "./sections";
+import { readFrontmatter } from "./frontmatter";
+import { sectionsOf, type Section } from "./sections";
 
 /** Scaffolding Pages: never Matches, never neighbours, never indexed. */
 const SCAFFOLDING = new Set(["index.md", "log.md", "SCHEMA.md"]);
@@ -38,39 +34,20 @@ export type MemoPage = {
   sections: Section[];
 };
 
-/** The `flags` list, flow (`[a, b]`) or block (`- a` lines) style, comments ignored. */
-function flagsOf(frontmatter: string[]): string[] {
-  const at = frontmatter.findIndex((line) => /^flags\s*:/.test(line));
-  if (at === -1) return [];
-  const inline = frontmatter[at]
-    .slice(frontmatter[at].indexOf(":") + 1)
-    .replace(/(^|\s)#.*$/, "")
-    .trim();
-  const items: string[] = [];
-  if (inline) items.push(...inline.replace(/[[\]]/g, "").split(","));
-  else
-    for (const line of frontmatter.slice(at + 1)) {
-      if (!line.trim() || /^\s*#/.test(line)) continue;
-      const item = listItem(line);
-      if (item === undefined) break;
-      items.push(item);
-    }
-  return items.map((f) => f.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
-}
-
 export function parsePage(path: string, text: string, etag: string): MemoPage {
   const { frontmatter, body } = splitPage(text);
+  const read = readFrontmatter(frontmatter);
   return {
     path,
     etag,
     hash: createHash("sha256").update(text).digest("hex"),
-    title: frontmatterValue(frontmatter, "title") ?? path,
-    kind: frontmatterValue(frontmatter, "kind") ?? "unknown",
-    status: frontmatterValue(frontmatter, "status") ?? "unknown",
-    flags: flagsOf(frontmatter),
+    title: read.value("title") ?? path,
+    kind: read.value("kind") ?? "unknown",
+    status: read.value("status") ?? "unknown",
+    flags: read.flags,
     frontmatter,
     body,
-    sections: sectionise(path, text),
+    sections: sectionsOf(path, read, body),
   };
 }
 
