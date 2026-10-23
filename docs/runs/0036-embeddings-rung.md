@@ -29,6 +29,9 @@ Build the embedding Rung behind `search_wiki`: a Gateway adapter, a section vect
     - a failed cache read degraded the search
   - Both were repaired test-first: embedding now uses a snapshot of the Pages, and only `EmbedUnavailable` degrades. A cache read error fails the search.
   - Run 3 exited 0 with no findings and no advisories, on 646cdb7. `--status` exited 0.
+  - Run 4, on 2aaf227 after the docs-only run entry, exited 1 with one blocker. The search took its hits before awaiting the embedding Rung but read Page metadata from the memo's live Map, so a refresh mid-embed showed one revision's title and status beside the other's excerpt.
+    - The fix covers the whole class, not just this case: `memo.refresh()` now returns an immutable Snapshot, copied only when something changed. A search keeps that Snapshot and its lexical index as locals from start to finish.
+    - Four public-interface tests, each failing on the old code first: a `flagged()` refresh mid-embed, a concurrent search, a Page deleted mid-embed, and a refresh that fails part-way mid-embed. In each, the result must read wholly as one revision.
 
 ## Findings worth remembering
 
