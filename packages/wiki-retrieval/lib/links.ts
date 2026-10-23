@@ -116,80 +116,84 @@ function outgoing(page: MemoPage): Map<string, Set<LinkKind>> {
 
 export type Adjacent = { page: string; labels: string[] };
 
-/** The Links of one Snapshot's Pages: never changes once taken. */
-export type LinkView = {
+/** The Links among one Snapshot's Pages. Never changed once built. */
+export type LinkTable = {
   /** The Pages one Link from `path`, each with its labels, sorted by path. */
   around(path: string): Adjacent[];
 };
 
-export type LinkTable = {
+type Read = { etag: string; to: Map<string, Set<LinkKind>> };
+
+export type Linker = {
   /**
-   * The Links among `pages`, as of exactly those Pages. Each Page's own
-   * Links are read once per etag and kept between calls; the view itself
-   * holds no state shared with any other view.
+   * The Link table for `pages`, a Snapshot's. Each Page's Links are read
+   * once per etag and reused by later tables; a table already handed out is
+   * never touched again, whatever Snapshot the next one is for.
    */
-  view(pages: ReadonlyMap<string, MemoPage>): LinkView;
+  table(pages: ReadonlyMap<string, MemoPage>): LinkTable;
 };
 
-export function createLinkTable(): LinkTable {
-  /** Per Page: the etag its Links were read at, and the Links. */
-  const read = new Map<
-    string,
-    { etag: string; to: Map<string, Set<LinkKind>> }
-  >();
-  const linksOf = (page: MemoPage) => {
-    const known = read.get(page.path);
-    if (known?.etag === page.etag) return known.to;
-    const to = outgoing(page);
-    read.set(page.path, { etag: page.etag, to });
-    return to;
-  };
-
+export function createLinker(): Linker {
+  /** Per Page: the etag its Links were last read at, and the Links. */
+  let read = new Map<string, Read>();
   return {
-    view(pages) {
-      for (const path of read.keys()) if (!pages.has(path)) read.delete(path);
-      /** Per Page: its Links. Per target: the Pages carrying a Link to it. */
-      const from = new Map<string, Map<string, Set<LinkKind>>>();
+    table(pages) {
+      const from = new Map<string, Read>();
+      /** Per target: the Pages carrying a Link to it. */
       const into = new Map<string, Set<string>>();
       for (const page of pages.values()) {
-        const to = linksOf(page);
-        from.set(page.path, to);
-        for (const target of to.keys()) {
+        const last = read.get(page.path);
+        const entry =
+          last?.etag === page.etag
+            ? last
+            : { etag: page.etag, to: outgoing(page) };
+        from.set(page.path, entry);
+        for (const target of entry.to.keys()) {
           const sources = into.get(target) ?? new Set<string>();
           sources.add(page.path);
           into.set(target, sources);
         }
       }
-      return {
-        around(path) {
-          const kinds = new Map<
-            string,
-            { forward: Set<LinkKind>; backward: Set<LinkKind> }
-          >();
-          const at = (other: string) => {
-            const entry = kinds.get(other) ?? {
-              forward: new Set<LinkKind>(),
-              backward: new Set<LinkKind>(),
-            };
-            kinds.set(other, entry);
-            return entry;
-          };
-          for (const [to, set] of from.get(path) ?? [])
-            if (pages.has(to)) for (const k of set) at(to).forward.add(k);
-          for (const source of into.get(path) ?? [])
-            for (const k of from.get(source)?.get(path) ?? [])
-              at(source).backward.add(k);
-          return [...kinds.entries()]
-            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-            .map(([page, { forward, backward }]) => ({
-              page,
-              labels: LINK_KINDS.flatMap((k) => [
-                ...(forward.has(k) ? [LABELS[k].forward] : []),
-                ...(backward.has(k) ? [LABELS[k].backward] : []),
-              ]),
-            }));
-        },
+      read = from;
+      return tableOf(pages, from, into);
+    },
+  };
+}
+
+function tableOf(
+  live: ReadonlyMap<string, MemoPage>,
+  from: ReadonlyMap<string, Read>,
+  into: ReadonlyMap<string, Set<string>>
+): LinkTable {
+  return {
+    around(path) {
+      const kinds = new Map<
+        string,
+        { forward: Set<LinkKind>; backward: Set<LinkKind> }
+      >();
+      const at = (other: string) => {
+        const entry = kinds.get(other) ?? {
+          forward: new Set<LinkKind>(),
+          backward: new Set<LinkKind>(),
+        };
+        kinds.set(other, entry);
+        return entry;
       };
+      for (const [to, set] of from.get(path)?.to ?? [])
+        if (live.has(to)) for (const k of set) at(to).forward.add(k);
+      for (const source of into.get(path) ?? [])
+        if (live.has(source))
+          for (const k of from.get(source)?.to.get(path) ?? [])
+            at(source).backward.add(k);
+      return [...kinds.entries()]
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([page, { forward, backward }]) => ({
+          page,
+          labels: LINK_KINDS.flatMap((k) => [
+            ...(forward.has(k) ? [LABELS[k].forward] : []),
+            ...(backward.has(k) ? [LABELS[k].backward] : []),
+          ]),
+        }));
     },
   };
 }

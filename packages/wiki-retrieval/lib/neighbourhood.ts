@@ -1,7 +1,7 @@
 // One Link hop from the Matches (decision #46, items 2, 4, 9, 10).
 
 import { kindRank as prior } from "./kinds";
-import type { LinkView } from "./links";
+import type { LinkTable } from "./links";
 import type { MemoPage } from "./memo";
 import type { ResultPage } from "./result";
 
@@ -17,7 +17,7 @@ export type Reach = { rule: "count" } | { rule: "weighted"; floor: number };
 export function neighbourhood(
   matches: ResultPage[],
   pages: ReadonlyMap<string, MemoPage>,
-  links: LinkView,
+  links: LinkTable,
   { room, reach }: { room: number; reach: Reach }
 ): ResultPage[] {
   const rank = new Map(matches.map((m, i) => [m.path, i]));

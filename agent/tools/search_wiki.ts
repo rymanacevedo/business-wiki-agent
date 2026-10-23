@@ -5,7 +5,7 @@ import { retrieval, retrievalNeighbourhood } from "../lib/config";
 
 export default defineTool({
   description:
-    "Ranked keyword search over the sections of every Wiki Page (not Sources, not the Index, Log or Schema). Returns up to five Pages, best first, each with the lines of its best section that match. Use only when the Index does not settle where a fact lives.",
+    "Ranked keyword search over the sections of every Wiki Page (not Sources, not the Index, Log or Schema). Returns up to five Pages, best first, each with the lines of its best section that match. Use when the Index does not settle where a fact lives, or when the question is about a detail no Index line mentions (a payment method, a line item, a name).",
   inputSchema: z.object({
     query: z
       .string()

@@ -40,6 +40,12 @@ Build the Link table and the one-hop Neighbourhood in `wiki-retrieval`, off by d
 6. Merged #56's round-4 repair, then moved the Link table onto page-edits' `parseFrontmatter` to match the memo.
 7. Review round 1: Standards had 0 findings, Spec had 1 blocker. The raw `](...)` scan took links inside code spans and after escapes, and missed reference links. The fix lexes the body with `marked` (17.0.6, already in the lockfile, now a direct dependency) and counts Citations only in prose outside code. I wrote the test first and tried to break the fix with tables, link text, lists and escapes. The fixture's Link table is identical before and after.
 8. Review rounds 2 and 3: exit 2 both times, with 0 findings on both axes. The Codex reviewer runs `--sandbox read-only`, and `bun test` needs temp dirs (EROFS), so it could not confirm "`bun run check` is green".
+9. Merged ticket/56 at 523d97a, which now carries #58 (embeddings) and #61 (metrics). `search` conflicted:
+   - The hop now runs after fusion, on the fused Matches, and the one return carries `rung`, `degraded`, `hopRan` and `pages`.
+   - #58 made `memo.refresh()` return an immutable Snapshot. The old Link table was one mutable table brought level inside `search`. It was consistent only because the update and the hop ran with no await between them.
+   - The Link table is now built per Snapshot: `createLinker().table(pages)` returns a table that is never changed once built, and each Page's Links are still read once per etag. `search` takes it as a local before the embed await, cached beside the index for that Snapshot.
+   - Tests first: two hop-on tests pause the fake adapter and refresh mid-embed (via `flagged()`, and via a second hop-on search). They check that the Match, its Link and the neighbour's title all come from one revision. Reading the table from instance state after the await fails the second test. A third test runs hop-on with the fake adapter on both Neighbourhood rows: Rung `embedding`, neighbours after Matches, the August statement present.
+   - `bun run check`: exit 0, 572 tests.
 
 ## Findings worth remembering
 
@@ -54,8 +60,7 @@ Nothing yet: PR #72 is a draft for review.
 ## Open questions
 
 - `review:spec` cannot complete Spec for packages whose tests need a writable temp dir; the gate's sandbox may need a writable TMPDIR.
-- #58 touches the same `return` in `search` and `config.ts`; expect a small merge.
 
 ## Artifacts
 
-PR #72 (`ticket/57-links-neighbourhood`), commits 1b82e04, 09bde44, 21cb0bd.
+PR #72 (`ticket/57-links-neighbourhood`), commits 1b82e04, 09bde44, 21cb0bd, merge 704b05b.

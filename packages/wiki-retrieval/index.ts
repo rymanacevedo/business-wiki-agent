@@ -10,7 +10,7 @@ import {
 } from "./lib/embeddings";
 import { fuse } from "./lib/fusion";
 import { MAX_MATCHES, MAX_PAGES, matches } from "./lib/matches";
-import { createLinkTable, type LinkView } from "./lib/links";
+import { createLinker, type LinkTable } from "./lib/links";
 import { createMemo, indexable, parsePage, type MemoPage } from "./lib/memo";
 import { neighbourhood as hop, type Reach } from "./lib/neighbourhood";
 import type { RetrievalResult } from "./lib/result";
@@ -118,16 +118,20 @@ export function createRetrieval({
 }: RetrievalOptions): Retrieval {
   const memo = createMemo(store);
   const semantic = embed && createSemantic(store, embed);
-  const links = createLinkTable();
-  // What the newest Snapshot seen derives, kept between calls: its index,
-  // and its Link view once a search first hops.
-  let built: { version: number; index: LexicalIndex; links?: LinkView } | null =
-    null;
+  const linker = createLinker();
+  // The index of the newest Snapshot seen, kept between calls; its Link
+  // table too, built on the first hop-on search at that Snapshot.
+  let built: {
+    version: number;
+    index: LexicalIndex;
+    links?: LinkTable;
+  } | null = null;
   return {
     async search({ query, kind, limit = MAX_MATCHES, neighbourhood = false }) {
       // One Snapshot answers the whole search: hits, Page metadata, excerpts
-      // and Links. `pages` and `derived` are locals, so a refresh by another
-      // call while this one awaits the embedding Rung cannot reach them.
+      // and Links. `pages`, `index` and `links` are locals, taken before any
+      // await, so a refresh by another call while this one awaits the
+      // embedding Rung cannot reach them.
       const { pages, version } = await memo.refresh();
       if (built?.version !== version)
         built = {
@@ -137,8 +141,10 @@ export function createRetrieval({
             bm25
           ),
         };
-      const derived = built;
-      const { index } = derived;
+      const { index } = built;
+      const links = neighbourhood
+        ? (built.links ??= linker.table(pages))
+        : null;
       const lexical = index.rank(query);
       let hits = lexical;
       let rung: RetrievalResult["rung"] = "lexical";
@@ -164,11 +170,8 @@ export function createRetrieval({
         matchFloor,
         kindPrior,
       });
-      const near = neighbourhood
-        ? hop(found, pages, (derived.links ??= links.view(pages)), {
-            room: MAX_PAGES - found.length,
-            reach,
-          })
+      const near = links
+        ? hop(found, pages, links, { room: MAX_PAGES - found.length, reach })
         : [];
       return {
         rung,
