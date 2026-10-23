@@ -9,6 +9,7 @@ import {
   embedWiki,
   renderResult,
   type Embed,
+  type ResultPage,
 } from "../index";
 import { countingEmbed, fakeEmbed } from "./fake-embed";
 import { BASE, FULL, fullWiki } from "./full-wiki";
@@ -338,5 +339,147 @@ describe("edits and failures during a search", () => {
       /blob read failed/
     );
     assert.equal(counts.calls, 0);
+  });
+});
+
+describe("one search answers from one snapshot of the Pages", () => {
+  const SNAP = "summaries/zz-snapshot-invoice.md";
+  const OLD = { title: "Old invoice", status: "active", amount: "100.00" };
+  const NEW = {
+    title: "Corrected invoice",
+    status: "superseded",
+    amount: "999.00",
+  };
+  const ask = { query: "zquorblat invoice" };
+
+  function body({ title, status, amount }: typeof OLD) {
+    return `---\ntitle: ${title}\nkind: summary\nstatus: ${status}\nflags: []\n---\n\n- ZQUORBLAT invoice amount ${amount}\n`;
+  }
+
+  /** An adapter that holds every call until `release`, and says when one is waiting. */
+  function pausedEmbed() {
+    let release = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    let waiting = () => {};
+    const entered = new Promise<void>((r) => (waiting = r));
+    const embed: Embed = async (texts) => {
+      waiting();
+      await gate;
+      return fakeEmbed(texts);
+    };
+    return { embed, release, entered };
+  }
+
+  /** The Match for SNAP, as one revision or the other; fails on a mix. */
+  function revisionOf(result: { pages: ResultPage[] }) {
+    const page = result.pages.find((p) => p.path === SNAP);
+    assert.ok(page, "the Page is a Match");
+    const seen = {
+      title: page.title,
+      status: page.status,
+      excerpt: page.excerpt?.join("\n") ?? "",
+    };
+    for (const [name, rev] of [
+      ["old", OLD],
+      ["new", NEW],
+    ] as const)
+      if (
+        seen.title === rev.title &&
+        seen.status === rev.status &&
+        seen.excerpt.includes(rev.amount)
+      )
+        return name;
+    assert.fail(`no revision of the Page reads like ${JSON.stringify(seen)}`);
+  }
+
+  async function replace(rev: typeof OLD) {
+    const current = await store.read(SNAP);
+    await store.write(SNAP, body(rev), { etag: current?.etag ?? null });
+  }
+
+  beforeEach(async () => {
+    await rebuildCache(store, fakeEmbed);
+    await replace(OLD);
+  });
+
+  test("an edit refreshed by flagged() while the search embeds: the result is wholly the old revision", async () => {
+    const { embed, release, entered } = pausedEmbed();
+    const retrieval = createRetrieval({ store, embed });
+    const searching = retrieval.search(ask);
+    await entered;
+    await replace(NEW);
+    await retrieval.flagged("conflict");
+    release();
+    assert.equal(revisionOf(await searching), "old");
+    assert.equal(revisionOf(await retrieval.search(ask)), "new");
+  });
+
+  test("a second search refreshing while the first embeds: each is wholly its own revision", async () => {
+    const { embed, release, entered } = pausedEmbed();
+    const retrieval = createRetrieval({ store, embed });
+    const first = retrieval.search(ask);
+    await entered;
+    await replace(NEW);
+    const second = retrieval.search(ask);
+    // Let the second search's refresh land before the first resumes.
+    await retrieval.flagged("conflict");
+    release();
+    assert.equal(revisionOf(await first), "old");
+    assert.equal(revisionOf(await second), "new");
+  });
+
+  test("a Page deleted while the search embeds: the search still reads it as it was", async () => {
+    const hidden = new Set<string>();
+    const view: WikiStore = {
+      ...store,
+      async manifest(prefix) {
+        return (await store.manifest(prefix)).filter(
+          (e) => !hidden.has(e.path)
+        );
+      },
+      async read(path) {
+        return hidden.has(path) ? null : store.read(path);
+      },
+    };
+    const { embed, release, entered } = pausedEmbed();
+    const retrieval = createRetrieval({ store: view, embed });
+    const searching = retrieval.search(ask);
+    await entered;
+    hidden.add(SNAP);
+    await retrieval.flagged("conflict");
+    release();
+    assert.equal(revisionOf(await searching), "old");
+    assert.ok(
+      !(await retrieval.search(ask)).pages.some((p) => p.path === SNAP)
+    );
+  });
+
+  test("a refresh that fails part-way while the search embeds: the search is wholly the old revision", async () => {
+    // The failing refresh reads SNAP's new text, then fails on another Page.
+    const FLAKY = "summaries/zzz-flaky.md";
+    let fail = false;
+    const view: WikiStore = {
+      ...store,
+      async read(path) {
+        if (fail && path === FLAKY) throw new Error("network");
+        return store.read(path);
+      },
+    };
+    const { embed, release, entered } = pausedEmbed();
+    const retrieval = createRetrieval({ store: view, embed });
+    const searching = retrieval.search(ask);
+    await entered;
+    await replace(NEW);
+    await store.write(
+      FLAKY,
+      "---\ntitle: Flaky\nkind: entity\n---\n\nFLAKY\n",
+      { etag: null }
+    );
+    fail = true;
+    await assert.rejects(retrieval.flagged("conflict"), /network/);
+    release();
+    assert.equal(revisionOf(await searching), "old");
+    fail = false;
+    assert.equal(revisionOf(await retrieval.search(ask)), "new");
   });
 });

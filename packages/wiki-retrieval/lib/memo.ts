@@ -79,19 +79,30 @@ async function pool<T>(
   if (failure) throw failure.error;
 }
 
+/**
+ * The Pages at one revision of the memo. Never changed once returned: a
+ * caller that awaits mid-way still holds the revision it started from,
+ * whatever refreshes run meanwhile.
+ */
+export type Snapshot = {
+  pages: ReadonlyMap<string, MemoPage>;
+  /** Changes whenever the Pages do, so derived indexes know when to rebuild. */
+  version: number;
+};
+
 export type Memo = {
   /**
    * Bring the memo level with the store: one `manifest("")`, then a read of
-   * each new or changed Page only, deleted Pages dropped. Returns the Pages
-   * and a version that changes whenever they do, so derived indexes know
-   * when to rebuild.
+   * each new or changed Page only, deleted Pages dropped. Returns a Snapshot
+   * of the result; a refresh that throws publishes none.
    */
-  refresh(): Promise<{ pages: Map<string, MemoPage>; version: number }>;
+  refresh(): Promise<Snapshot>;
 };
 
 export function createMemo(store: WikiStore): Memo {
   const pages = new Map<string, MemoPage>();
   let version = 0;
+  let snapshot: Snapshot = { pages: new Map(), version };
   let queue: Promise<unknown> = Promise.resolve();
 
   async function sync() {
@@ -113,7 +124,10 @@ export function createMemo(store: WikiStore): Memo {
       else pages.delete(path);
       version++;
     });
-    return { pages, version };
+    // Copy on change only: `pages` keeps mutating, the Snapshot never does.
+    if (snapshot.version !== version)
+      snapshot = { pages: new Map(pages), version };
+    return snapshot;
   }
 
   return {

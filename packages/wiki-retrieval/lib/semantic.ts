@@ -37,7 +37,7 @@ export type Semantic = {
    */
   rank(
     query: string,
-    pages: Map<string, EmbeddablePage>
+    pages: ReadonlyMap<string, EmbeddablePage>
   ): Promise<SectionHit[]>;
 };
 
@@ -64,11 +64,12 @@ export function createSemantic(store: WikiStore, embed: Embed): Semantic {
     }
   }
 
-  async function rank(query: string, live: Map<string, EmbeddablePage>) {
-    // The Pages as they are now: a refresh during the embed call replaces
-    // entries in the live map, and a vector must carry the hash of the text
-    // it was made from, or an edit would be certified as embedded.
-    const pages = new Map(live);
+  async function rank(
+    query: string,
+    pages: ReadonlyMap<string, EmbeddablePage>
+  ) {
+    // `pages` is the search's Snapshot, so every vector recorded here carries
+    // the hash of the text it was made from, whatever refreshes meanwhile.
     const cache = await load();
     const todo = missing(cache, pages.values()).slice(0, EMBED_PER_SEARCH);
     let queryVector: Float32Array;

@@ -95,18 +95,23 @@ export function createRetrieval({
 }: RetrievalOptions): Retrieval {
   const memo = createMemo(store);
   const semantic = embed && createSemantic(store, embed);
-  let index: LexicalIndex | null = null;
-  let indexed = -1;
+  // The index of the newest Snapshot seen, kept between calls.
+  let built: { version: number; index: LexicalIndex } | null = null;
   return {
     async search({ query, kind, limit = MAX_MATCHES }) {
+      // One Snapshot answers the whole search: hits, Page metadata and
+      // excerpts. `pages` and `index` are locals, so a refresh by another
+      // call while this one awaits the embedding Rung cannot reach them.
       const { pages, version } = await memo.refresh();
-      if (!index || version !== indexed) {
-        index = lexicalIndex(
-          [...pages.values()].flatMap((p) => p.sections),
-          bm25
-        );
-        indexed = version;
-      }
+      if (built?.version !== version)
+        built = {
+          version,
+          index: lexicalIndex(
+            [...pages.values()].flatMap((p) => p.sections),
+            bm25
+          ),
+        };
+      const { index } = built;
       const lexical = index.rank(query);
       let hits = lexical;
       let rung: RetrievalResult["rung"] = "lexical";

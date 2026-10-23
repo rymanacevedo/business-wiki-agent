@@ -155,7 +155,7 @@ export async function embedChecked(
  */
 export function record(
   vectors: Vectors,
-  pages: Map<string, EmbeddablePage>,
+  pages: ReadonlyMap<string, EmbeddablePage>,
   sections: Section[],
   fresh: Float32Array[]
 ): void {
