@@ -38,12 +38,20 @@ Merge #57 (Links, Neighbourhood) into #58 (embeddings), since the bench needs bo
 ## Findings worth remembering
 
 - **The floor axis is inert under hybrid**, as #58 predicted. RRF scores over two top-20 lists never fall under a third of the top score.
-- **Weighted reach changes nothing.** Under hybrid, every expected Page that is found at all is found as a Match, so the Neighbourhood ordering never decides a rank on this dataset.
+- **Weighted reach changes no rank.** Under hybrid, every row that scores has all its expected Pages as Matches, so the Neighbourhood ordering never decides a rank on this dataset. Its only visible effect: `query-suite-number` loses the hop that reached the lease (the row still misses its insurance-certificate entry).
 - **The kind prior helps and hurts.** It lifts `profile.md` rows (EIN, entity type: rank 3 to 1). It sinks the supplies Ledger (1 to 5) and the lease rows.
 - **Two rows miss under hybrid:**
   - `query-licenses-permits` misses in every configuration.
   - `query-suite-number` misses under hybrid but is found lexical-only at rank 4. Fusion displaces it.
 - **The semantic rows are found only with embeddings.** Lexical-only misses both diagnostic-kit and van-repair.
+
+## Review rounds
+
+1. On 8016786: exit 1. Standards had 0 findings; Spec had 2 blockers.
+   - Source ids matched any path containing the id (an entity Page, or a longer id). They now resolve to `summaries/<id>.md` exactly.
+   - Cells collapsed the Rungs and hid them when an entry was missing. Each cell now lists every `cites` entry's Rung in order, with `missing` where one is absent.
+
+   Both were fixed test-first and the table regenerated. MRRs are unchanged.
 
 ## What the human checked
 

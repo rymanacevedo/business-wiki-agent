@@ -7,6 +7,7 @@ import type { ResultPage } from "../../packages/wiki-retrieval";
 import { createWikiStore, type WikiStore } from "../../packages/wiki-store";
 import {
   benchRows,
+  cellOf,
   choose,
   DEFAULTS,
   rankRow,
@@ -35,11 +36,11 @@ describe("a row's reciprocal rank", () => {
   ];
 
   test("one required entry: 1 over its position", () => {
-    assert.equal(rankRow(["invoice-4471"], result).rr, 1 / 2);
+    assert.equal(rankRow(["2026-09-12-invoice-4471"], result).rr, 1 / 2);
   });
 
   test("several required entries: 1 over the position of the last to appear", () => {
-    assert.equal(rankRow(["profile.md", "cascade"], result).rr, 1 / 4);
+    assert.equal(rankRow(["profile.md", "entities/cascade"], result).rr, 1 / 4);
   });
 
   test("an any-of entry counts at the best position of its alternatives", () => {
@@ -52,7 +53,10 @@ describe("a row's reciprocal rank", () => {
   });
 
   test("a required entry missing from the result scores 0", () => {
-    const row = rankRow(["invoice-4471", "lease-harborview"], result);
+    const row = rankRow(
+      ["2026-09-12-invoice-4471", "lease-harborview"],
+      result
+    );
     assert.equal(row.rr, 0);
     assert.equal(row.entries[1]?.position, null);
   });
@@ -62,7 +66,7 @@ describe("a row's reciprocal rank", () => {
   });
 
   test("a neighbour reaches an entry by the hop; a Match by the result's Rung", () => {
-    const row = rankRow(["invoice-4471", "profile.md"], result, {
+    const row = rankRow(["2026-09-12-invoice-4471", "profile.md"], result, {
       rung: "embedding",
       lexicalMatches: ["summaries/2026-09-12-invoice-4471.md"],
     });
@@ -70,11 +74,53 @@ describe("a row's reciprocal rank", () => {
       row.entries.map((e) => e.rung),
       ["lexical", "hop"]
     );
-    const viaFusion = rankRow(["invoice-4471"], result, {
+    const viaFusion = rankRow(["2026-09-12-invoice-4471"], result, {
       rung: "embedding",
       lexicalMatches: [],
     });
     assert.equal(viaFusion.entries[0]?.rung, "embedding");
+  });
+});
+
+describe("a Source id names its summary Page only", () => {
+  const ID = "2026-09-12-invoice-cascade-parts-4471";
+
+  test("a Page elsewhere, or a longer id, sharing the text is not the entry", () => {
+    for (const path of [`entities/${ID}.md`, `summaries/${ID}0.md`])
+      assert.equal(rankRow([ID], [page(path)]).rr, 0, path);
+  });
+
+  test("the summary Page is, inside an any-of list too", () => {
+    const result = [page("profile.md"), page(`summaries/${ID}.md`)];
+    assert.equal(rankRow([ID], result).rr, 1 / 2);
+    assert.equal(rankRow([["obligations/none-", ID]], result).rr, 1 / 2);
+  });
+
+  test("a path pattern keeps substring matching", () => {
+    assert.equal(
+      rankRow(
+        ["obligations/2026-11-15-"],
+        [page("obligations/2026-11-15-renewal.md")]
+      ).rr,
+      1
+    );
+  });
+});
+
+describe("a rendered cell", () => {
+  test("names each expected entry's Rung in cites order, a missing one as missing", () => {
+    const row = rankRow(
+      ["profile.md", "summaries/missing.md", "lease"],
+      [page("profile.md"), page("summaries/lease.md", "neighbour")]
+    );
+    assert.equal(cellOf(row), "— · lexical, missing, hop");
+  });
+
+  test("one entry: its rank and its Rung", () => {
+    assert.equal(
+      cellOf(rankRow(["profile.md"], [page("x.md"), page("profile.md")])),
+      "2 · lexical"
+    );
   });
 });
 
