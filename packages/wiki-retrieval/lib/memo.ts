@@ -1,6 +1,7 @@
 // The in-process memo: every indexable Page's parsed form, kept current by
 // comparing the store's etag manifest on every call.
 
+import { createHash } from "node:crypto";
 import type { WikiStore } from "../../wiki-store";
 import { splitPage } from "../../page-edits";
 import {
@@ -25,6 +26,8 @@ export function indexable(path: string): boolean {
 export type MemoPage = {
   path: string;
   etag: string;
+  /** sha256 hex of the body: the embedding cache's key, the same on every backend. */
+  hash: string;
   title: string;
   kind: string;
   status: string;
@@ -55,11 +58,12 @@ function flagsOf(frontmatter: string[]): string[] {
   return items.map((f) => f.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
 }
 
-function parse(path: string, text: string, etag: string): MemoPage {
+export function parsePage(path: string, text: string, etag: string): MemoPage {
   const { frontmatter, body } = splitPage(text);
   return {
     path,
     etag,
+    hash: createHash("sha256").update(text).digest("hex"),
     title: frontmatterValue(frontmatter, "title") ?? path,
     kind: frontmatterValue(frontmatter, "kind") ?? "unknown",
     status: frontmatterValue(frontmatter, "status") ?? "unknown",
@@ -128,7 +132,7 @@ export function createMemo(store: WikiStore): Memo {
     const stale = manifest.filter((e) => pages.get(e.path)?.etag !== e.etag);
     await pool(stale, READS_IN_FLIGHT, async ({ path }) => {
       const entry = await store.read(path);
-      if (entry) pages.set(path, parse(path, entry.body, entry.etag));
+      if (entry) pages.set(path, parsePage(path, entry.body, entry.etag));
       else pages.delete(path);
       version++;
     });
