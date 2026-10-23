@@ -29,6 +29,10 @@ Ship the tracer bullet: the `wiki-retrieval` package with lexical Matches only, 
   - block-style frontmatter lists were not indexed
   - `flagged` missed flags carrying YAML comments
   - the deferred spot check
+- Codex round 2 (exit 1) raised these, repaired test-first:
+  - a failed refresh released its queue while its reads still ran, so the next refresh could exceed 10 in flight and old text could overwrite new; the pool now drains first
+  - a comment on a list key hid the block list's items
+- Codex round 3 on 00662f8: exit 1. Standards had 0 findings. One Spec blocker is left (`flagged` misses multi-line YAML flow `flags` lists), plus the 108/109 advisory. Per the flow, it went on the PR as a comment after two repair rounds, and the PR stays a draft.
 - Spot check once #54's runs had finished. `WIKI_SEED=full eve eval query/questions/0017 lint/checks/0004 safety/runtime/rows/0000`: 3 of 3 pass (23 gates; the cash row was judged faithful and cited). The run directory was not kept.
 
 ## Findings worth remembering
@@ -39,9 +43,12 @@ Ship the tracer bullet: the `wiki-retrieval` package with lexical Matches only, 
 
 ## What the human checked
 
-Nothing yet; the PR is a draft awaiting review.
+Nothing yet: PR #67 is a draft with one unresolved review finding.
 
 ## Open questions
+
+- `flagged` and multi-line flow lists: read `flags` with the YAML parser, here or in #59.
+- Amend the AC's section count from 108 to 109, since the split is the spec's own rule.
 
 - `CLERK_RETRIEVAL_NEIGHBOURHOOD` and `CLERK_RETRIEVAL_EMBEDDINGS` are not wired yet (#57, #58).
 
