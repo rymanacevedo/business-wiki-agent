@@ -106,6 +106,10 @@ _Avoid_: Hit, entry point, seed, result
 The Pages one Link away from a Match, returned with it so an answer can connect facts across Pages. Each carries the Link that brought it in.
 _Avoid_: Subgraph, context window, related pages, hops
 
+**Rung**:
+One stage of retrieval able to answer a Query on its own, from the Index down through keyword matching, semantic matching, and the Neighbourhood. A result names the highest Rung that contributed.
+_Avoid_: Stage, tier, level, layer, fallback
+
 ### The seed corpus
 
 **Corpus**:
