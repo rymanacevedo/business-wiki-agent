@@ -22,10 +22,14 @@ Move Lint's flag scans from `search_wiki`, which is ranked and capped at five, t
 
 - Merged origin/ticket/56-wiki-retrieval-lexical again, after #58 and #61 had landed on it. The merge was clean, and the check passed with 551 tests.
 - Review round 2 (a133697) exited 1. Standards had 0 findings. Spec's only blocker was the 5-row Lint slice, which is #63's work under the brief. I commented it on the PR and left the PR as a draft.
+- Merged origin/ticket/56-wiki-retrieval-lexical again, now carrying #57's Links and Neighbourhood. One conflict, in `agent/lib/config.ts`: `READ_PAGE_MAX` and `retrievalNeighbourhood()` both kept.
+- Repair round 3, for round 2's new Spec blocker: `flagged` skipped `index.md`, `log.md` and `SCHEMA.md`, because the memo never held them, yet the Schema lets any Page carry flags. Tests first: a cold instance lists a flagged `index.md`, and `search` (Neighbourhood on) never returns a scaffolding Page; flags added to `index.md`, `log.md` and `SCHEMA.md` (block style) are listed, and a flag removed from `index.md` drops out; a store whose manifest leaks flagged `sources/` and `cache/` Pages lists neither; at the tool, a flagged `index.md` shows up as `index.md · index · active`. All four were red. The fix: the memo keeps the scaffolding Pages on a separate shelf, filled from the same manifest only when `refresh({ scaffolding: true })` asks, and never moving `version`. So `flagged` sees them while search's index, embeddings, Links and Neighbourhood never do, and a search still reads 70 Pages and no `index.md`. `indexable` now also refuses `cache/` (the store already hides it). `bun run check` passed (582 tests). The full 5-row Lint slice (`WIKI_SEED=full`, `--strict`) passed at 7fafd2e: 5/5 rows, 54 gates.
 
 ## Findings worth remembering
 
-- The full 5-row Lint slice did not run here. #63 runs it. Rows 0001 and 0002 (overdue, next 30 days) do not touch steps 2 and 3, though they load the same skill.
+- `flagged` covers every Page that can carry a flag, scaffolding included; ranked search, Matches and neighbours still exclude scaffolding. The split lives in `packages/wiki-retrieval/lib/memo.ts` (`Snapshot.scaffolding`).
+
+- The full 5-row Lint slice ran in repair round 3 (5/5, 54 gates).
 - `read_page`'s 12-path cap and the Lint skill now share one constant; change it in `agent/lib/config.ts`.
 - Unprompted, the model also scans `needs-owner` when asked for flagged Pages, since the enum offers it.
 
@@ -35,7 +39,7 @@ Nothing yet. The PR is a draft.
 
 ## Open questions
 
-- The 5-row Lint slice (AC 5) is still to run, in #63 or by the orchestrator, before this PR can pass review.
+- None open from the review so far.
 
 ## Artifacts
 
