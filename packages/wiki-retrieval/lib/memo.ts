@@ -70,19 +70,32 @@ function parse(path: string, text: string, etag: string): MemoPage {
   };
 }
 
-/** Run `task` over `items` with at most `limit` in flight. */
+/**
+ * Run `task` over `items` with at most `limit` in flight. On a failure no
+ * new task starts, every running one settles, then the first error throws:
+ * nothing is still writing when the caller moves on.
+ */
 async function pool<T>(
   items: T[],
   limit: number,
   task: (item: T) => Promise<void>
 ): Promise<void> {
   let next = 0;
+  let failure: { error: unknown } | undefined;
   const worker = async () => {
-    while (next < items.length) await task(items[next++]);
+    while (!failure && next < items.length) {
+      const item = items[next++];
+      try {
+        await task(item);
+      } catch (error) {
+        failure ??= { error };
+      }
+    }
   };
   await Promise.all(
     Array.from({ length: Math.min(limit, items.length) }, worker)
   );
+  if (failure) throw failure.error;
 }
 
 export type Memo = {

@@ -146,3 +146,48 @@ test("a refresh that fails part-way still leaves the next search current", async
     [DELI]
   );
 });
+
+test("a failed refresh finishes its reads before the next one starts", async () => {
+  // Refresh 1 reads A's old text slowly and fails fast on B. If refresh 2
+  // could start before A's read lands, the old text would overwrite the new.
+  const A = DELI;
+  const B = "summaries/zz-flaky.md"; // sorts after A, so A is in flight when B fails
+  await store.write(B, "---\ntitle: Flaky\nkind: entity\n---\n\nFLAKY\n", {
+    etag: null,
+  });
+  let first = true;
+  let inFlight = 0;
+  let peak = 0;
+  const view: WikiStore = {
+    ...store,
+    async read(path) {
+      peak = Math.max(peak, ++inFlight);
+      try {
+        if (first && path === B) throw new Error("network");
+        if (first && path === A) {
+          const old = await store.read(path);
+          await new Promise((r) => setTimeout(r, 50));
+          return old;
+        }
+        await new Promise((r) => setTimeout(r, 1));
+        return await store.read(path);
+      } finally {
+        inFlight--;
+      }
+    },
+  };
+  const retrieval = createRetrieval({ store: view });
+  const failed = assert.rejects(retrieval.search({ query: "cash" }), /network/);
+  await new Promise((r) => setTimeout(r, 5));
+  const page = await store.read(A);
+  assert.ok(page);
+  await store.write(A, `${page.body}\n- ZQUORBLAT tip\n`, { etag: page.etag });
+  await failed;
+  first = false;
+  for (let i = 0; i < 2; i++)
+    assert.deepEqual(
+      (await retrieval.search({ query: "zquorblat" })).pages.map((p) => p.path),
+      [A]
+    );
+  assert.ok(peak <= 10, `peak ${peak}`);
+});

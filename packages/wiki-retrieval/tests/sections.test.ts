@@ -148,3 +148,10 @@ test("block-style frontmatter lists are indexed like flow ones", () => {
   assert.ok(tokenise(top.text).includes("2026-01-02-zquorblat-letter"));
   assert.ok(tokenise(top.text).includes("needs-owner"));
 });
+
+test("a comment on a block list's key does not hide its items", () => {
+  const page = `---\ntitle: Commented\nkind: entity\nsources: # provenance\n  - 2026-01-02-zquorblat-letter\nflags: # set by Lint\n  - needs-owner\n---\n\nBody\n`;
+  const [top] = sectionise("entities/commented.md", page);
+  assert.ok(top.lines.includes("sources: [2026-01-02-zquorblat-letter]"));
+  assert.ok(top.lines.includes("flags: [needs-owner]"));
+});

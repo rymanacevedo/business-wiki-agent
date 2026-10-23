@@ -73,7 +73,8 @@ function frontmatterFacts(frontmatter: string[]): string[] {
       parents.pop();
     const name =
       parents[parents.length - 1]?.key === "payment" ? `payment.${key}` : key;
-    const value = flowList(raw.trim());
+    // A value that is only a comment is empty: a block list may follow.
+    const value = flowList(raw.trim().replace(/^#.*$/, ""));
     if (value === "") {
       parents.push({ indent, key });
       list = { name, items: [] };
