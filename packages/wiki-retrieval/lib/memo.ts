@@ -1,5 +1,6 @@
-// The in-process memo: every indexable Page's parsed form, kept current by
-// comparing the store's etag manifest on every call.
+// The in-process memo: every indexable Page's parsed form (and, for flag
+// scans, the scaffolding Pages'), kept current by comparing the store's etag
+// manifest on every call.
 
 import { createHash } from "node:crypto";
 import type { WikiStore } from "../../wiki-store";
@@ -15,7 +16,8 @@ export function indexable(path: string): boolean {
   return (
     path.endsWith(".md") &&
     !SCAFFOLDING.has(path) &&
-    !path.startsWith("sources/")
+    !path.startsWith("sources/") &&
+    !path.startsWith("cache/")
   );
 }
 
@@ -121,27 +123,42 @@ export type Snapshot = {
   pages: ReadonlyMap<string, MemoPage>;
   /** Changes whenever the Pages do, so derived indexes know when to rebuild. */
   version: number;
+  /**
+   * The scaffolding Pages, for flag scans only: current when the refresh
+   * asked for them, else as last read (empty until then). Never in `pages`
+   * and never moving `version`.
+   */
+  scaffolding: ReadonlyMap<string, MemoPage>;
 };
 
 export type Memo = {
   /**
    * Bring the memo level with the store: one `manifest("")`, then a read of
    * each new or changed Page only, deleted Pages dropped. Returns a Snapshot
-   * of the result; a refresh that throws publishes none.
+   * of the result; a refresh that throws publishes none. With
+   * `scaffolding`, the same manifest brings the scaffolding Pages level too.
    */
-  refresh(): Promise<Snapshot>;
+  refresh(options?: { scaffolding?: boolean }): Promise<Snapshot>;
 };
 
 export function createMemo(store: WikiStore): Memo {
   const pages = new Map<string, MemoPage>();
   let version = 0;
-  let snapshot: Snapshot = { pages: new Map(), version };
+  // The scaffolding Pages, read only for flag scans; `copied` is the
+  // `changes` count the Snapshot's copy of them was taken at.
+  const scaffolding = new Map<string, MemoPage>();
+  let changes = 0;
+  let copied = 0;
+  let snapshot: Snapshot = {
+    pages: new Map(),
+    version,
+    scaffolding: new Map(),
+  };
   let queue: Promise<unknown> = Promise.resolve();
 
-  async function sync() {
-    const manifest = (await store.manifest("")).filter((e) =>
-      indexable(e.path)
-    );
+  async function sync(withScaffolding: boolean) {
+    const entries = await store.manifest("");
+    const manifest = entries.filter((e) => indexable(e.path));
     // The version moves with every change to `pages`, as it happens, so a
     // refresh that throws part-way still invalidates what was built before.
     const live = new Set(manifest.map((e) => e.path));
@@ -157,17 +174,41 @@ export function createMemo(store: WikiStore): Memo {
       else pages.delete(path);
       version++;
     });
-    // Copy on change only: `pages` keeps mutating, the Snapshot never does.
+    if (withScaffolding) {
+      const shelf = entries.filter((e) => SCAFFOLDING.has(e.path));
+      const live = new Set(shelf.map((e) => e.path));
+      for (const path of scaffolding.keys())
+        if (!live.has(path)) {
+          scaffolding.delete(path);
+          changes++;
+        }
+      const stale = shelf.filter(
+        (e) => scaffolding.get(e.path)?.etag !== e.etag
+      );
+      await pool(stale, READS_IN_FLIGHT, async ({ path }) => {
+        const entry = await store.read(path);
+        if (entry)
+          scaffolding.set(path, parsePage(path, entry.body, entry.etag));
+        else scaffolding.delete(path);
+        changes++;
+      });
+    }
+    // Copy on change only: the maps keep mutating, the Snapshot never does.
     if (snapshot.version !== version)
-      snapshot = { pages: new Map(pages), version };
+      snapshot = { ...snapshot, pages: new Map(pages), version };
+    if (copied !== changes) {
+      snapshot = { ...snapshot, scaffolding: new Map(scaffolding) };
+      copied = changes;
+    }
     return snapshot;
   }
 
   return {
-    refresh() {
+    refresh({ scaffolding = false } = {}) {
       // One refresh at a time per instance, so concurrent calls never
       // interleave their reads into the same Pages.
-      const run = queue.then(sync, sync);
+      const go = () => sync(scaffolding);
+      const run = queue.then(go, go);
       queue = run.catch(() => {});
       return run;
     },
