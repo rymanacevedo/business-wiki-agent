@@ -7,8 +7,13 @@ import type { BlobClient } from "../index";
  * private access only, no silent overwrite, `ifMatch` against the current
  * etag, paginated `list`. Reads that could be served stale from the CDN
  * (anything without `useCache: false`) are refused, so a backend that forgets
- * it fails here rather than lagging 60 seconds in production.
+ * it fails here rather than lagging 60 seconds in production. Like the
+ * service (measured 2026-10-23), `get` reports a weak etag (`W/"..."`) for a
+ * body of 1 KB or more, which arrives compressed, while `list` and `put`
+ * report the strong one; `ifMatch` compares strongly.
  */
+const WEAK_FROM = 1024;
+
 export function fakeBlob(pageSize = 2) {
   const blobs = new Map<string, { body: string; etag: string }>();
   let version = 0;
@@ -25,7 +30,9 @@ export function fakeBlob(pageSize = 2) {
       if (!blob) return null;
       return {
         stream: new Response(blob.body).body!,
-        blob: { etag: blob.etag },
+        blob: {
+          etag: blob.body.length >= WEAK_FROM ? `W/${blob.etag}` : blob.etag,
+        },
       };
     },
     async put(pathname, body, options) {
@@ -56,7 +63,10 @@ export function fakeBlob(pageSize = 2) {
       const page = keys.slice(start, start + Math.min(limit, pageSize));
       const next = start + page.length;
       return {
-        blobs: page.map((pathname) => ({ pathname })),
+        blobs: page.map((pathname) => ({
+          pathname,
+          etag: blobs.get(pathname)!.etag,
+        })),
         hasMore: next < keys.length,
         cursor: next < keys.length ? String(next) : undefined,
       };

@@ -65,6 +65,17 @@ test("concurrent first accesses seed once and keep later writes", async () => {
   ]);
 });
 
+test("the session store's manifest is the seeded namespace's, with read's etags", async () => {
+  const store = wiki(session("sess_m"));
+  const manifest = await store.manifest("");
+  assert.deepEqual(
+    manifest.map((entry) => entry.path),
+    await store.list("")
+  );
+  const index = manifest.find((entry) => entry.path === "index.md");
+  assert.equal(index?.etag, (await store.read("index.md"))?.etag);
+});
+
 test("the seed comes from WIKI_SEED", async () => {
   process.env.WIKI_SEED = "full";
   const summaries = await wiki(session("sess_full")).list("summaries/");

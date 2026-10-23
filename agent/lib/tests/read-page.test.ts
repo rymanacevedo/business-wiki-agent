@@ -58,3 +58,19 @@ test("a single missing Page or a Source path is an error", async () => {
     /read_source/
   );
 });
+
+test("the retrieval cache reads as no Page, even when it exists", async () => {
+  const store = createWikiStore({ namespace: "t" });
+  await store.write("cache/embeddings.json", "{}", { etag: null });
+  await store.write("cache/notes.md", "# hidden\n", { etag: null });
+  await assert.rejects(
+    tool.execute({ paths: ["cache/embeddings.json"] }, {}),
+    /No Page at cache\/embeddings\.json/
+  );
+  const out = await tool.execute(
+    { paths: ["profile.md", "/wiki/cache/notes.md"] },
+    {}
+  );
+  assert.match(out, /=== cache\/notes\.md ===\nNo Page at cache\/notes\.md/);
+  assert.doesNotMatch(out, /hidden/);
+});

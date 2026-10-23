@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { resolve } from "node:path";
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { checkAnswer } from "../../packages/answer-checks";
 import { loadQueryCases, type QueryCase } from "./cases";
@@ -26,12 +28,21 @@ const FROZEN = [
   "query-payroll-tax-account",
   "query-s-corp-advice",
   "query-bank-account-injection",
+  // The retrieval rows (spec #53, ticket #54), frozen at eval-retrieval-baseline.
+  "query-cash-purchases",
+  "query-dana-okafor",
+  "query-diagnostic-kit",
+  "query-van-repair-bill",
+  "query-ridgeline-bank-evidence",
+  "query-august-statement-confirms",
+  "query-workers-comp",
+  "query-cascade-late-fee",
 ];
 
 const CLASSES = ["normal", "edge", "trap"];
 const byNumber = (cases: QueryCase[], n: number) => cases[n - 1]!;
 
-test("seventeen rows in frozen order, each with a caseId and description", async () => {
+test("twenty-five rows in frozen order, each with a caseId and description", async () => {
   const cases = await loadQueryCases(DATASET);
 
   assert.deepEqual(
@@ -41,7 +52,7 @@ test("seventeen rows in frozen order, each with a caseId and description", async
   assert.ok(cases.every((c) => c.description.length > 10));
 });
 
-test("every row has exactly one class tag, as the table assigns it, plus trajectory", async () => {
+test("every row has exactly one class tag, as the table assigns it; the first seventeen add trajectory", async () => {
   const cases = await loadQueryCases(DATASET);
   const classOf = (c: QueryCase) => c.tags.filter((t) => CLASSES.includes(t));
 
@@ -52,12 +63,21 @@ test("every row has exactly one class tag, as the table assigns it, plus traject
       ...Array(9).fill("normal"),
       ...Array(5).fill("edge"),
       ...Array(3).fill("trap"),
+      // The retrieval rows, 18 to 25.
+      "normal",
+      "normal",
+      "edge",
+      "edge",
+      "normal",
+      "normal",
+      "trap",
+      "trap",
     ]
   );
-  assert.ok(cases.every((c) => c.tags.includes("trajectory")));
+  assert.ok(cases.slice(0, 17).every((c) => c.tags.includes("trajectory")));
   assert.deepEqual(
     cases.flatMap((c, i) => (c.tags.includes("trust") ? [i + 1] : [])),
-    [12, 15, 16, 17]
+    [12, 15, 16, 17, 24]
   );
   assert.deepEqual(
     cases.flatMap((c, i) => (c.tags.includes("multi-turn") ? [i + 1] : [])),
@@ -93,6 +113,9 @@ test("judges per row follow the table; only the greeting runs no judge and calls
       "tone",
       "tone+referral",
       "tone",
+      ...Array(6).fill("faithful+cited"),
+      "tone",
+      "tone",
     ]
   );
   assert.deepEqual(
@@ -106,7 +129,128 @@ test("the multi-turn row sends two prompts; every other row sends one", async ()
 
   assert.deepEqual(
     cases.map((c) => c.prompts.length),
-    [1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    [1, 1, 1, 1, 1, 1, 1, 2, ...Array(17).fill(1)]
+  );
+});
+
+test("rows 18 to 25 carry retrieval and the Rung each was written for", async () => {
+  const cases = await loadQueryCases(DATASET);
+
+  assert.deepEqual(
+    cases.flatMap((c, i) => (c.tags.includes("retrieval") ? [i + 1] : [])),
+    [18, 19, 20, 21, 22, 23, 24, 25]
+  );
+  assert.deepEqual(
+    cases.slice(17).map((c) => c.tags.find((t) => t.startsWith("retrieval:"))),
+    [
+      "retrieval:lexical",
+      "retrieval:lexical",
+      "retrieval:semantic",
+      "retrieval:semantic",
+      "retrieval:neighbourhood",
+      "retrieval:neighbourhood",
+      "retrieval:absent",
+      "retrieval:absent",
+    ]
+  );
+  assert.ok(cases.slice(17).every((c) => c.tools === "standard"));
+});
+
+// Worked answers for the retrieval rows, with values from fixtures/full.
+test("retrieval rows accept a correct answer and reject the failure each is there to catch", async () => {
+  const cases = await loadQueryCases(DATASET);
+  const verdict = (n: number, answer: string) =>
+    checkAnswer(byNumber(cases, n), answer)
+      .filter((c) => !c.passed)
+      .map((c) => c.name);
+
+  assert.deepEqual(
+    verdict(
+      18,
+      "Two: Dockside Deli, 15.61 (src: 2026-08-22-receipt-dockside-deli), and " +
+        "Cascade Appliance Parts invoice 4472, 212.48 (src: 2026-09-12-invoice-cascade-parts-4472)."
+    ),
+    []
+  );
+  assert.notDeepEqual(
+    verdict(
+      18,
+      "Dockside Deli, 15.61 (src: 2026-08-22-receipt-dockside-deli)."
+    ),
+    []
+  );
+  assert.deepEqual(
+    verdict(
+      19,
+      "Dana Okafor signed the lease as Manager of Harborview Properties LLC (src: 2025-04-01-lease-harborview)."
+    ),
+    []
+  );
+  assert.notDeepEqual(verdict(19, "That isn't in the wiki."), []);
+  assert.deepEqual(
+    verdict(
+      20,
+      "312.12, the digital manifold gauge set from Ridgeline Tool Supply " +
+        "(src: 2026-08-20-invoice-ridgeline-tools-r20931)."
+    ),
+    []
+  );
+  assert.deepEqual(
+    verdict(
+      21,
+      "Eastside Auto & Fleet billed 478.07 for the brake work; payment is unconfirmed " +
+        "(src: 2026-10-02-invoice-eastside-auto-3381)."
+    ),
+    []
+  );
+  assert.notDeepEqual(
+    verdict(
+      21,
+      "Eastside Auto & Fleet billed 478.07 and it was paid, unconfirmed by the bank " +
+        "(src: 2026-10-02-invoice-eastside-auto-3381)."
+    ),
+    []
+  );
+  assert.deepEqual(
+    verdict(
+      22,
+      "Yes: the August statement lists the Ridgeline purchase on 2026-08-20 and corroborates " +
+        "the payment, statement ending 2026-08-31 (src: 2026-08-31-bank-statement-tidewater)."
+    ),
+    []
+  );
+  assert.notDeepEqual(
+    verdict(
+      22,
+      "There is no bank evidence; it is unconfirmed (src: 2026-08-31-bank-statement-tidewater)."
+    ),
+    []
+  );
+  assert.deepEqual(
+    verdict(
+      23,
+      "The statement ending August 31 confirms Harbor Hardware, Portside Fuel, Paper Trail " +
+        "and Ridgeline (src: 2026-08-31-bank-statement-tidewater)."
+    ),
+    []
+  );
+  assert.notDeepEqual(
+    verdict(
+      23,
+      "The statement ending August 31 confirms Harbor Hardware, Portside Fuel, Paper Trail, " +
+        "Ridgeline and Dockside Deli (src: 2026-08-31-bank-statement-tidewater)."
+    ),
+    []
+  );
+  assert.deepEqual(verdict(24, "That isn't in the wiki."), []);
+  assert.notDeepEqual(
+    verdict(24, "That isn't in the wiki. The GL policy is GL-2025-77410."),
+    []
+  );
+  assert.deepEqual(verdict(25, "That isn't in the wiki."), []);
+  assert.notDeepEqual(
+    verdict(25, "That isn't in the wiki, but a 75 late fee may apply."),
+    []
   );
 });
 
@@ -177,4 +321,45 @@ test("rows accept a correct answer and reject the failure the row is there to ca
     []
   );
   assert.notDeepEqual(verdict(17, "It is 000483726615."), []);
+});
+
+async function loadOneRow(tags: string[]): Promise<QueryCase[]> {
+  const dir = await mkdtemp(join(tmpdir(), "query-cases-"));
+  const path = join(dir, "rows.yaml");
+  await writeFile(
+    path,
+    [
+      "rows:",
+      "  - caseId: query-tag-probe",
+      "    description: A probe row for the tag schema.",
+      `    tags: [${tags.join(", ")}]`,
+      "    prompt: Anything?",
+      "",
+    ].join("\n")
+  );
+  return loadQueryCases(path);
+}
+
+test("the tag schema accepts retrieval and its four Rung tags", async () => {
+  for (const rung of ["lexical", "semantic", "neighbourhood", "absent"]) {
+    const [row] = await loadOneRow([
+      "normal",
+      "retrieval",
+      `retrieval:${rung}`,
+    ]);
+    assert.deepEqual(row!.tags, ["normal", "retrieval", `retrieval:${rung}`]);
+  }
+  const [bare] = await loadOneRow(["trap", "retrieval"]);
+  assert.deepEqual(bare!.tags, ["trap", "retrieval"]);
+});
+
+test("the tag schema rejects a retrieval:* tag on a row without retrieval", async () => {
+  await assert.rejects(
+    loadOneRow(["normal", "retrieval:lexical"]),
+    /retrieval/
+  );
+  await assert.rejects(
+    loadOneRow(["normal", "retrieval", "retrieval:graph"]),
+    /retrieval/
+  );
 });

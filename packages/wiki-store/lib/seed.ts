@@ -7,7 +7,7 @@ import {
   type BackendName,
   type Env,
 } from "./select";
-import { checkNamespace, SOURCES_PREFIX } from "./paths";
+import { checkNamespace, isCache, SOURCES_PREFIX } from "./paths";
 
 export class WikiSeedError extends Error {
   constructor(message: string) {
@@ -18,7 +18,7 @@ export class WikiSeedError extends Error {
 
 export type SeedOptions = {
   namespace: string;
-  /** A Wiki fixture: Pages only, no `sources/`. */
+  /** A Wiki fixture: Pages and the `cache/` files, no `sources/`. */
   fixtureDir: string;
   /** The Corpus Sources, copied under `sources/`. */
   sourcesDir: string;
@@ -78,7 +78,8 @@ export async function seedNamespace({
         )
     );
   return {
-    pages: pages.length,
+    // The retrieval cache is copied like any file but is not a Page.
+    pages: pages.filter((path) => !isCache(path)).length,
     sources: sources.length,
     backend: backendName(env),
   };

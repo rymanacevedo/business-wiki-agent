@@ -3,7 +3,21 @@ import { z } from "zod";
 
 const pattern = z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]);
 const CLASSES = ["normal", "edge", "trap"] as const;
-const OPTIONAL_TAGS = ["trust", "trajectory", "multi-turn", "calibration"];
+/** `retrieval:*` names the Rung a row was written for, never what answered it. */
+const RETRIEVAL_TAGS = [
+  "retrieval:lexical",
+  "retrieval:semantic",
+  "retrieval:neighbourhood",
+  "retrieval:absent",
+];
+const OPTIONAL_TAGS = [
+  "trust",
+  "trajectory",
+  "multi-turn",
+  "calibration",
+  "retrieval",
+  ...RETRIEVAL_TAGS,
+];
 
 /** The judges a row runs: `referral` is the choice judge expecting `declined-with-referral`. */
 export const JUDGES = ["faithful", "cited", "tone", "referral"] as const;
@@ -29,6 +43,12 @@ const row = z
               OPTIONAL_TAGS.includes(t)
           ),
         `optional tags are ${OPTIONAL_TAGS.join(", ")}`
+      )
+      .refine(
+        (tags) =>
+          tags.includes("retrieval") ||
+          !tags.some((t) => t.startsWith("retrieval:")),
+        "a retrieval:* tag needs the retrieval tag too"
       ),
     /** One message, or one per turn (checks apply to the last turn). */
     prompt: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),

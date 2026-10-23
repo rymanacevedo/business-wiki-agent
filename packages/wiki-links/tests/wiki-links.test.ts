@@ -177,3 +177,21 @@ test("a missing or malformed path opens nothing", async () => {
   assert.equal(await openWikiPage(store, ["..", "secrets.md"]), null);
   assert.equal(await openWikiPage(store, ["%2e%2e", "x.md"]), null);
 });
+
+test("the wiki browser never serves the retrieval cache", async () => {
+  const store = await seeded();
+  for (const [path, body] of [
+    ["cache/embeddings.json", "{}"],
+    ["cache/notes.md", "# hidden\n"],
+    ["cache/notes.txt", "hidden\n"],
+  ])
+    await store.write(path, body, { etag: null }).catch(() => undefined);
+  for (const segments of [
+    ["cache", "embeddings.json"],
+    ["cache", "notes.md"],
+    ["cache", "notes"],
+    ["%63ache", "notes.md"],
+    ["cache%2Fnotes.md"],
+  ])
+    assert.equal(await openWikiPage(store, segments), null, segments.join("/"));
+});

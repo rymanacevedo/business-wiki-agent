@@ -1,4 +1,8 @@
-import { WikiConflictError, type WikiStore } from "../../packages/wiki-store";
+import {
+  isCache,
+  WikiConflictError,
+  type WikiStore,
+} from "../../packages/wiki-store";
 import { clerkConfig, SOURCES } from "./config";
 
 export const INDEX = "index.md";
@@ -10,6 +14,10 @@ export function pagePath(path: string): string {
   const clean = path.trim().replace(/^\/?(wiki\/)?/, "");
   if (clean.startsWith(SOURCES))
     throw new Error("Sources are immutable: no tool writes under sources/.");
+  // Retrieval's cache shares the namespace; lower-cased so a
+  // case-insensitive local disk cannot alias it.
+  if (isCache(clean.toLowerCase()))
+    throw new Error(`${clean} is not a Page: nothing under cache/ is.`);
   if (!clean.endsWith(".md"))
     throw new Error(`Page paths end in .md, got ${clean}.`);
   return clean;

@@ -1,5 +1,7 @@
 # Query slice (WIKI_SEED=full): the 17-row table in eval-design (issue #12)
-# item 12. Values come from corpus/manifest.json, never from the fixture.
+# item 12, then the eight retrieval rows from spec #53 (ticket #54), frozen at
+# git tag eval-retrieval-baseline. Values come from corpus/manifest.json, never
+# from the fixture; the retrieval rows' values were checked against fixtures/full.
 # Row order is frozen: eval ids are query/questions/<index>. Append, never reorder.
 #
 # Patterns (must_include, must_not_include, cites, pages): a string is a
@@ -181,4 +183,84 @@ rows:
       - '/(?:\\?[*xX•]){2,}[ -]?6615/'
     must_not_include: ['/\d{8,}/', "483726615"]
     pages: [2026-09-30-bank-statement-tidewater, profile.md]
+    judges: [tone]
+
+  # Retrieval rows (spec #53): Index-hostile on purpose. `retrieval:*` names
+  # the Rung a row was written for, never what answered it.
+  - caseId: query-cash-purchases
+    description: "Body-only fact: the two cash purchases (Dockside Deli 15.61, Cascade 4472 212.48); 'cash' appears only in the Page bodies, never in the Index."
+    tags: [normal, retrieval, retrieval:lexical]
+    prompt: Which purchases did we pay in cash?
+    must_include: ["15.61", "212.48", Dockside, Cascade]
+    cites:
+      [2026-08-22-receipt-dockside-deli, 2026-09-12-invoice-cascade-parts-4472]
+    judges: [faithful, cited]
+
+  - caseId: query-dana-okafor
+    description: "Body-only fact: Dana Okafor is named once, on the lease's signature line, as Harborview's manager."
+    tags: [normal, retrieval, retrieval:lexical]
+    prompt: Who is Dana Okafor?
+    must_include: [Harborview, [Manager, manager, signed]]
+    cites: [2025-04-01-lease-harborview]
+    judges: [faithful, cited]
+
+  - caseId: query-diagnostic-kit
+    description: "Wording shares no vocabulary with the answer Page: the 'A/C diagnostic kit' is the Ridgeline invoice's digital manifold gauge set, 312.12."
+    tags: [edge, retrieval, retrieval:semantic]
+    prompt: What did the A/C diagnostic kit cost us?
+    must_include: ["312.12", Ridgeline]
+    cites: [2026-08-20-invoice-ridgeline-tools-r20931]
+    judges: [faithful, cited]
+
+  - caseId: query-van-repair-bill
+    description: "Wording shares no vocabulary with the answer Page: the garage's 'stopping repairs' are Eastside's brake work, 478.07, payment unknown."
+    tags: [edge, retrieval, retrieval:semantic]
+    prompt: What did the garage charge for the stopping repairs?
+    must_include:
+      - "478.07"
+      - Eastside
+      - [unpaid, unconfirmed, not confirmed, payment unknown]
+    must_not_include: [paid in full, '/\bwas paid\b/i']
+    cites: [2026-10-02-invoice-eastside-auto-3381]
+    judges: [faithful, cited]
+
+  - caseId: query-ridgeline-bank-evidence
+    description: "Record-to-statement: the Ridgeline payment is corroborated by the 2026-08-31 Tidewater statement that lists it."
+    tags: [normal, retrieval, retrieval:neighbourhood]
+    prompt: Is there bank evidence that the Ridgeline order was paid?
+    must_include:
+      - "/paid in full|was paid|confirms? the payment|corroborat/i"
+      - ["2026-08-31", August]
+    must_not_include: ["/not paid|unpaid|unconfirmed|no bank evidence/i"]
+    cites: [2026-08-31-bank-statement-tidewater]
+    judges: [faithful, cited]
+
+  - caseId: query-august-statement-confirms
+    description: "Statement-to-Records: the August statement corroborates Harbor Hardware, Portside Fuel, Paper Trail and Ridgeline, and not the cash Dockside Deli receipt."
+    tags: [normal, retrieval, retrieval:neighbourhood]
+    prompt: Which purchases did the August bank statement confirm?
+    must_include:
+      - Harbor Hardware
+      - Portside Fuel
+      - Paper Trail
+      - Ridgeline
+      - ["2026-08-31", August 31]
+    must_not_include: [[Dockside, deli]]
+    cites: [2026-08-31-bank-statement-tidewater]
+    judges: [faithful, cited]
+
+  - caseId: query-workers-comp
+    description: "Near-miss that must stay absent: no workers' comp policy, and the general liability policy number must not stand in for one."
+    tags: [trap, retrieval, retrieval:absent, trust]
+    prompt: What's our workers' comp policy number?
+    must_include: [That isn't in the wiki]
+    must_not_include: [GL-2025-77410, '/GL-\d/']
+    judges: [tone]
+
+  - caseId: query-cascade-late-fee
+    description: "Near-miss that must stay absent: no Cascade invoice carries a late fee, so the lease's $75 rent late fee must not stand in for one."
+    tags: [trap, retrieval, retrieval:absent]
+    prompt: Is there a late fee on the Cascade invoice?
+    must_include: [That isn't in the wiki]
+    must_not_include: ['/\b75\b/']
     judges: [tone]
