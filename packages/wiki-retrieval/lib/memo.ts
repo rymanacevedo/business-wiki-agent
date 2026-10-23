@@ -1,0 +1,125 @@
+// The in-process memo: every indexable Page's parsed form, kept current by
+// comparing the store's etag manifest on every call.
+
+import type { WikiStore } from "../../wiki-store";
+import { splitPage } from "../../page-edits";
+import { frontmatterValue, sectionise, type Section } from "./sections";
+
+/** Scaffolding Pages: never Matches, never neighbours, never indexed. */
+const SCAFFOLDING = new Set(["index.md", "log.md", "SCHEMA.md"]);
+const READS_IN_FLIGHT = 10;
+
+export function indexable(path: string): boolean {
+  return (
+    path.endsWith(".md") &&
+    !SCAFFOLDING.has(path) &&
+    !path.startsWith("sources/")
+  );
+}
+
+export type MemoPage = {
+  path: string;
+  etag: string;
+  title: string;
+  kind: string;
+  status: string;
+  flags: string[];
+  /** The Page's raw frontmatter lines and body, for the Link table to come. */
+  frontmatter: string[];
+  body: string[];
+  sections: Section[];
+};
+
+/** The `flags` list, flow (`[a, b]`) or block (`- a` lines) style. */
+function flagsOf(frontmatter: string[]): string[] {
+  const at = frontmatter.findIndex((line) => /^flags\s*:/.test(line));
+  if (at === -1) return [];
+  const inline = frontmatter[at].slice(frontmatter[at].indexOf(":") + 1).trim();
+  const items: string[] = [];
+  if (inline) items.push(...inline.replace(/[[\]]/g, "").split(","));
+  else
+    for (const line of frontmatter.slice(at + 1)) {
+      const item = /^\s*-\s+(.*)$/.exec(line);
+      if (!item) break;
+      items.push(item[1]);
+    }
+  return items.map((f) => f.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+}
+
+function parse(path: string, text: string, etag: string): MemoPage {
+  const { frontmatter, body } = splitPage(text);
+  return {
+    path,
+    etag,
+    title: frontmatterValue(frontmatter, "title") ?? path,
+    kind: frontmatterValue(frontmatter, "kind") ?? "unknown",
+    status: frontmatterValue(frontmatter, "status") ?? "unknown",
+    flags: flagsOf(frontmatter),
+    frontmatter,
+    body,
+    sections: sectionise(path, text),
+  };
+}
+
+/** Run `task` over `items` with at most `limit` in flight. */
+async function pool<T>(
+  items: T[],
+  limit: number,
+  task: (item: T) => Promise<void>
+): Promise<void> {
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) await task(items[next++]);
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker)
+  );
+}
+
+export type Memo = {
+  /**
+   * Bring the memo level with the store: one `manifest("")`, then a read of
+   * each new or changed Page only, deleted Pages dropped. Returns the Pages
+   * and a version that changes whenever they do, so derived indexes know
+   * when to rebuild.
+   */
+  refresh(): Promise<{ pages: Map<string, MemoPage>; version: number }>;
+};
+
+export function createMemo(store: WikiStore): Memo {
+  const pages = new Map<string, MemoPage>();
+  let version = 0;
+  let queue: Promise<unknown> = Promise.resolve();
+
+  async function sync() {
+    const manifest = (await store.manifest("")).filter((e) =>
+      indexable(e.path)
+    );
+    let changed = false;
+    const live = new Set(manifest.map((e) => e.path));
+    for (const path of pages.keys())
+      if (!live.has(path)) {
+        pages.delete(path);
+        changed = true;
+      }
+    const stale = manifest.filter((e) => pages.get(e.path)?.etag !== e.etag);
+    await pool(stale, READS_IN_FLIGHT, async ({ path }) => {
+      const entry = await store.read(path);
+      changed = true;
+      if (entry) pages.set(path, parse(path, entry.body, entry.etag));
+      else pages.delete(path);
+    });
+    if (changed) version++;
+    return { pages, version };
+  }
+
+  return {
+    refresh() {
+      // One refresh at a time per instance, so concurrent calls never
+      // interleave their reads into the same Pages.
+      const run = queue.then(sync, sync);
+      queue = run.catch(() => {});
+      return run;
+    },
+  };
+}
