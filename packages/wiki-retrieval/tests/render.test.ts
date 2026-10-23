@@ -102,3 +102,12 @@ test("no score or Rung reaches the text", () => {
   const text = renderResult(result([LEASE, PROFILE], { rung: "embedding" }));
   assert.doesNotMatch(text, /5\.9|4\.2|lexical|embedding|rung/i);
 });
+
+test("hop on but no neighbours, and hop off: no Also linked section and no sentence about it", () => {
+  const expected = `## Matches (1)
+### profile.md
+Northwind Repair LLC · profile · superseded · section "Premises lease"
+> - **Landlord**: Harborview Properties LLC (src: 2025-04-01-lease-harborview)`;
+  assert.equal(renderResult(result([PROFILE], { hopRan: true })), expected);
+  assert.equal(renderResult(result([PROFILE], { hopRan: false })), expected);
+});

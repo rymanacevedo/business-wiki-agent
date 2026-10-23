@@ -78,6 +78,14 @@ export function retrieval(ctx?: SessionCtx): Retrieval {
   return instance;
 }
 
+/**
+ * Whether `search_wiki` runs the one-Link hop to the Neighbourhood:
+ * experimental, on only with `CLERK_RETRIEVAL_NEIGHBOURHOOD=1`.
+ */
+export function retrievalNeighbourhood(): boolean {
+  return process.env.CLERK_RETRIEVAL_NEIGHBOURHOOD === "1";
+}
+
 export const SOURCES = "sources/";
 export const SUMMARIES = "summaries/";
 
