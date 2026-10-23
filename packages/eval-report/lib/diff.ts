@@ -7,8 +7,11 @@ export type Run = { label: string; slices: SliceReport[] };
 /** A row whose expectation changed between the runs: a dataset fix, not an agent change. */
 export type DatasetFix = { id: string; commit: string; change: string };
 
-export const START = "<!-- eval-diff:start -->";
-export const END = "<!-- eval-diff:end -->";
+/** The marker pair for a README block: the default block, or `eval-diff:<name>:start/end`. */
+export function markers(name?: string): { start: string; end: string } {
+  const prefix = name === undefined ? "eval-diff" : `eval-diff:${name}`;
+  return { start: `<!-- ${prefix}:start -->`, end: `<!-- ${prefix}:end -->` };
+}
 
 /** Every `<slice>.json` in one run directory. */
 export async function readRun(runsDir: string, label: string): Promise<Run> {
@@ -153,6 +156,23 @@ export function diffRuns(
     })
   );
 
+  const tags = [
+    ...new Set([...all(before), ...all(after)].flatMap((c) => c.tags)),
+  ].sort();
+  const byTag = table(
+    ["Tag", "Cases", "Pass rate before", "Pass rate after"],
+    tags.map((t) => {
+      const b = all(before).filter((c) => c.tags.includes(t));
+      const a = all(after).filter((c) => c.tags.includes(t));
+      return [
+        t,
+        String(new Set([...ids(b), ...ids(a)]).size),
+        passRate(b),
+        passRate(a),
+      ];
+    })
+  );
+
   const scoreRows: string[][] = [];
   for (const slice of slices) {
     const b = cases(before, slice);
@@ -214,6 +234,12 @@ export function diffRuns(
     "",
     byClass,
     "",
+    "## By tag",
+    "",
+    "A case carries several tags, so a case counts once in every tag it has.",
+    "",
+    byTag,
+    "",
     "## Labelled scores (mean)",
     "",
     scoreRows.length
@@ -250,8 +276,16 @@ export function diffRuns(
   return { markdown, readmeBlock };
 }
 
-/** Replace the text between the eval-diff markers; throws if they are missing. */
-export function rewriteReadmeBlock(readme: string, block: string): string {
+/**
+ * Replace the text between a block's markers (the default eval-diff pair, or
+ * the named `eval-diff:<name>` pair); throws if the pair is missing.
+ */
+export function rewriteReadmeBlock(
+  readme: string,
+  block: string,
+  name?: string
+): string {
+  const { start: START, end: END } = markers(name);
   const start = readme.indexOf(START);
   const end = readme.indexOf(END);
   if (start === -1 || end === -1 || end < start)

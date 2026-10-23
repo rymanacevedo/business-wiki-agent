@@ -76,3 +76,68 @@ test("a README without the markers fails, and an unknown run label fails", async
   assert.equal(run(root, "before", "nope").status, 1);
   assert.equal(run(root, "before").status, 64);
 });
+
+test("--block writes the named block and leaves the default block untouched", async () => {
+  const readme =
+    "# Clerk\n\n<!-- eval-diff:start -->\nslice table\n<!-- eval-diff:end -->\n\n<!-- eval-diff:retrieval:start -->\n<!-- eval-diff:retrieval:end -->\n";
+  const root = await repo(readme);
+  const result = run(root, "before", "after", "--block", "retrieval");
+
+  assert.equal(result.status, 0, result.stderr);
+  const written = await readFile(join(root, "README.md"), "utf8");
+  assert.ok(
+    written.includes(
+      "<!-- eval-diff:start -->\nslice table\n<!-- eval-diff:end -->"
+    ),
+    written
+  );
+  assert.ok(
+    written.includes("<!-- eval-diff:retrieval:start -->\n| Slice | Cases |"),
+    written
+  );
+  assert.ok(written.includes("| **total** | 1 |"), written);
+});
+
+test("--block with no such marker pair fails and names the pair", async () => {
+  const root = await repo(
+    "# Clerk\n\n<!-- eval-diff:start -->\n<!-- eval-diff:end -->\n"
+  );
+  const result = run(root, "before", "after", "--block", "retrieval");
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /eval-diff:retrieval:start/);
+});
+
+test("a named block reads its own dataset fixes, not the default block's", async () => {
+  const root = await repo(
+    "# Clerk\n\n<!-- eval-diff:start -->\n<!-- eval-diff:end -->\n\n<!-- eval-diff:retrieval:start -->\n<!-- eval-diff:retrieval:end -->\n"
+  );
+  await writeFile(
+    join(root, "docs/evals/dataset-fixes.json"),
+    JSON.stringify([
+      { id: "ingest/sources/0000", commit: "abc1234", change: "old fix" },
+    ])
+  );
+
+  assert.equal(run(root, "before", "after", "--block", "retrieval").status, 0);
+  const retrieval = await readFile(join(root, "README.md"), "utf8");
+  assert.ok(!retrieval.includes("dataset fixes"), retrieval);
+
+  await writeFile(
+    join(root, "docs/evals/dataset-fixes.retrieval.json"),
+    JSON.stringify([
+      { id: "ingest/sources/0000", commit: "def5678", change: "new fix" },
+    ])
+  );
+  assert.equal(run(root, "before", "after", "--block", "retrieval").status, 0);
+  const page = await readFile(join(root, "docs/evals/before-after.md"), "utf8");
+  assert.ok(page.includes("| def5678 | new fix |"), page);
+  assert.ok(!page.includes("old fix"), page);
+});
+
+test("a block name that is not a plain slug is a usage error", async () => {
+  const root = await repo("# Clerk\n");
+
+  for (const name of ["", "../x", "a b", "retrieval:start"])
+    assert.equal(run(root, "before", "after", "--block", name).status, 64);
+});
