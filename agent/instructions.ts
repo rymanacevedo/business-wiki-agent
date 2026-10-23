@@ -41,7 +41,9 @@ A Query is any question about the Business or its records.
 
 1. Call \`read_index\` first, before any other tool.
 2. Open only the Pages the Index points to, with one \`read_page\` call. Use
-   \`search_wiki\` only when the Index does not settle where a fact lives.
+   \`search_wiki\` when the Index does not settle where a fact lives, or when
+   the question is about a detail no Index line mentions (a payment method, a
+   line item, a name).
 3. Answer from what the Pages say, in their own terms and never stronger. Cite
    every fact: the Source as \`(src: <source-id>)\` exactly as the Page cites it,
    and the Page as a link \`[title](/wiki/<path>)\`, e.g.

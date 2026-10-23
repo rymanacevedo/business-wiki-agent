@@ -1,7 +1,7 @@
 import { defineEval, type EveEvalTurn } from "eve/evals";
 import { checkAnswer, judgedPages } from "../../packages/answer-checks";
 import type config from "../evals.config";
-import { gateChecks, standardTrajectory } from "../lib/answers";
+import { gateChecks, scoreRetrieval, standardTrajectory } from "../lib/answers";
 import { drive } from "../lib/drive";
 import { sessionWiki } from "../lib/run";
 import { loadQueryCases, type Judge } from "./cases";
@@ -76,8 +76,11 @@ export default cases.map((c) =>
         t.skip("the Query slice runs from WIKI_SEED=full");
 
       let turn: EveEvalTurn | undefined;
-      for (const prompt of c.prompts)
+      const toolCalls: EveEvalTurn["toolCalls"][number][] = [];
+      for (const prompt of c.prompts) {
         turn = await drive(t, c.caseId, prompt, turn?.session);
+        toolCalls.push(...turn.toolCalls);
+      }
       if (!turn) return;
       // A multi-turn row checks its last turn; the trajectory covers the run.
       turn.succeeded();
@@ -86,6 +89,8 @@ export default cases.map((c) =>
 
       const answer = turn.message ?? "";
       gateChecks(t, checkAnswer(c, answer));
+      // toolCalls[].output is search_wiki's full execute object, not the text.
+      scoreRetrieval(t, c.cites, toolCalls);
       if (c.judges.length === 0) return;
 
       const wiki = await sessionWiki(t.context, turn.sessionId);
