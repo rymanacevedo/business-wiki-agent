@@ -10,6 +10,7 @@ import {
   renderResult,
   type Embed,
   type ResultPage,
+  type RetrievalResult,
 } from "../index";
 import { countingEmbed, fakeEmbed } from "./fake-embed";
 import { BASE, FULL, fullWiki } from "./full-wiki";
@@ -82,6 +83,36 @@ async function edit(path: string, change: (body: string) => string) {
   assert.ok(page);
   await store.write(path, change(page.body), { etag: page.etag });
 }
+
+describe("the hop on with the fake adapter", () => {
+  test("the Neighbourhood rows fuse, then hop: Rung embedding, the August statement found, neighbours after Matches", async () => {
+    await rebuildCache(store, fakeEmbed);
+    const retrieval = createRetrieval({ store, embed: fakeEmbed });
+    for (const query of [
+      "Is there bank evidence that the Ridgeline order was paid?",
+      "Which purchases did the August bank statement confirm?",
+    ]) {
+      const result = await retrieval.search({ query, neighbourhood: true });
+      assert.equal(result.rung, "embedding", query);
+      assert.equal(result.degraded, false, query);
+      assert.equal(result.hopRan, true, query);
+      assert.ok(result.pages.length <= 8, query);
+      const roles = result.pages.map((p) => p.role);
+      assert.ok(roles.includes("neighbour"), query);
+      assert.deepEqual(
+        roles,
+        [...roles].sort((a, b) => (a === b ? 0 : a === "match" ? -1 : 1)),
+        "Matches first, then neighbours"
+      );
+      assert.ok(
+        result.pages.some(
+          (p) => p.path === "summaries/2026-08-31-bank-statement-tidewater.md"
+        ),
+        query
+      );
+    }
+  });
+});
 
 describe("the cache and the delta", () => {
   test("a warm cache embeds no section, and the query once per search", async () => {
@@ -481,5 +512,84 @@ describe("one search answers from one snapshot of the Pages", () => {
     assert.equal(revisionOf(await searching), "old");
     fail = false;
     assert.equal(revisionOf(await retrieval.search(ask)), "new");
+  });
+
+  describe("with the hop on, Links come from that snapshot too", () => {
+    const OLD_PARTY = "entities/zz-old-party.md";
+    const NEW_PARTY = "entities/zz-new-party.md";
+    const hopAsk = { ...ask, neighbourhood: true };
+
+    /** SNAP at `rev`, linking to `party` in its body. */
+    function linking(rev: typeof OLD, party: string) {
+      return `${body(rev)}- Paid to [the party](../${party})\n`;
+    }
+    const party = (title: string) =>
+      `---\ntitle: ${title}\nkind: entity\nstatus: active\nflags: []\n---\n\n- A counterparty\n`;
+
+    async function put(path: string, text: string) {
+      const current = await store.read(path);
+      await store.write(path, text, { etag: current?.etag ?? null });
+    }
+
+    beforeEach(async () => {
+      await put(OLD_PARTY, party("Old party"));
+      await put(NEW_PARTY, party("New party"));
+      await put(SNAP, linking(OLD, OLD_PARTY));
+    });
+
+    /** Which revision SNAP's Link and its neighbour read as; fails on a mix. */
+    function hopRevisionOf(result: RetrievalResult) {
+      assert.equal(result.hopRan, true);
+      const page = revisionOf(result);
+      const via = (path: string) =>
+        result.pages.find(
+          (p) =>
+            p.path === path &&
+            p.role === "neighbour" &&
+            p.via?.some((v) => v.match === SNAP)
+        );
+      const old = via(OLD_PARTY);
+      const now = via(NEW_PARTY);
+      const seen =
+        old && !now && old.title === "Old party"
+          ? "old"
+          : now && !old
+            ? "new"
+            : "mixed";
+      assert.equal(seen, page, JSON.stringify(result.pages));
+      return page;
+    }
+
+    async function edit() {
+      await put(SNAP, linking(NEW, NEW_PARTY));
+      await put(OLD_PARTY, party("Old party, renamed"));
+    }
+
+    test("an edit refreshed by flagged() while the search embeds: the Links are wholly the old revision", async () => {
+      const { embed, release, entered } = pausedEmbed();
+      const retrieval = createRetrieval({ store, embed });
+      const searching = retrieval.search(hopAsk);
+      await entered;
+      await edit();
+      await retrieval.flagged("conflict");
+      release();
+      assert.equal(hopRevisionOf(await searching), "old");
+      assert.equal(hopRevisionOf(await retrieval.search(hopAsk)), "new");
+    });
+
+    test("a second hop-on search refreshing while the first embeds: each is wholly its own revision", async () => {
+      const { embed, release, entered } = pausedEmbed();
+      const retrieval = createRetrieval({ store, embed });
+      // The first search builds the old Link table; the second, the new one.
+      const first = retrieval.search(hopAsk);
+      await entered;
+      await edit();
+      const second = retrieval.search(hopAsk);
+      await retrieval.flagged("conflict");
+      release();
+      assert.equal(hopRevisionOf(await second), "new");
+      assert.equal(hopRevisionOf(await first), "old");
+      assert.equal(hopRevisionOf(await retrieval.search(hopAsk)), "new");
+    });
   });
 });

@@ -81,6 +81,14 @@ export function retrieval(ctx?: SessionCtx): Retrieval {
 /** Most Pages one `read_page` call opens; Lint batches longer lists. */
 export const READ_PAGE_MAX = 12;
 
+/**
+ * Whether `search_wiki` runs the one-Link hop to the Neighbourhood:
+ * experimental, on only with `CLERK_RETRIEVAL_NEIGHBOURHOOD=1`.
+ */
+export function retrievalNeighbourhood(): boolean {
+  return process.env.CLERK_RETRIEVAL_NEIGHBOURHOOD === "1";
+}
+
 export const SOURCES = "sources/";
 export const SUMMARIES = "summaries/";
 
