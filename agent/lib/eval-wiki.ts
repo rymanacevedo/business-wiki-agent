@@ -86,5 +86,6 @@ export function evalWiki(
     write: async (path, body, options) =>
       (await ready()).write(path, body, options),
     list: async (prefix) => (await ready()).list(prefix),
+    manifest: async (prefix) => (await ready()).manifest(prefix),
   };
 }
