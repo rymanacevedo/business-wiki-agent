@@ -98,6 +98,33 @@ test("--block writes the named block and leaves the default block untouched", as
   assert.ok(written.includes("| **total** | 1 |"), written);
 });
 
+test("--block writes its own before/after page and leaves the default page alone", async () => {
+  const root = await repo(
+    "# Clerk\n\n<!-- eval-diff:start -->\n<!-- eval-diff:end -->\n\n<!-- eval-diff:retrieval:start -->\n<!-- eval-diff:retrieval:end -->\n"
+  );
+  await mkdir(join(root, "docs/evals"), { recursive: true });
+  await writeFile(
+    join(root, "docs/evals/before-after.md"),
+    "the spec #15 record\n"
+  );
+  const result = run(root, "before", "after", "--block", "retrieval");
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(
+    await readFile(join(root, "docs/evals/before-after.md"), "utf8"),
+    "the spec #15 record\n"
+  );
+  const page = await readFile(
+    join(root, "docs/evals/before-after.retrieval.md"),
+    "utf8"
+  );
+  assert.ok(
+    page.includes("| ingest/sources/0000 | satisfies [page] | none |"),
+    page
+  );
+  assert.match(result.stdout, /before-after\.retrieval\.md/);
+});
+
 test("--block with no such marker pair fails and names the pair", async () => {
   const root = await repo(
     "# Clerk\n\n<!-- eval-diff:start -->\n<!-- eval-diff:end -->\n"
@@ -130,7 +157,10 @@ test("a named block reads its own dataset fixes, not the default block's", async
     ])
   );
   assert.equal(run(root, "before", "after", "--block", "retrieval").status, 0);
-  const page = await readFile(join(root, "docs/evals/before-after.md"), "utf8");
+  const page = await readFile(
+    join(root, "docs/evals/before-after.retrieval.md"),
+    "utf8"
+  );
   assert.ok(page.includes("| def5678 | new fix |"), page);
   assert.ok(!page.includes("old fix"), page);
 });
