@@ -133,3 +133,18 @@ test("a section over 300 tokens splits at the fact line nearest its midpoint, ne
   assert.ok(tokenise(second.text).includes("long"), "title repeated");
   assert.ok(tokenise(second.text).includes("rows"), "heading repeated");
 });
+
+test("block-style frontmatter lists are indexed like flow ones", () => {
+  const page = `---\ntitle: Block\nkind: summary\nsources:\n  - 2026-01-02-zquorblat-letter\n  # a comment\nflags:\n  - needs-owner\nexpense:\n  allocations:\n    - { category: meals, amount: 1.00 }\n  payment:\n    evidence:\n      - 2026-01-03-bank\n---\n\nBody line\n`;
+  const [top] = sectionise("summaries/block.md", page);
+  assert.deepEqual(top.lines, [
+    "title: Block",
+    "kind: summary",
+    "sources: [2026-01-02-zquorblat-letter]",
+    "flags: [needs-owner]",
+    "payment.evidence: [2026-01-03-bank]",
+    "Body line",
+  ]);
+  assert.ok(tokenise(top.text).includes("2026-01-02-zquorblat-letter"));
+  assert.ok(tokenise(top.text).includes("needs-owner"));
+});

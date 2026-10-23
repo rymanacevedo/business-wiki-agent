@@ -111,3 +111,38 @@ test("an edit seen first by flagged is still searchable afterwards", async () =>
     [DELI]
   );
 });
+
+test("a refresh that fails part-way still leaves the next search current", async () => {
+  // Pages read before the failure are already in the memo: the index must
+  // still rebuild, even if the Page that failed is gone by the next search.
+  const NEW = "entities/zz-new.md";
+  const hidden = new Set<string>();
+  let failNew = false;
+  const view: WikiStore = {
+    ...store,
+    async manifest(prefix) {
+      return (await store.manifest(prefix)).filter((e) => !hidden.has(e.path));
+    },
+    async read(path) {
+      if (path === NEW && failNew) throw new Error("network");
+      return store.read(path);
+    },
+  };
+  const retrieval = createRetrieval({ store: view });
+  await retrieval.search({ query: "cash" });
+  const page = await store.read(DELI);
+  assert.ok(page);
+  await store.write(DELI, `${page.body}\n- ZQUORBLAT tip\n`, {
+    etag: page.etag,
+  });
+  await store.write(NEW, "---\ntitle: New\nkind: entity\n---\n\nNEW\n", {
+    etag: null,
+  });
+  failNew = true;
+  await assert.rejects(retrieval.search({ query: "zquorblat" }), /network/);
+  hidden.add(NEW);
+  assert.deepEqual(
+    (await retrieval.search({ query: "zquorblat" })).pages.map((p) => p.path),
+    [DELI]
+  );
+});

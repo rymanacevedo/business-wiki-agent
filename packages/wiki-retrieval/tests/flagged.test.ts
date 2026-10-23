@@ -44,3 +44,21 @@ test("flagged sees a flag added since the last call, in either YAML list style",
     ["entities/alpha.md", "entities/zeta.md"]
   );
 });
+
+test("flagged reads past YAML comments", async () => {
+  const retrieval = createRetrieval({ store });
+  await store.write(
+    "entities/inline.md",
+    "---\ntitle: Inline\nkind: entity\nstatus: active\nflags: [needs-owner] # set by Lint\n---\n\nINLINE\n",
+    { etag: null }
+  );
+  await store.write(
+    "entities/block.md",
+    "---\ntitle: Block\nkind: entity\nstatus: active\nflags:\n  # set by Lint\n  - needs-owner # why\n---\n\nBLOCK\n",
+    { etag: null }
+  );
+  assert.deepEqual(
+    (await retrieval.flagged("needs-owner")).map((p) => p.path),
+    ["entities/block.md", "entities/inline.md"]
+  );
+});

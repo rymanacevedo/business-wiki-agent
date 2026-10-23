@@ -3,7 +3,12 @@
 
 import type { WikiStore } from "../../wiki-store";
 import { splitPage } from "../../page-edits";
-import { frontmatterValue, sectionise, type Section } from "./sections";
+import {
+  frontmatterValue,
+  listItem,
+  sectionise,
+  type Section,
+} from "./sections";
 
 /** Scaffolding Pages: never Matches, never neighbours, never indexed. */
 const SCAFFOLDING = new Set(["index.md", "log.md", "SCHEMA.md"]);
@@ -30,18 +35,22 @@ export type MemoPage = {
   sections: Section[];
 };
 
-/** The `flags` list, flow (`[a, b]`) or block (`- a` lines) style. */
+/** The `flags` list, flow (`[a, b]`) or block (`- a` lines) style, comments ignored. */
 function flagsOf(frontmatter: string[]): string[] {
   const at = frontmatter.findIndex((line) => /^flags\s*:/.test(line));
   if (at === -1) return [];
-  const inline = frontmatter[at].slice(frontmatter[at].indexOf(":") + 1).trim();
+  const inline = frontmatter[at]
+    .slice(frontmatter[at].indexOf(":") + 1)
+    .replace(/(^|\s)#.*$/, "")
+    .trim();
   const items: string[] = [];
   if (inline) items.push(...inline.replace(/[[\]]/g, "").split(","));
   else
     for (const line of frontmatter.slice(at + 1)) {
-      const item = /^\s*-\s+(.*)$/.exec(line);
-      if (!item) break;
-      items.push(item[1]);
+      if (!line.trim() || /^\s*#/.test(line)) continue;
+      const item = listItem(line);
+      if (item === undefined) break;
+      items.push(item);
     }
   return items.map((f) => f.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
 }
@@ -95,21 +104,21 @@ export function createMemo(store: WikiStore): Memo {
     const manifest = (await store.manifest("")).filter((e) =>
       indexable(e.path)
     );
-    let changed = false;
+    // The version moves with every change to `pages`, as it happens, so a
+    // refresh that throws part-way still invalidates what was built before.
     const live = new Set(manifest.map((e) => e.path));
     for (const path of pages.keys())
       if (!live.has(path)) {
         pages.delete(path);
-        changed = true;
+        version++;
       }
     const stale = manifest.filter((e) => pages.get(e.path)?.etag !== e.etag);
     await pool(stale, READS_IN_FLIGHT, async ({ path }) => {
       const entry = await store.read(path);
-      changed = true;
       if (entry) pages.set(path, parse(path, entry.body, entry.etag));
       else pages.delete(path);
+      version++;
     });
-    if (changed) version++;
     return { pages, version };
   }
 

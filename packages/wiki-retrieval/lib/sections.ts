@@ -32,30 +32,58 @@ export function frontmatterValue(
   return undefined;
 }
 
+/** A YAML list item's value, without a trailing comment. */
+export const listItem = (line: string): string | undefined => {
+  const item = /^\s*-\s+(.*)$/.exec(line);
+  return item ? unquote(item[1].replace(/\s+#.*$/, "")) : undefined;
+};
+
+/** A flow list's text up to its closing bracket, dropping a trailing comment. */
+const flowList = (value: string) =>
+  value.startsWith("[") && value.includes("]")
+    ? value.slice(0, value.indexOf("]") + 1)
+    : value;
+
 /**
- * Frontmatter facts as `key: value` lines: every scalar with a value except
- * `created` and `updated`; keys under `payment` read `payment.<key>`;
- * the flow-style allocation rows are skipped.
+ * Frontmatter facts as `key: value` lines: every value except `created` and
+ * `updated`; keys under `payment` read `payment.<key>`; a block-style list
+ * reads like a flow one (`key: [a, b]`); the allocation rows are skipped.
  */
 function frontmatterFacts(frontmatter: string[]): string[] {
   const facts: string[] = [];
-  let parent = "";
+  const parents: { indent: number; key: string }[] = [];
+  let list: { name: string; items: string[] } | null = null;
+  const closeList = () => {
+    if (list?.items.length)
+      facts.push(`${list.name}: [${list.items.join(", ")}]`);
+    list = null;
+  };
   for (const line of frontmatter) {
-    const match = /^(\s*)([A-Za-z_][\w-]*)\s*:(.*)$/.exec(line);
-    if (!match) continue;
-    const [, indent, key, raw] = match;
-    const value = raw.trim();
-    if (indent.length === 0) parent = "";
-    if (value === "") {
-      if (indent.length > 0) parent = key;
+    if (!line.trim() || /^\s*#/.test(line)) continue;
+    const item = listItem(line);
+    if (item !== undefined) {
+      if (list && !item.startsWith("{")) list.items.push(item);
       continue;
     }
-    if (SKIPPED_KEYS.has(key) && indent.length === 0) continue;
-    if (value === "null" || value === "[]" || value === "~") continue;
+    closeList();
+    const match = /^(\s*)([A-Za-z_][\w-]*)\s*:(.*)$/.exec(line);
+    if (!match) continue;
+    const [, { length: indent }, key, raw] = match;
+    while (parents.length && parents[parents.length - 1].indent >= indent)
+      parents.pop();
     const name =
-      indent.length > 0 && parent === "payment" ? `payment.${key}` : key;
+      parents[parents.length - 1]?.key === "payment" ? `payment.${key}` : key;
+    const value = flowList(raw.trim());
+    if (value === "") {
+      parents.push({ indent, key });
+      list = { name, items: [] };
+      continue;
+    }
+    if (SKIPPED_KEYS.has(key) && indent === 0) continue;
+    if (value === "null" || value === "[]" || value === "~") continue;
     facts.push(`${name}: ${unquote(value)}`);
   }
+  closeList();
   return facts;
 }
 

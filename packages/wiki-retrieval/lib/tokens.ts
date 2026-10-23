@@ -12,9 +12,13 @@ const MONTHS =
   );
 const MONTH_YEAR = new RegExp(`\\b(${MONTHS.join("|")})\\s+(\\d{4})\\b`, "gi");
 
-/** A decimal number or a run of letters and digits, either continued by `-` plus more. */
+/**
+ * A decimal number (which may run on into letters, so `1099NEC` and `12A`
+ * stay whole) or a run of letters and digits, either continued by `-` plus
+ * more letters or digits.
+ */
 const TOKEN =
-  /\d+(?:\.\d+)?(?:-[\p{L}\p{N}]+)*|[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*/gu;
+  /\d+(?:\.\d+)?[\p{L}\p{N}]*(?:-[\p{L}\p{N}]+)*|[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*/gu;
 const THOUSANDS = /(?<=\d),(?=\d{3}\b)/g;
 const DAY = /^(\d{4}-\d{2})-\d{2}/;
 

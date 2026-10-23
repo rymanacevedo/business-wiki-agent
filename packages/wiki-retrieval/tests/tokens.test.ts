@@ -102,3 +102,9 @@ test("a Query turns Month YYYY into YYYY-MM; a Page does not", () => {
   );
   assert.deepEqual(tokenise("September 2026"), ["september", "2026"]);
 });
+
+test("an identifier that starts with digits stays whole", () => {
+  assert.deepEqual(tokenise("Form 1099NEC"), ["form", "1099nec"]);
+  assert.notDeepEqual(tokenise("Unit 12A"), tokenise("Unit 12B"));
+  assert.deepEqual(tokenise("Unit 12A"), ["unit", "12a"]);
+});
