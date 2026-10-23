@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { defaultBible } from "../../packages/corpus/bible";
 import { createRetrieval, type Retrieval } from "../../packages/wiki-retrieval";
+import { gatewayEmbed } from "../../packages/wiki-retrieval/gateway";
 import { createWikiStore, type WikiStore } from "../../packages/wiki-store";
 import {
   EVAL_RUN_ENV,
@@ -43,6 +44,16 @@ const RETRIEVALS = 8;
 const retrievals = new Map<string, Retrieval>();
 
 /**
+ * The embedding adapter: the Gateway's (with `AI_GATEWAY_API_KEY`) unless
+ * `CLERK_RETRIEVAL_EMBEDDINGS=0` makes retrieval lexical-only.
+ */
+export function retrievalEmbed() {
+  return process.env.CLERK_RETRIEVAL_EMBEDDINGS === "0"
+    ? undefined
+    : gatewayEmbed;
+}
+
+/**
  * The Retrieval instance for this session's namespace, kept across tool
  * calls so its section index survives the fresh store `wiki(ctx)` builds
  * each time. One per namespace (each eval session has its own), at most the
@@ -55,7 +66,9 @@ export function retrieval(ctx?: SessionCtx): Retrieval {
     : (process.env.WIKI_NAMESPACE ?? "demo");
   // The local store directory is part of the key: tests and scripts move it.
   const key = `${resolve(process.env.WIKI_STORE_DIR ?? ".wiki-store")}:${namespace}`;
-  const instance = retrievals.get(key) ?? createRetrieval({ store: wiki(ctx) });
+  const instance =
+    retrievals.get(key) ??
+    createRetrieval({ store: wiki(ctx), embed: retrievalEmbed() });
   retrievals.delete(key);
   retrievals.set(key, instance);
   for (const stale of retrievals.keys()) {

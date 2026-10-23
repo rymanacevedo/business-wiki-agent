@@ -116,47 +116,56 @@ function outgoing(page: MemoPage): Map<string, Set<LinkKind>> {
 
 export type Adjacent = { page: string; labels: string[] };
 
+/** The Links among one Snapshot's Pages. Never changed once built. */
 export type LinkTable = {
-  /** Bring the table level with the memo's Pages: only changed Pages are re-read. */
-  update(pages: Map<string, MemoPage>): void;
   /** The Pages one Link from `path`, each with its labels, sorted by path. */
   around(path: string): Adjacent[];
 };
 
-export function createLinkTable(): LinkTable {
-  /** Per Page: the etag its Links were read at, and the Links. */
-  const from = new Map<
-    string,
-    { etag: string; to: Map<string, Set<LinkKind>> }
-  >();
-  /** Per target: the Pages carrying a Link to it. */
-  const into = new Map<string, Set<string>>();
-  let live = new Map<string, MemoPage>();
+type Read = { etag: string; to: Map<string, Set<LinkKind>> };
 
-  const unlink = (path: string) => {
-    for (const to of from.get(path)?.to.keys() ?? []) {
-      into.get(to)?.delete(path);
-      if (into.get(to)?.size === 0) into.delete(to);
-    }
-    from.delete(path);
-  };
+export type Linker = {
+  /**
+   * The Link table for `pages`, a Snapshot's. Each Page's Links are read
+   * once per etag and reused by later tables; a table already handed out is
+   * never touched again, whatever Snapshot the next one is for.
+   */
+  table(pages: ReadonlyMap<string, MemoPage>): LinkTable;
+};
 
+export function createLinker(): Linker {
+  /** Per Page: the etag its Links were last read at, and the Links. */
+  let read = new Map<string, Read>();
   return {
-    update(pages) {
-      live = pages;
-      for (const path of from.keys()) if (!pages.has(path)) unlink(path);
+    table(pages) {
+      const from = new Map<string, Read>();
+      /** Per target: the Pages carrying a Link to it. */
+      const into = new Map<string, Set<string>>();
       for (const page of pages.values()) {
-        if (from.get(page.path)?.etag === page.etag) continue;
-        unlink(page.path);
-        const to = outgoing(page);
-        from.set(page.path, { etag: page.etag, to });
-        for (const target of to.keys()) {
+        const last = read.get(page.path);
+        const entry =
+          last?.etag === page.etag
+            ? last
+            : { etag: page.etag, to: outgoing(page) };
+        from.set(page.path, entry);
+        for (const target of entry.to.keys()) {
           const sources = into.get(target) ?? new Set<string>();
           sources.add(page.path);
           into.set(target, sources);
         }
       }
+      read = from;
+      return tableOf(pages, from, into);
     },
+  };
+}
+
+function tableOf(
+  live: ReadonlyMap<string, MemoPage>,
+  from: ReadonlyMap<string, Read>,
+  into: ReadonlyMap<string, Set<string>>
+): LinkTable {
+  return {
     around(path) {
       const kinds = new Map<
         string,

@@ -22,7 +22,7 @@ export type Reach = { rule: "count" } | { rule: "weighted"; floor: number };
 /** The Neighbourhood of `matches`, ranked, at most `room` Pages. */
 export function neighbourhood(
   matches: ResultPage[],
-  pages: Map<string, MemoPage>,
+  pages: ReadonlyMap<string, MemoPage>,
   links: LinkTable,
   { room, reach }: { room: number; reach: Reach }
 ): ResultPage[] {

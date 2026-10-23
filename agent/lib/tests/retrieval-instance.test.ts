@@ -3,7 +3,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, test } from "node:test";
-import { retrieval } from "../config";
+import { gatewayEmbed } from "../../../packages/wiki-retrieval/gateway";
+import { retrieval, retrievalEmbed } from "../config";
 import { EVAL_RUN_ENV } from "../eval-wiki";
 
 // The agent keeps one Retrieval instance per namespace, so its memo outlives
@@ -50,4 +51,13 @@ test("only the 8 most recently used instances are kept", () => {
   retrieval(session("s8")); // evicts s1, the least recently used
   assert.equal(retrieval(session("s0")), first);
   assert.notEqual(retrieval(session("s1")), second);
+});
+
+test("embeddings come from the Gateway unless CLERK_RETRIEVAL_EMBEDDINGS=0", () => {
+  delete process.env.CLERK_RETRIEVAL_EMBEDDINGS;
+  assert.equal(retrievalEmbed(), gatewayEmbed);
+  process.env.CLERK_RETRIEVAL_EMBEDDINGS = "1";
+  assert.equal(retrievalEmbed(), gatewayEmbed);
+  process.env.CLERK_RETRIEVAL_EMBEDDINGS = "0";
+  assert.equal(retrievalEmbed(), undefined);
 });
