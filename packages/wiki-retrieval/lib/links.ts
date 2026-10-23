@@ -1,7 +1,7 @@
 // The Link table (decision #46): four kinds derived from what a Page already
 // says, collapsed per Page pair, followed both ways.
 
-import { parse } from "yaml";
+import { parseFrontmatter } from "../../page-edits";
 import type { MemoPage } from "./memo";
 
 export const LINK_KINDS = ["cites", "links", "party", "supersedes"] as const;
@@ -50,9 +50,10 @@ const strings = (value: unknown): string[] =>
     typeof v === "string" || typeof v === "number" ? [String(v).trim()] : []
   );
 
+/** The frontmatter as data, with page-edits' parser; `{}` when it is not YAML. */
 function frontmatterOf(page: MemoPage): Record<string, unknown> {
   try {
-    const data: unknown = parse(page.frontmatter.join("\n"));
+    const data: unknown = parseFrontmatter(page.frontmatter)?.toJS();
     return data && typeof data === "object"
       ? (data as Record<string, unknown>)
       : {};

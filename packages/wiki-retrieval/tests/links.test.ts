@@ -33,14 +33,6 @@ flags: []
 - **Self**: [this Page](./2026-10-12-pay-invoice-zquorblat.md); [gone](../entities/no-such-entity.md); [site](https://example.com/a.md); [index](../index.md) (src: no-such-source)
 ${extra}`;
 
-const search = (query: string) =>
-  createRetrieval({ store }).search({
-    query,
-    kind: "obligation",
-    limit: 1,
-    neighbourhood: true,
-  });
-
 describe("the Link table", () => {
   test("the four kinds from a Page's text, collapsed per Page pair, both ways", async () => {
     await store.write(NEW, page(), { etag: null });
@@ -128,7 +120,12 @@ describe("the Link table", () => {
     await store.write(NEW, page().replace("flags: []", "flags: [unclosed"), {
       etag: null,
     });
-    const result = await search("zquorblat");
+    // Its kind is unreadable too, so no kind filter.
+    const result = await createRetrieval({ store }).search({
+      query: "zquorblat",
+      limit: 1,
+      neighbourhood: true,
+    });
     assert.equal(result.pages[0].path, NEW);
     assert.ok(
       via(result, "summaries/2026-09-12-invoice-cascade-parts-4472.md")
