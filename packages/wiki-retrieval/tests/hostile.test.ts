@@ -217,6 +217,23 @@ describe("bodies that break the Markdown parser", () => {
     );
   });
 
+  test("deeply nested lists followed by blank lines stay bounded", async () => {
+    const path = "entities/nestedblanks.md";
+    const nested = Array.from(
+      { length: 1000 },
+      (_, i) => `${" ".repeat(i * 2)}- a`
+    ).join("\n");
+    await store.write(
+      path,
+      page({
+        word: "nestedblanks",
+        body: `${nested}${"\n".repeat(200_000)}${" ".repeat(2000)}\`\`\`${"\n".repeat(200_000)}`,
+      }),
+      { etag: null }
+    );
+    await stillServes(path, "nestedblanks");
+  });
+
   test("deeply nested lists stay bounded", async () => {
     const path = "entities/nestedlists.md";
     await store.write(

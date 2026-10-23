@@ -2,9 +2,12 @@
 // length. `marked` is superlinear on some input, so it reads the body in
 // bounded pieces: chunks of top-level blocks (MAX_CHUNK) and paragraphs in
 // pieces (MAX_INLINE), each cut where no link or code span is open, and at
-// most MAX_DEPTH container markers on one line. Only input no ordinary Page
-// holds (a link open across 16,000 characters, a 1,000-character run with
-// no whitespace outside brackets) is cut through a link.
+// most MAX_DEPTH container markers on one line. The chunker follows the
+// quotes and list items each line sits in, as `marked` reads them, so no cut
+// falls inside a code or raw HTML block at any depth, and a chunk cut inside
+// a list item reopens it. Only input no ordinary Page holds (a link open
+// across 16,000 characters, a 1,000-character run with no whitespace outside
+// brackets) is cut through a link.
 
 import { Lexer, type Links, type Token, type Tokens } from "marked";
 
@@ -86,51 +89,275 @@ function scan(line: string, open: Open): void {
 }
 
 /**
+ * A container a line can sit in: a block quote, whose lines carry `>`, or a
+ * list item, whose lines are indented to its content (`indent` columns past
+ * the containers around it) or blank.
+ */
+type Container = { quote: true } | { quote: false; indent: number };
+
+/** Where a path's quotes sit, computed once per path. */
+const quotesOf = new WeakMap<
+  readonly Container[],
+  { first: number; last: number }
+>();
+function quotes(path: readonly Container[]): { first: number; last: number } {
+  let found = quotesOf.get(path);
+  if (!found) {
+    found = {
+      first: path.findIndex((c) => c.quote),
+      last: path.reduce((at, c, i) => (c.quote ? i : at), -1),
+    };
+    quotesOf.set(path, found);
+  }
+  return found;
+}
+
+/**
+ * `rest` past the container marker ending at `end`. `marked` takes one space
+ * or one tab after `>` as part of the marker.
+ */
+const past = (rest: string, end: number) =>
+  rest.slice(rest[end - 1] === ">" && rest[end] === "\t" ? end + 1 : end);
+
+/** `text` past `columns` of leading whitespace (a tab to the next multiple of 4, its extra columns kept as spaces), or null if it is indented less. */
+function dedent(text: string, columns: number): string | null {
+  let col = 0;
+  let i = 0;
+  while (col < columns) {
+    if (text[i] === " ") col++;
+    else if (text[i] === "\t") col += 4 - (col % 4);
+    else return null;
+    i++;
+  }
+  // A tab that reaches past `columns` leaves its extra columns as indent.
+  return " ".repeat(col - columns) + text.slice(i);
+}
+
+/**
+ * A line that ends a list item even unindented inside its code, as `marked`
+ * reads one: a list marker, heading, fence, thematic break or quote.
+ */
+const ENDS_ITEM =
+  /^ {0,3}(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|#{1,6}(?:[ \t]|$)|```|~~~|>|(?:(?:- *){3,}|(?:_ *){3,}|(?:\* *){3,})$)/;
+
+/**
+ * `line` past the containers of `path` it continues: `rest` is what follows
+ * them, `depth` how many of them it continues. A blank line continues every
+ * list item up to the first quote; a quote needs its `>`. With `lazy`, an
+ * unindented line continues the list items it falls short of, as `marked`
+ * reads code in a list item, unless a quote is inside them or it ends them.
+ */
+function enter(
+  line: string,
+  path: readonly Container[],
+  lazy = false
+): { rest: string; depth: number } {
+  if (line.trim() === "") {
+    const { first } = quotes(path);
+    return { rest: "", depth: first < 0 ? path.length : first };
+  }
+  let rest = line;
+  for (let depth = 0; depth < path.length; depth++) {
+    const container = path[depth]!;
+    if (container.quote) {
+      const end = markerEnd(rest, 0);
+      if (end < 0 || !rest.slice(0, end).includes(">")) return { rest, depth };
+      rest = past(rest, end);
+    } else {
+      const next = dedent(rest, container.indent);
+      if (next !== null) rest = next;
+      else if (lazy && quotes(path).last < depth && !ENDS_ITEM.test(rest))
+        return { rest: rest.trimStart(), depth: path.length };
+      else return { rest, depth };
+    }
+  }
+  return { rest, depth: path.length };
+}
+
+/** `path` extended by the container markers `rest` opens, and what follows them. */
+function open(
+  rest: string,
+  path: readonly Container[]
+): { rest: string; path: readonly Container[] } {
+  let end = markerEnd(rest, 0);
+  if (end < 0) return { rest, path };
+  const out = [...path];
+  for (; end > 0; end = markerEnd(rest, 0)) {
+    out.push(
+      rest.slice(0, end).includes(">")
+        ? { quote: true }
+        : { quote: false, indent: end }
+    );
+    rest = past(rest, end);
+  }
+  return { rest, path: out };
+}
+
+/**
+ * `rest` without its leading whitespace if that is at most three columns (a
+ * tab to the next multiple of 4), as a block that may not be indented code
+ * opens; null if it is indented further.
+ */
+function unindented(rest: string): string | null {
+  let col = 0;
+  let i = 0;
+  for (; rest[i] === " " || rest[i] === "\t"; i++)
+    col += rest[i] === " " ? 1 : 4 - (col % 4);
+  return col <= 3 ? rest.slice(i) : null;
+}
+
+/**
+ * What a raw block opened by `rest` (a line past its containers) is closed
+ * by, or null if it opens none. Inside a paragraph `marked` lets a fence
+ * interrupt indented up to three spaces but an HTML block only unindented.
+ */
+function rawCloser(
+  rest: string,
+  inParagraph: boolean
+): ((rest: string) => boolean) | null {
+  const text = unindented(rest);
+  if (text === null) return null;
+  const html = /<\/(pre|script|style|textarea)>/i;
+  const fence = /^(`{3,}(?=[^`]*$)|~{3,})/.exec(text)?.[1];
+  if (!fence && inParagraph && text !== rest) return null;
+  if (fence) {
+    const close = new RegExp(`^${fence[0]}{${fence.length},}\\s*$`);
+    return (r) => {
+      const t = unindented(r);
+      return t !== null && close.test(t);
+    };
+  }
+  if (text.startsWith("<!--") && !text.slice(4).includes("-->"))
+    return (r) => r.includes("-->");
+  if (/^<(pre|script|style|textarea)(\s|>|$)/i.test(text) && !html.test(text))
+    return (r) => html.test(r);
+  return null;
+}
+
+/**
+ * A line of text inside `path`'s containers, to open a chunk cut inside a
+ * list item so `marked` reads the rest of the item as the whole body would;
+ * null when `path` holds no list item, or one too deeply indented to rebuild.
+ */
+function reopening(path: readonly Container[]): string | null {
+  if (path.length > MAX_DEPTH || path.every((c) => c.quote)) return null;
+  let line = "";
+  for (const c of path) {
+    if (c.quote) line += "> ";
+    else {
+      const before = Math.min(3, c.indent - 2);
+      const after = c.indent - before - 1;
+      if (before < 0 || after > 4) return null;
+      line += `${" ".repeat(before)}-${" ".repeat(after)}`;
+    }
+  }
+  return `${line}.`;
+}
+
+/** A line past its containers that opens or ends no paragraph: blank or a heading. */
+const NOT_PROSE = /^(?:[ \t]*|[ \t]{0,3}#{1,6}(?:[ \t].*)?)$/;
+
+/**
  * `markdown` in chunks of about `MAX_CHUNK`, each read by `marked` on its
  * own. A cut goes before a top-level block that follows a blank line; inside
  * one longer block, before a line with no link or code span open across it.
- * A line indented four or more spaces would read as code at the top of a
- * chunk, so its chunk opens with a line of text it continues instead. Never
- * inside fenced code, an HTML comment or a raw `<pre>`-style block.
+ * A chunk cut inside a list item opens with a line that reopens the item's
+ * containers; elsewhere a line indented four or more spaces would read as
+ * code at the top of a chunk, so unless it is indented code its chunk opens
+ * with a line of text it continues instead. Never inside a raw block (fenced code, an HTML comment
+ * or a `<pre>`-style block) at any container depth: a raw block remembers
+ * the quotes and list items it opened in, and ends at its closer or at the
+ * first line outside them.
  */
 function chunks(markdown: string): string[] {
   const out: string[] = [];
   let current: string[] = [];
   let size = 0;
-  let open: Open = { square: 0, round: 0, code: 0 };
-  /** What closes the open fence or raw block, null outside one. */
-  let closer: RegExp | null = null;
+  let spans: Open = { square: 0, round: 0, code: 0 };
+  /** The containers the previous line left open, as far as they are known. */
+  let containers: readonly Container[] = [];
+  /** The open raw block: the containers it sits in and what closes it. */
+  let raw: {
+    path: readonly Container[];
+    closes: (rest: string) => boolean;
+  } | null = null;
   let blank = true;
-  for (const raw of markdown.split("\n")) {
-    const line = shallow(raw);
+  /** The previous line past its containers was blank or a heading, or indented code. */
+  let codeMayOpen = true;
+  let inCode = false;
+  /** The chunk was cut mid-paragraph inside a list item and opened outside it. */
+  let detached = false;
+  for (const unbounded of markdown.split("\n")) {
+    const line = shallow(unbounded);
     const empty = line.trim() === "";
-    if (closer === null) {
-      const shallowIndent = /^ {0,3}\S/.test(line);
-      const balanced = open.square + open.round + open.code === 0;
-      const at = blank ? shallowIndent : balanced;
-      if (
-        current.length > 0 &&
-        !empty &&
-        ((at && size + line.length > MAX_CHUNK) || size > MAX_OPEN)
-      ) {
-        out.push(current.join("\n"));
-        current = shallowIndent ? [] : ["."];
-        size = 0;
-        open = { square: 0, round: 0, code: 0 };
+    if (raw !== null) {
+      const { rest, depth } = enter(line, raw.path, !blank);
+      if (depth === raw.path.length) {
+        if (raw.closes(rest)) {
+          containers = raw.path;
+          raw = null;
+          codeMayOpen = true;
+        }
+        current.push(line);
+        size += line.length + 1;
+        blank = empty;
+        continue;
       }
-      const fence = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
-      if (fence)
-        closer = new RegExp(`^ {0,3}${fence[0]}{${fence.length},}\\s*$`);
-      else if (/^ {0,3}<!--/.test(line) && !line.slice(4).includes("-->"))
-        closer = /-->/;
-      else if (
-        /^ {0,3}<(pre|script|style|textarea)(\s|>|$)/i.test(line) &&
-        !/<\/(pre|script|style|textarea)>/i.test(line)
-      )
-        closer = /<\/(pre|script|style|textarea)>/i;
-      if (empty) open = { square: 0, round: 0, code: 0 };
-      else if (!fence) scan(line, open);
-    } else if (closer.test(line)) closer = null;
+      // The line leaves a container the block sat in, which ends the block,
+      // and no paragraph is open after it.
+      containers = raw.path;
+      raw = null;
+      codeMayOpen = true;
+    }
+    const entered = enter(line, containers);
+    const opened = empty
+      ? { rest: "", path: containers.slice(0, entered.depth) }
+      : open(entered.rest, containers.slice(0, entered.depth));
+    const code: boolean =
+      !empty && (codeMayOpen || inCode) && dedent(opened.rest, 4) !== null;
+    const shallowIndent = /^ {0,3}\S/.test(line);
+    const balanced = spans.square + spans.round + spans.code === 0;
+    const at = blank ? shallowIndent : balanced;
+    // `marked` reads a list item's lines one at a time, so a paragraph that
+    // an HTML block may only interrupt unindented is one outside list items.
+    const inParagraph = !codeMayOpen && opened.path.at(-1)?.quote !== false;
+    const closes = code ? null : rawCloser(opened.rest, inParagraph);
+    const reopen = empty ? null : reopening(containers.slice(0, entered.depth));
+    // The line opens a block of its own rather than continuing a paragraph.
+    const block =
+      !empty &&
+      (code || codeMayOpen || closes !== null || ENDS_ITEM.test(opened.rest));
+    if (!empty && reopen === null) detached = false;
+    if (
+      current.length > 0 &&
+      !empty &&
+      ((at && size + line.length > MAX_CHUNK) ||
+        size > MAX_OPEN ||
+        (detached && reopen !== null && block && balanced))
+    ) {
+      out.push(current.join("\n"));
+      // Mid-paragraph in a list item, the chunk opens outside it, where a
+      // long paragraph reads in linear time, until the next block in the
+      // item, which opens a chunk back inside it.
+      detached = reopen !== null && !block;
+      current = code
+        ? []
+        : reopen && block
+          ? [reopen]
+          : shallowIndent && !detached
+            ? []
+            : ["."];
+      size = 0;
+      spans = { square: 0, round: 0, code: 0 };
+    }
+    containers =
+      empty && entered.depth === containers.length ? containers : opened.path;
+    if (closes) raw = { path: containers, closes };
+    if (empty) spans = { square: 0, round: 0, code: 0 };
+    else if (!code && !(closes && /^[`~]/.test(unindented(opened.rest)!)))
+      scan(line, spans);
+    inCode = code || (inCode && empty);
+    codeMayOpen = code || NOT_PROSE.test(opened.rest);
     current.push(line);
     size += line.length + 1;
     blank = empty;
