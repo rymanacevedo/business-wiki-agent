@@ -62,3 +62,126 @@ test("flagged reads past YAML comments", async () => {
     ["entities/block.md", "entities/inline.md"]
   );
 });
+
+// Each Page spells `flags` a different way; `want` is whether it carries
+// needs-owner. The frontmatter is read as YAML, so every valid spelling
+// counts and a malformed frontmatter carries no flags.
+const SPELLINGS: { name: string; flags: string; want: boolean }[] = [
+  {
+    name: "flow-multiline",
+    flags: "flags: [\n  conflict,\n  needs-owner\n  ]",
+    want: true,
+  },
+  {
+    name: "flow-multiline-comments",
+    flags: "flags: [ # set by Lint\n  needs-owner, # why\n]",
+    want: true,
+  },
+  {
+    name: "flow-quoted",
+    flags: `flags: ["needs-owner", 'conflict']`,
+    want: true,
+  },
+  {
+    name: "block-quoted",
+    flags: `flags:\n  - "needs-owner"\n  - 'conflict'`,
+    want: true,
+  },
+  {
+    name: "block-deep-indent",
+    flags: "flags:\n        - conflict\n        - needs-owner",
+    want: true,
+  },
+  { name: "block-no-indent", flags: "flags:\n- needs-owner", want: true },
+  { name: "block-blank-line", flags: "flags:\n\n  - needs-owner", want: true },
+  { name: "scalar", flags: "flags: needs-owner", want: true },
+  {
+    name: "scalar-quoted",
+    flags: `flags: "needs-owner" # one flag`,
+    want: true,
+  },
+  {
+    name: "empty-flow",
+    flags: "flags: [] # any of: conflict, needs-owner",
+    want: false,
+  },
+  { name: "empty-null", flags: "flags:", want: false },
+  { name: "empty-tilde", flags: "flags: ~", want: false },
+  { name: "prefix-only", flags: "flags: [needs-owner-later]", want: false },
+  {
+    name: "commented-out",
+    flags: "flags: []\n# flags: [needs-owner]",
+    want: false,
+  },
+  {
+    name: "nested-not-page",
+    flags: "flags: []\nexpense:\n  flags: [needs-owner]",
+    want: false,
+  },
+  {
+    name: "alias",
+    flags: "owners: &owner [needs-owner]\nflags: *owner",
+    want: true,
+  },
+  {
+    name: "nested-item-ignored",
+    flags: "flags: [[needs-owner], conflict]",
+    want: false,
+  },
+  {
+    name: "malformed-duplicate",
+    flags: "flags: []\nflags: [needs-owner]",
+    want: false,
+  },
+  {
+    name: "malformed-tab-indent",
+    flags: "flags:\n\t- needs-owner",
+    want: false,
+  },
+  {
+    name: "malformed-unclosed",
+    flags: "flags: [needs-owner\nnote: x",
+    want: false,
+  },
+  {
+    name: "malformed-colon",
+    flags: "flags: [needs-owner]\nnote: a: b",
+    want: false,
+  },
+];
+
+test("flagged reads every YAML spelling of flags, and none from a malformed frontmatter", async () => {
+  const retrieval = createRetrieval({ store });
+  for (const { name, flags } of SPELLINGS)
+    await store.write(
+      `entities/${name}.md`,
+      `---\ntitle: ${name}\nkind: entity\nstatus: active\n${flags}\n---\n\nBody of ${name}, flags: [needs-owner]\n`,
+      { etag: null }
+    );
+  assert.deepEqual(
+    (await retrieval.flagged("needs-owner")).map((p) => p.path),
+    SPELLINGS.filter((s) => s.want)
+      .map((s) => `entities/${s.name}.md`)
+      .sort()
+  );
+  const conflict = (await retrieval.flagged("conflict")).map((p) => p.path);
+  for (const name of [
+    "flow-multiline",
+    "flow-quoted",
+    "block-quoted",
+    "block-deep-indent",
+  ])
+    assert.ok(conflict.includes(`entities/${name}.md`), name);
+});
+
+test("a Page with a malformed frontmatter is still searchable by its body", async () => {
+  const retrieval = createRetrieval({ store });
+  await store.write(
+    "entities/broken.md",
+    "---\ntitle: Broken\nkind: entity\nflags: [needs-owner\n---\n\nZQUORBLAT body text\n",
+    { etag: null }
+  );
+  const result = await retrieval.search({ query: "zquorblat" });
+  assert.equal(result.pages[0]?.path, "entities/broken.md");
+  assert.deepEqual(await retrieval.flagged("needs-owner"), []);
+});

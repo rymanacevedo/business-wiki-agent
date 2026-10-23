@@ -155,3 +155,34 @@ test("a comment on a block list's key does not hide its items", () => {
   assert.ok(top.lines.includes("sources: [2026-01-02-zquorblat-letter]"));
   assert.ok(top.lines.includes("flags: [needs-owner]"));
 });
+
+test("section 0 reads the frontmatter as YAML: multi-line flow lists, quotes, comments, raw numbers", () => {
+  const page = `---\ntitle: "Quoted: with a colon" # comment\nkind: summary\nsources: [\n  2026-01-02-zquorblat-letter, # first\n  "2026-01-03-bank"\n]\nstatus: active\nflags: needs-owner\nnote: |\n  two\n  lines\nempty: ""\nexpense:\n  amount: 20.00\n  allocations:\n    - category: meals\n      amount: 20.00\n  payment: { status: paid, evidence: [2026-01-03-bank] }\n---\n\nBody line\n`;
+  const [top] = sectionise("summaries/yaml.md", page);
+  assert.deepEqual(top.lines, [
+    "title: Quoted: with a colon",
+    "kind: summary",
+    "sources: [2026-01-02-zquorblat-letter, 2026-01-03-bank]",
+    "status: active",
+    "flags: needs-owner",
+    "note: two lines",
+    "amount: 20.00",
+    "payment.status: paid",
+    "payment.evidence: [2026-01-03-bank]",
+    "Body line",
+  ]);
+  assert.ok(tokenise(top.text).includes("quoted"), "title from YAML");
+});
+
+test("a malformed frontmatter folds no facts; the body is still sectioned", () => {
+  const page = `---\ntitle: Broken\nsources: [2026-01-02-zquorblat-letter\n---\n\nBody line\n\n## Notes\n\nA note\n`;
+  const sections = sectionise("entities/broken.md", page);
+  assert.deepEqual(
+    sections.map((s) => s.lines),
+    [["Body line"], ["A note"]]
+  );
+  assert.ok(
+    sections[0].text.startsWith("entities/broken.md\n"),
+    "title falls back to the path"
+  );
+});

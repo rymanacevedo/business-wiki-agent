@@ -33,6 +33,9 @@ Ship the tracer bullet: the `wiki-retrieval` package with lexical Matches only, 
   - a failed refresh released its queue while its reads still ran, so the next refresh could exceed 10 in flight and old text could overwrite new; the pool now drains first
   - a comment on a list key hid the block list's items
 - Codex round 3 on 00662f8: exit 1. Standards had 0 findings. One Spec blocker is left (`flagged` misses multi-line YAML flow `flags` lists), plus the 108/109 advisory. Per the flow, it went on the PR as a comment after two repair rounds, and the PR stays a draft.
+- The human approved a third repair round. Round 3's blocker was a symptom: the frontmatter was read line by line, so each new YAML spelling needed its own case. The memo and section 0 now read it once, as YAML, with page-edits' `parseFrontmatter` (now exported from `page-edits`). Test-first, with 21 `flags` spellings (flow and block lists, multi-line flow lists, comments, quotes, empty lists, `~`, a lone scalar, odd indentation, an alias, a nested item, a commented-out line, a nested non-Page key) and four malformed frontmatters. A malformed frontmatter now reads as empty (no facts, no flags, title falls back to the path), and its body stays searchable. Scalars keep their written text, so `20.00` stays `20.00`. `fixtures/full` still makes 109 sections, and the snapshots are unchanged. Merged the moved `ticket/54` base first (#68).
+- The 108/109 explanation was posted on #56.
+- Round 4, the last approved round, runs on the head that carries this entry. Its result is on PR #67.
 - Spot check once #54's runs had finished. `WIKI_SEED=full eve eval query/questions/0017 lint/checks/0004 safety/runtime/rows/0000`: 3 of 3 pass (23 gates; the cash row was judged faithful and cited). The run directory was not kept.
 
 ## Findings worth remembering
@@ -47,7 +50,6 @@ Nothing yet: PR #67 is a draft with one unresolved review finding.
 
 ## Open questions
 
-- `flagged` and multi-line flow lists: read `flags` with the YAML parser, here or in #59.
 - Amend the AC's section count from 108 to 109, since the split is the spec's own rule.
 
 - `CLERK_RETRIEVAL_NEIGHBOURHOOD` and `CLERK_RETRIEVAL_EMBEDDINGS` are not wired yet (#57, #58).
