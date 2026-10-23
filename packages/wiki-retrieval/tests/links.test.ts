@@ -131,4 +131,43 @@ describe("the Link table", () => {
       via(result, "summaries/2026-09-12-invoice-cascade-parts-4472.md")
     );
   });
+
+  test("Markdown links are read as Markdown: code and escapes are not links, reference links are", async () => {
+    await store.write(
+      NEW,
+      `---
+title: Pay invoice zquorblat
+kind: obligation
+status: active
+flags: []
+---
+
+- **Example**: \`[Bank](../summaries/2026-08-31-bank-statement-tidewater.md)\` is how a link looks.
+- **Escaped**: \\[Fuel](../summaries/2026-08-11-receipt-portside-fuel.md) is not a link.
+- **Code citation**: \`(src: 2026-08-14-receipt-paper-trail-office)\` is how a Citation looks.
+
+\`\`\`
+[Ridgeline](../summaries/2026-08-20-invoice-ridgeline-tools-r20931.md) (src: 2026-09-01-invoice-lumen-sites-hosting)
+\`\`\`
+
+- **Record**: [Invoice 4472][record].
+
+[record]: ../summaries/2026-09-12-invoice-cascade-parts-4472.md
+`,
+      { etag: null }
+    );
+    const result = await createRetrieval({ store }).search({
+      query: "zquorblat",
+      kind: "obligation",
+      limit: 1,
+      neighbourhood: true,
+    });
+    assert.equal(result.pages[0].path, NEW);
+    assert.deepEqual(
+      result.pages
+        .filter((p) => p.role === "neighbour")
+        .map((p) => [p.path, p.via![0].labels]),
+      [["summaries/2026-09-12-invoice-cascade-parts-4472.md", ["linked from"]]]
+    );
+  });
 });

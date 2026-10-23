@@ -1,6 +1,7 @@
 // The Link table (decision #46): four kinds derived from what a Page already
 // says, collapsed per Page pair, followed both ways.
 
+import { Lexer, walkTokens } from "marked";
 import { parseFrontmatter } from "../../page-edits";
 import type { MemoPage } from "./memo";
 
@@ -21,7 +22,6 @@ const LABELS: Record<LinkKind, { forward: string; backward: string }> = {
 
 const CITATION = /\(src: ([^)]*)\)/g;
 const SOURCE_ID = /^[a-z0-9][a-z0-9.-]*$/;
-const MARKDOWN_LINK = /\]\(\s*<?([^)\s>]+)>?(?:\s+[^)]*)?\)/g;
 /** A scheme (`https:`, `mailto:`), a root-relative path or a bare anchor. */
 const NOT_RELATIVE = /^([a-z][a-z0-9+.-]*:|\/|#)/i;
 
@@ -62,6 +62,22 @@ function frontmatterOf(page: MemoPage): Record<string, unknown> {
   }
 }
 
+/**
+ * A Page body read as Markdown: every link's target (inline or reference
+ * style) and the prose text outside code, where Citations count. Code
+ * spans, code blocks and backslash escapes carry no Link.
+ */
+function readBody(markdown: string): { prose: string; targets: string[] } {
+  const targets: string[] = [];
+  const prose: string[] = [];
+  walkTokens(Lexer.lex(markdown), (token) => {
+    if (token.type === "link") targets.push(token.href);
+    else if (token.type === "text" && !("tokens" in token && token.tokens))
+      prose.push(token.text);
+  });
+  return { prose: prose.join("\n"), targets };
+}
+
 /** Every Link a Page carries, by target, before dangling targets are known. */
 function outgoing(page: MemoPage): Map<string, Set<LinkKind>> {
   const out = new Map<string, Set<LinkKind>>();
@@ -72,13 +88,13 @@ function outgoing(page: MemoPage): Map<string, Set<LinkKind>> {
     out.set(to, kinds);
   };
   const fm = frontmatterOf(page);
-  const text = page.body.join("\n");
-  for (const [, ids] of text.matchAll(CITATION))
+  const { prose, targets } = readBody(page.body.join("\n"));
+  for (const [, ids] of prose.matchAll(CITATION))
     for (const id of ids.split(","))
       if (SOURCE_ID.test(id.trim())) add(summaryOf(id.trim()), "cites");
   for (const id of strings(fm.sources))
     if (SOURCE_ID.test(id)) add(summaryOf(id), "cites");
-  for (const [, target] of text.matchAll(MARKDOWN_LINK))
+  for (const target of targets)
     if (!NOT_RELATIVE.test(target))
       add(resolveRelative(page.path, target), "links");
   const expense =
