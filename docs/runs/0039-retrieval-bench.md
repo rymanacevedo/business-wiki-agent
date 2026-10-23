@@ -58,6 +58,11 @@ Merge #57 (Links, Neighbourhood) into #58 (embeddings), since the bench needs bo
    - Retargeted the PR base to `ticket/56-wiki-retrieval-lexical`.
    - The bench regenerates byte for byte.
 
+3. On 9985a76: exit 1. Standards had 0 findings; Spec had 1 blocker: `PROFILE.MD` was classed as a Source id, because the `.md` check was case-sensitive.
+   - Fixed test-first: the `.md` check is now case-insensitive.
+   - Trying to break the fix turned up a related bug: any bare word (`cascade`) would have resolved to `summaries/cascade.md`. A Source id is now the Corpus's date-prefixed stem, and anything else stays a case-insensitive substring.
+   - The table is unchanged.
+
 ## What the human checked
 
 Nothing yet. The PR is a draft.

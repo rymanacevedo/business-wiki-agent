@@ -96,6 +96,18 @@ describe("a Source id names its summary Page only", () => {
     assert.equal(rankRow([["obligations/none-", ID]], result).rr, 1 / 2);
   });
 
+  test("a Page path in any case is a path, not a Source id", () => {
+    for (const pattern of ["PROFILE.MD", "Profile.Md"])
+      assert.equal(rankRow([pattern], [page("profile.md")]).rr, 1, pattern);
+  });
+
+  test("a bare word that is no Source id (no date prefix) stays a substring", () => {
+    assert.equal(
+      rankRow(["Cascade"], [page("entities/cascade-appliance-parts.md")]).rr,
+      1
+    );
+  });
+
   test("a path pattern keeps substring matching", () => {
     assert.equal(
       rankRow(

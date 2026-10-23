@@ -29,9 +29,13 @@ export function benchRows(
     }));
 }
 
-/** A `cites` alternative that is a Source id (no folder, no `.md`, not a regex). */
-const SOURCE_ID = /^[a-z0-9][a-z0-9.-]*$/i;
-const isSourceId = (p: string) => SOURCE_ID.test(p) && !p.endsWith(".md");
+/**
+ * A `cites` alternative that is a Source id: the Corpus's date-prefixed
+ * file stem (`2026-09-12-invoice-cascade-parts-4471`), no folder, no `.md`
+ * in any case. Anything else is a path pattern, a case-insensitive substring.
+ */
+const SOURCE_ID = /^\d{4}-\d{2}-\d{2}-[a-z0-9.-]+$/i;
+const isSourceId = (p: string) => SOURCE_ID.test(p) && !/\.md$/i.test(p);
 
 /** One `cites` entry against one path: a Source id names its summary Page exactly. */
 function entryMatches(pattern: Pattern, path: string): boolean {
