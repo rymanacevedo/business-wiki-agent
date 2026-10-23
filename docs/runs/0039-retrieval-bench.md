@@ -53,6 +53,11 @@ Merge #57 (Links, Neighbourhood) into #58 (embeddings), since the bench needs bo
 
    Both were fixed test-first and the table regenerated. MRRs are unchanged.
 
+2. On a9da7bb: exit 2 (stale). During the review, PRs #71 and #72 merged into `ticket/56`, carrying #57's own resolution of the Links/embeddings conflict (`createLinker().table(pages)`), which is the same design as this branch's merge.
+   - Merged `ticket/56`, took theirs for `index.ts`, `links.ts` and `neighbourhood.ts`, and re-applied `kindPrior`.
+   - Retargeted the PR base to `ticket/56-wiki-retrieval-lexical`.
+   - The bench regenerates byte for byte.
+
 ## What the human checked
 
 Nothing yet. The PR is a draft.
@@ -63,5 +68,5 @@ Nothing yet. The PR is a draft.
 
 ## Artifacts
 
-- Branch `ticket/60-retrieval-bench`. The merge commit is cb51d1d, and the bench is d65951e.
+- Branch `ticket/60-retrieval-bench`. The bench is d65951e. The first merge (cb51d1d) was superseded by #57's resolution on `ticket/56`.
 - `docs/evals/retrieval-bench.md`.
