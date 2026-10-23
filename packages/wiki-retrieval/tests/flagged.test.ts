@@ -62,3 +62,17 @@ test("flagged reads past YAML comments", async () => {
     ["entities/block.md", "entities/inline.md"]
   );
 });
+
+test("a cold instance answers flagged with no search before it, and sees a flag removed between calls", async () => {
+  const retrieval = createRetrieval({ store });
+  assert.deepEqual(
+    (await retrieval.flagged("conflict")).map((p) => p.path),
+    ["profile.md"]
+  );
+  const page = await store.read("profile.md");
+  assert.ok(page);
+  const unflagged = page.body.replace(/^flags:.*\n(?:\s+-.*\n)*/m, "");
+  assert.notEqual(unflagged, page.body);
+  await store.write("profile.md", unflagged, { etag: page.etag });
+  assert.deepEqual(await retrieval.flagged("conflict"), []);
+});

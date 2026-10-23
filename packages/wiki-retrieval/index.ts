@@ -40,7 +40,8 @@ export type RetrievalOptions = {
 };
 
 /** The Schema's flags. */
-export type Flag = "conflict" | "suspicious-content" | "needs-owner";
+export const FLAGS = ["conflict", "suspicious-content", "needs-owner"] as const;
+export type Flag = (typeof FLAGS)[number];
 
 export type FlaggedPage = { path: string; kind: string; status: string };
 

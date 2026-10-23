@@ -119,6 +119,7 @@ flowchart LR
     read_index
     read_page
     search_wiki
+    list_flagged
     list_sources
     read_source["read_source<br/>(Masking: SSNs and account<br/>numbers masked before Clerk reads)"]
   end
@@ -639,7 +640,7 @@ agent did them, or nobody has). Do each one or delete its line:
 
 | Path                       | What it holds                                                                                                                                                                          |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `agent/`                   | Clerk on Eve: `agent.ts` (model, caps), `instructions.ts`, `tools/` (ten tools), `skills/lint.ts`, `hooks/` (Approval logging), `channels/eve.ts`, `instrumentation/` (LangSmith)      |
+| `agent/`                   | Clerk on Eve: `agent.ts` (model, caps), `instructions.ts`, `tools/` (eleven tools), `skills/lint.ts`, `hooks/` (Approval logging), `channels/eve.ts`, `instrumentation/` (LangSmith)   |
 | `apps/web/`                | Next.js web chat (Approval cards) and the read-only wiki browser at `/wiki`                                                                                                            |
 | `packages/`                | Deep modules ([rules](packages/README.md)): `wiki-store`, `corpus`, `source-masking`, `page-edits`, `wiki-check`, `wiki-links`, `langsmith-tracing`, `chat-judge`, and the eval checks |
 | `corpus/`                  | The 34 generated Sources and the Manifest                                                                                                                                              |

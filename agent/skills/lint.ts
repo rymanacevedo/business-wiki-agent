@@ -15,12 +15,12 @@ A Lint reads and reports; it changes nothing.
 
 1. \`read_page(["SCHEMA.md"])\` and \`read_index\` (it gives the Demo Date),
    together in one step.
-2. **Unresolved Contradictions**: \`search_wiki("Conflict unresolved")\`, then
-   one \`read_page\` call with every Page found; every fact line in the Schema's Contradiction
+2. **Unresolved Contradictions**: \`list_flagged("conflict")\`, then
+   one \`read_page\` call with every Page listed; every fact line in the Schema's Contradiction
    shape on a Page whose \`flags\` include \`conflict\` is one item: the fact, both
    values with their Citations.
-3. **Suspicious Content**: \`search_wiki("suspicious-content flags")\`, then
-   one \`read_page\` call with every Page found; every Page whose \`flags\` include
+3. **Suspicious Content**: \`list_flagged("suspicious-content")\`, then
+   one \`read_page\` call with every Page listed; every Page whose \`flags\` include
    \`suspicious-content\` is one item, quoting a few words of the flagged text.
 4. **Obligations**: take every line in the Index's Obligations section that
    says \`(active)\`; \`done\` and \`superseded\` Obligations are never listed. For
@@ -35,7 +35,7 @@ A Lint reads and reports; it changes nothing.
    - **Due within 30 days** (0 to 30 days until due): "due <due> (<n> days)".
    - Anything due more than 30 days out is in neither section.
 5. **Orphan Pages**: a Page you saw linked from another Page or returned by
-   \`search_wiki\` that has no line in the Index. \`SCHEMA.md\`, \`index.md\`, and
+   \`list_flagged\` or \`search_wiki\` that has no line in the Index. \`SCHEMA.md\`, \`index.md\`, and
    \`log.md\` are the Wiki's scaffolding, never on the Index and never orphans.
 6. \`append_log\` one LINT line (no subject) with the count per section, e.g.
    "1 conflict; 1 suspicious-content; 2 missed; 2 due within 30 days; 0 orphans".
