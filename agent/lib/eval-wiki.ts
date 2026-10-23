@@ -43,6 +43,14 @@ function sessionId(ctx: SessionCtx | undefined): string {
   return remembered;
 }
 
+/** The namespace of the session `ctx` names (or the one a tool last saw) under an eval run. */
+export function sessionNamespace(
+  runId: string,
+  ctx: SessionCtx | undefined
+): string {
+  return evalNamespace(runId, sessionId(ctx));
+}
+
 const seeding = new Map<string, Promise<void>>();
 
 /** Copy `fixtures/<WIKI_SEED>` and the Corpus Sources into an empty namespace, once. */
@@ -77,7 +85,7 @@ export function evalWiki(
 ): WikiStore {
   let namespace: string | undefined;
   const ready = async () => {
-    namespace ??= evalNamespace(runId, sessionId(ctx));
+    namespace ??= sessionNamespace(runId, ctx);
     await ensureSeeded(namespace);
     return createWikiStore({ namespace });
   };

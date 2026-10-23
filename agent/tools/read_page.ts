@@ -1,9 +1,7 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { isCache } from "../../packages/wiki-store";
-import { SOURCES, wiki } from "../lib/config";
-
-const MAX_PAGES = 12;
+import { READ_PAGE_MAX, SOURCES, wiki } from "../lib/config";
 
 export default defineTool({
   description:
@@ -12,7 +10,7 @@ export default defineTool({
     paths: z
       .array(z.string())
       .min(1)
-      .max(MAX_PAGES)
+      .max(READ_PAGE_MAX)
       .describe("Page paths relative to the Wiki root, with .md"),
   }),
   label: { start: ({ paths }) => `Read ${paths.join(", ")}` },

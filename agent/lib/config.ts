@@ -1,6 +1,14 @@
+import { resolve } from "node:path";
 import { defaultBible } from "../../packages/corpus/bible";
+import { createRetrieval, type Retrieval } from "../../packages/wiki-retrieval";
+import { gatewayEmbed } from "../../packages/wiki-retrieval/gateway";
 import { createWikiStore, type WikiStore } from "../../packages/wiki-store";
-import { EVAL_RUN_ENV, evalWiki, type SessionCtx } from "./eval-wiki";
+import {
+  EVAL_RUN_ENV,
+  evalWiki,
+  sessionNamespace,
+  type SessionCtx,
+} from "./eval-wiki";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -30,6 +38,55 @@ export function wiki(ctx?: SessionCtx): WikiStore {
   const run = process.env[EVAL_RUN_ENV];
   if (run) return evalWiki(run, ctx);
   return createWikiStore({ namespace: process.env.WIKI_NAMESPACE ?? "demo" });
+}
+
+const RETRIEVALS = 8;
+const retrievals = new Map<string, Retrieval>();
+
+/**
+ * The embedding adapter: the Gateway's (with `AI_GATEWAY_API_KEY`) unless
+ * `CLERK_RETRIEVAL_EMBEDDINGS=0` makes retrieval lexical-only.
+ */
+export function retrievalEmbed() {
+  return process.env.CLERK_RETRIEVAL_EMBEDDINGS === "0"
+    ? undefined
+    : gatewayEmbed;
+}
+
+/**
+ * The Retrieval instance for this session's namespace, kept across tool
+ * calls so its section index survives the fresh store `wiki(ctx)` builds
+ * each time. One per namespace (each eval session has its own), at most the
+ * 8 most recently used.
+ */
+export function retrieval(ctx?: SessionCtx): Retrieval {
+  const run = process.env[EVAL_RUN_ENV];
+  const namespace = run
+    ? sessionNamespace(run, ctx)
+    : (process.env.WIKI_NAMESPACE ?? "demo");
+  // The local store directory is part of the key: tests and scripts move it.
+  const key = `${resolve(process.env.WIKI_STORE_DIR ?? ".wiki-store")}:${namespace}`;
+  const instance =
+    retrievals.get(key) ??
+    createRetrieval({ store: wiki(ctx), embed: retrievalEmbed() });
+  retrievals.delete(key);
+  retrievals.set(key, instance);
+  for (const stale of retrievals.keys()) {
+    if (retrievals.size <= RETRIEVALS) break;
+    retrievals.delete(stale);
+  }
+  return instance;
+}
+
+/** Most Pages one `read_page` call opens; Lint batches longer lists. */
+export const READ_PAGE_MAX = 12;
+
+/**
+ * Whether `search_wiki` runs the one-Link hop to the Neighbourhood:
+ * experimental, on only with `CLERK_RETRIEVAL_NEIGHBOURHOOD=1`.
+ */
+export function retrievalNeighbourhood(): boolean {
+  return process.env.CLERK_RETRIEVAL_NEIGHBOURHOOD === "1";
 }
 
 export const SOURCES = "sources/";

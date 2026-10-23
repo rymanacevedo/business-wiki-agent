@@ -1,8 +1,8 @@
 import { defineEval, type EveEvalTurn } from "eve/evals";
 import { checkAnswer, judgedPages } from "../../packages/answer-checks";
 import type config from "../evals.config";
-import { gateChecks, standardTrajectory } from "../lib/answers";
-import { drive } from "../lib/drive";
+import { gateChecks, scoreRetrieval, standardTrajectory } from "../lib/answers";
+import { driveSegments } from "../lib/drive";
 import { sessionWiki } from "../lib/run";
 import { loadQueryCases, type Judge } from "./cases";
 
@@ -76,8 +76,13 @@ export default cases.map((c) =>
         t.skip("the Query slice runs from WIKI_SEED=full");
 
       let turn: EveEvalTurn | undefined;
-      for (const prompt of c.prompts)
-        turn = await drive(t, c.caseId, prompt, turn?.session);
+      // The last prompt's calls, across every segment drive took to settle it.
+      let toolCalls: EveEvalTurn["toolCalls"][number][] = [];
+      for (const prompt of c.prompts) {
+        const driven = await driveSegments(t, c.caseId, prompt, turn?.session);
+        turn = driven.turn;
+        toolCalls = driven.segments.flatMap((segment) => segment.toolCalls);
+      }
       if (!turn) return;
       // A multi-turn row checks its last turn; the trajectory covers the run.
       turn.succeeded();
@@ -86,6 +91,9 @@ export default cases.map((c) =>
 
       const answer = turn.message ?? "";
       gateChecks(t, checkAnswer(c, answer));
+      // A multi-turn row scores its last turn, like the gates; each output is
+      // search_wiki's full execute object, not the text the model saw.
+      scoreRetrieval(t, c.cites, toolCalls);
       if (c.judges.length === 0) return;
 
       const wiki = await sessionWiki(t.context, turn.sessionId);

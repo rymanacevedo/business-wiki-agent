@@ -1,0 +1,230 @@
+import type { WikiStore } from "../wiki-store";
+import { lexicalIndex, type Bm25Options, type LexicalIndex } from "./lib/bm25";
+import {
+  embedChecked,
+  missing,
+  parseCache,
+  record,
+  serialiseCache,
+  type Embed,
+} from "./lib/embeddings";
+import { fuse } from "./lib/fusion";
+import { MAX_MATCHES, MAX_PAGES, matches } from "./lib/matches";
+import { createLinker, type LinkTable } from "./lib/links";
+import { createMemo, indexable, parsePage, type MemoPage } from "./lib/memo";
+import { neighbourhood as hop, type Reach } from "./lib/neighbourhood";
+import type { RetrievalResult } from "./lib/result";
+import { createSemantic, EmbedUnavailable } from "./lib/semantic";
+
+export type { ResultPage, RetrievalResult } from "./lib/result";
+export type { Reach } from "./lib/neighbourhood";
+export { renderResult } from "./lib/render";
+
+/** The Page kinds a Match can have: the Schema's kinds less the scaffolding. */
+export const MATCH_KINDS = [
+  "profile",
+  "summary",
+  "entity",
+  "obligation",
+  "ledger",
+] as const;
+export type MatchKind = (typeof MATCH_KINDS)[number];
+
+export type SearchOptions = {
+  query: string;
+  /** Filters Matches only. */
+  kind?: MatchKind;
+  /** Most Matches to return, at most (and by default) 5. */
+  limit?: number;
+  /**
+   * Add the Neighbourhood: the Pages one Link from a Match, after every
+   * Match, up to 8 Pages in all. Off unless `true`; `hopRan` says whether it ran.
+   */
+  neighbourhood?: boolean;
+};
+
+export type { Embed } from "./lib/embeddings";
+export {
+  CACHE_PATH,
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+} from "./lib/embeddings";
+export { EMBED_PER_SEARCH } from "./lib/semantic";
+
+export type RetrievalOptions = {
+  store: WikiStore;
+  /**
+   * Texts to vectors (the Gateway adapter in `gateway.ts`, or a fake). Omit
+   * it and the instance is lexical-only by configuration.
+   */
+  embed?: Embed;
+  /** BM25 parameters; defaults `k1 = 1.2`, `b = 0.5`. */
+  bm25?: Bm25Options;
+  /**
+   * Matches scoring under this fraction of the top score drop; default a
+   * third. This default, the count rule and the prior off are the bench's
+   * chosen configuration (`docs/evals/retrieval-bench.md`, ticket #60).
+   */
+  matchFloor?: number;
+  /**
+   * How neighbours rank by reach: `{ rule: "count" }` (the default, distinct
+   * reaching Matches) or `{ rule: "weighted", floor }` for the bench.
+   */
+  reach?: Reach;
+  /**
+   * Order Matches by kind (profile, obligation, summary, entity, ledger),
+   * then fused rank, after the floor and the cap. Off by default.
+   */
+  kindPrior?: boolean;
+};
+
+/** The Schema's flags. */
+export const FLAGS = ["conflict", "suspicious-content", "needs-owner"] as const;
+export type Flag = (typeof FLAGS)[number];
+
+export type FlaggedPage = { path: string; kind: string; status: string };
+
+export type Retrieval = {
+  /** Rank the Wiki's sections for a Query; the store is re-checked first. */
+  search(options: SearchOptions): Promise<RetrievalResult>;
+  /**
+   * Every Page carrying `flag`, sorted by path: exhaustive, not ranked. The
+   * scaffolding Pages count here (never Sources); they never reach `search`.
+   */
+  flagged(flag: Flag): Promise<FlaggedPage[]>;
+};
+
+/**
+ * Retrieval over one WikiStore's Pages (never `sources/`; `index.md`,
+ * `log.md` and `SCHEMA.md` only in `flagged`). Keep one instance per namespace: it holds the
+ * section index and the Link table between calls and revalidates them
+ * against the store's etag manifest on every call, so edits are searchable
+ * (and linked) at once.
+ */
+let warned = false;
+
+/** One warning per process, however many searches degrade. */
+function warnDegraded(error: unknown) {
+  if (warned) return;
+  warned = true;
+  console.warn(
+    `wiki-retrieval: semantic matching unavailable, keyword matches only: ${error instanceof Error ? error.message : String(error)}`
+  );
+}
+
+export function createRetrieval({
+  store,
+  embed,
+  bm25,
+  matchFloor = 1 / 3,
+  reach = { rule: "count" },
+  kindPrior = false,
+}: RetrievalOptions): Retrieval {
+  const memo = createMemo(store);
+  const semantic = embed && createSemantic(store, embed);
+  const linker = createLinker();
+  // The index of the newest Snapshot seen, kept between calls; its Link
+  // table too, built on the first hop-on search at that Snapshot.
+  let built: {
+    version: number;
+    index: LexicalIndex;
+    links?: LinkTable;
+  } | null = null;
+  return {
+    async search({ query, kind, limit = MAX_MATCHES, neighbourhood = false }) {
+      // One Snapshot answers the whole search: hits, Page metadata, excerpts
+      // and Links. `pages`, `index` and `links` are locals, taken before any
+      // await, so a refresh by another call while this one awaits the
+      // embedding Rung cannot reach them.
+      const { pages, version } = await memo.refresh();
+      if (built?.version !== version)
+        built = {
+          version,
+          index: lexicalIndex(
+            [...pages.values()].flatMap((p) => p.sections),
+            bm25
+          ),
+        };
+      const { index } = built;
+      const links = neighbourhood
+        ? (built.links ??= linker.table(pages))
+        : null;
+      const lexical = index.rank(query);
+      let hits = lexical;
+      let rung: RetrievalResult["rung"] = "lexical";
+      let degraded = false;
+      if (semantic) {
+        try {
+          const nearest = await semantic.rank(query, pages);
+          // With one ranker RRF is a monotone transform: lexical passes through.
+          if (nearest.length > 0) {
+            hits = fuse(lexical, nearest);
+            rung = "embedding";
+          }
+        } catch (error) {
+          if (!(error instanceof EmbedUnavailable)) throw error;
+          degraded = true;
+          warnDegraded(error);
+        }
+      }
+      const found = matches(hits, pages, index, {
+        query,
+        kind,
+        limit: Math.max(0, Math.min(limit, MAX_MATCHES, MAX_PAGES)),
+        matchFloor,
+        kindPrior,
+      });
+      const near = links
+        ? hop(found, pages, links, { room: MAX_PAGES - found.length, reach })
+        : [];
+      return {
+        rung,
+        degraded,
+        hopRan: neighbourhood,
+        pages: [...found, ...near],
+      };
+    },
+    async flagged(flag) {
+      // Every Page that can carry a flag: scaffolding included, Sources never.
+      const { pages, scaffolding } = await memo.refresh({ scaffolding: true });
+      return [...pages.values(), ...scaffolding.values()]
+        .filter((p) => p.flags.includes(flag))
+        .map(({ path, kind, status }) => ({ path, kind, status }))
+        .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+    },
+  };
+}
+
+/**
+ * The fixture embed step: the cache file body for a whole Wiki (and how
+ * many sections it had to embed), every
+ * section of every indexable Page embedded (Sources and scaffolding never),
+ * keyed by the content hash the search side computes. Vectors in `previous`
+ * still current for their Page are kept, so a rerun embeds only what changed.
+ */
+export async function embedWiki({
+  pages,
+  embed,
+  previous,
+}: {
+  /** Path to file body, as stored. */
+  pages: Map<string, string>;
+  embed: Embed;
+  previous?: string | null;
+}): Promise<{ body: string; embedded: number }> {
+  const parsed = new Map<string, MemoPage>();
+  for (const [path, body] of pages)
+    if (indexable(path)) parsed.set(path, parsePage(path, body, ""));
+  const vectors = parseCache(previous);
+  const todo = missing(vectors, parsed.values());
+  record(
+    vectors,
+    parsed,
+    todo,
+    await embedChecked(
+      embed,
+      todo.map((s) => s.text)
+    )
+  );
+  return { body: serialiseCache(vectors), embedded: todo.length };
+}
