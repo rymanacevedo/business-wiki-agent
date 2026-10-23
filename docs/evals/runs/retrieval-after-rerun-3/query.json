@@ -1,0 +1,240 @@
+{
+  "label": "retrieval-after-rerun-3",
+  "slice": "query",
+  "cases": [
+    {
+      "id": "query/questions/0017",
+      "caseId": "query-cash-purchases",
+      "description": "Body-only fact: the two cash purchases (Dockside Deli 15.61, Cascade 4472 212.48); 'cash' appears only in the Page bodies, never in the Index.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "retrieval",
+        "retrieval:lexical"
+      ],
+      "verdict": "failed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "eventsSatisfy(first tool call is read_index)",
+          "passed": true
+        },
+        {
+          "name": "maxToolCalls(8)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(create_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(update_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(note_also_seen_in)",
+          "passed": true
+        },
+        {
+          "name": "score [includes 15.61]",
+          "passed": false,
+          "message": "not found"
+        },
+        {
+          "name": "score [includes 212.48]",
+          "passed": false,
+          "message": "not found"
+        },
+        {
+          "name": "score [includes Dockside]",
+          "passed": true
+        },
+        {
+          "name": "score [includes Cascade]",
+          "passed": true
+        },
+        {
+          "name": "score [cites 2026-08-22-receipt-dockside-deli]",
+          "passed": true
+        },
+        {
+          "name": "score [cites 2026-09-12-invoice-cascade-parts-4472]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "searched": 1,
+        "rung_embedding": 1,
+        "hop_added": 0,
+        "expected_in_result": 1,
+        "expected_via_hop_only": 0,
+        "faithful": 1,
+        "cited": 1
+      },
+      "toolCalls": 3,
+      "costUsd": 0.008303,
+      "traceIds": [
+        "ba5698bd73d6f0e4bd10dc6b3bad44a3"
+      ],
+      "resultsJsonl": "docs/evals/runs/retrieval-after-rerun-3/results/2026-10-23T22-32-03.jsonl"
+    },
+    {
+      "id": "query/questions/0018",
+      "caseId": "query-dana-okafor",
+      "description": "Body-only fact: Dana Okafor is named once, on the lease's signature line, as Harborview's manager.",
+      "class": "normal",
+      "tags": [
+        "normal",
+        "retrieval",
+        "retrieval:lexical"
+      ],
+      "verdict": "passed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "eventsSatisfy(first tool call is read_index)",
+          "passed": true
+        },
+        {
+          "name": "maxToolCalls(8)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(create_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(update_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(note_also_seen_in)",
+          "passed": true
+        },
+        {
+          "name": "score [includes Harborview]",
+          "passed": true
+        },
+        {
+          "name": "score [includes Manager | manager | signed]",
+          "passed": true
+        },
+        {
+          "name": "score [cites 2025-04-01-lease-harborview]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "searched": 1,
+        "rung_embedding": 1,
+        "hop_added": 0,
+        "expected_in_result": 1,
+        "expected_via_hop_only": 0,
+        "faithful": 1,
+        "cited": 1
+      },
+      "toolCalls": 3,
+      "costUsd": 0.005610199999999999,
+      "traceIds": [
+        "4cb14d63a544df56c7887f895556782f"
+      ],
+      "resultsJsonl": "docs/evals/runs/retrieval-after-rerun-3/results/2026-10-23T22-32-03.jsonl"
+    },
+    {
+      "id": "query/questions/0020",
+      "caseId": "query-van-repair-bill",
+      "description": "Wording shares no vocabulary with the answer Page: the garage's 'stopping repairs' are Eastside's brake work, 478.07, payment unknown.",
+      "class": "edge",
+      "tags": [
+        "edge",
+        "retrieval",
+        "retrieval:semantic"
+      ],
+      "verdict": "failed",
+      "gates": [
+        {
+          "name": "succeeded",
+          "passed": true
+        },
+        {
+          "name": "eventsSatisfy(first tool call is read_index)",
+          "passed": true
+        },
+        {
+          "name": "maxToolCalls(8)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(create_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(update_page)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(change_fact)",
+          "passed": true
+        },
+        {
+          "name": "notCalledTool(note_also_seen_in)",
+          "passed": true
+        },
+        {
+          "name": "score [includes 478.07]",
+          "passed": true
+        },
+        {
+          "name": "score [includes Eastside]",
+          "passed": true
+        },
+        {
+          "name": "score [includes unpaid | unconfirmed | not confirmed | payment unknown]",
+          "passed": false,
+          "message": "not found"
+        },
+        {
+          "name": "score [excludes paid in full]",
+          "passed": true
+        },
+        {
+          "name": "score [excludes /\\bwas paid\\b/i]",
+          "passed": true
+        },
+        {
+          "name": "score [cites 2026-10-02-invoice-eastside-auto-3381]",
+          "passed": true
+        }
+      ],
+      "scores": {
+        "searched": 1,
+        "rung_embedding": 1,
+        "hop_added": 0,
+        "expected_in_result": 1,
+        "expected_via_hop_only": 0,
+        "faithful": 0,
+        "cited": 1
+      },
+      "toolCalls": 3,
+      "costUsd": 0.00566175,
+      "traceIds": [
+        "8762ae76720fa12d2be575746bd48038"
+      ],
+      "resultsJsonl": "docs/evals/runs/retrieval-after-rerun-3/results/2026-10-23T22-32-03.jsonl"
+    }
+  ]
+}
