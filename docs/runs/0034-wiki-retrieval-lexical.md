@@ -56,6 +56,11 @@ Ship the tracer bullet: the `wiki-retrieval` package with lexical Matches only, 
   - an iterative token walk
 - The fix was attacked with 56 shapes (late links in long lists, after and inside huge code blocks, unclosed fences, HTML comments, tables, 240 KB emphasis, escapes, backticks, links and brackets, 60,000-line paragraphs, list items, one-line nested markers). All were correct and the slowest took 750 ms, except one: 5,000 nested `[` around one link loses that link. Link and Citation sets match a whole-body `marked` parse on 170 fixture, corpus and docs Pages, on 40 concatenations of them, and on 300 random 50 to 70 KB bodies.
 - PRs #70 (#59) and #73 (#60) were then merged into ticket/56 through GitHub, so PR #67 now ships 56+57+58+59+60+61. Run entry 0036-query-rung-metrics was renumbered to 0040. `bun run check`: exit 0, 629 tests.
+- The combined review on 9036358 (56 to 61 + 53, base origin/main) exited 1. Standards had 0 blockers. Spec had three P2 blockers:
+  - Round 6's own: a fence inside a blockquote is not tracked, so a forced cut in a very long quoted code block leaks its `[x](y)` lines as Links.
+  - #61's: Query metrics match cites by substring, not by the resolved summary path.
+  - #53's eval and README items, which #63 owns.
+  - This was the last approved round. The findings are on PR #67, the PR stays a draft, and `--status` was not run.
 - Spot check once #54's runs had finished. `WIKI_SEED=full eve eval query/questions/0017 lint/checks/0004 safety/runtime/rows/0000`: 3 of 3 pass (23 gates; the cash row was judged faithful and cited). The run directory was not kept.
 
 ## Findings worth remembering
@@ -66,7 +71,7 @@ Ship the tracer bullet: the `wiki-retrieval` package with lexical Matches only, 
 
 ## What the human checked
 
-Nothing yet: PR #67 is a draft pending the final combined review.
+Nothing yet: PR #67 is a draft with three unresolved review findings (one owned by #63).
 
 ## Open questions
 
