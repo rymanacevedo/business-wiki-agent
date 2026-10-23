@@ -2,7 +2,7 @@ import { defineEval, type EveEvalTurn } from "eve/evals";
 import { checkAnswer, judgedPages } from "../../packages/answer-checks";
 import type config from "../evals.config";
 import { gateChecks, scoreRetrieval, standardTrajectory } from "../lib/answers";
-import { drive } from "../lib/drive";
+import { driveSegments } from "../lib/drive";
 import { sessionWiki } from "../lib/run";
 import { loadQueryCases, type Judge } from "./cases";
 
@@ -78,8 +78,10 @@ export default cases.map((c) =>
       let turn: EveEvalTurn | undefined;
       const toolCalls: EveEvalTurn["toolCalls"][number][] = [];
       for (const prompt of c.prompts) {
-        turn = await drive(t, c.caseId, prompt, turn?.session);
-        toolCalls.push(...turn.toolCalls);
+        const driven = await driveSegments(t, c.caseId, prompt, turn?.session);
+        turn = driven.turn;
+        for (const segment of driven.segments)
+          toolCalls.push(...segment.toolCalls);
       }
       if (!turn) return;
       // A multi-turn row checks its last turn; the trajectory covers the run.
