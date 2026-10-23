@@ -18,21 +18,22 @@ state), `multi-turn`, and `calibration` (the Owner hand-labels it).
 
 The counts below come from the dataset modules (`evals/ingest/cases.ts` over
 the Manifest and the `base` fixture, `evals/query/questions.yaml`,
-`evals/lint/cases.ts`, `evals/safety/cases.ts`), counted on 2026-10-19:
+`evals/lint/cases.ts`, `evals/safety/cases.ts`), counted on 2026-10-23:
 
 | Slice              | Seed   | Cases  | normal | edge   | trap   | Notes                            |
 | ------------------ | ------ | ------ | ------ | ------ | ------ | -------------------------------- |
 | `ingest`           | `base` | 30     | 18     | 2      | 10     | one case per Source not in base  |
-| `query`            | `full` | 17     | 9      | 5      | 3      | 13 rows tagged `calibration`     |
+| `query`            | `full` | 25     | 13     | 7      | 5      | 13 `calibration`, 8 `retrieval`  |
 | `lint`             | `full` | 5      | 5      | 0      | 0      | deterministic only               |
 | `safety/at-ingest` | `base` | 5      | 0      | 1      | 4      | reported in the `safety` slice   |
 | `safety/approvals` | `full` | 5      | 0      | 1      | 4      | every row parks on an Approval   |
 | `safety/runtime`   | `full` | 3      | 2      | 1      | 0      | Inbox, Owner-asserted change     |
-| **total**          |        | **65** | **34** | **10** | **21** | the eval design planned about 52 |
+| **total**          |        | **73** | **38** | **12** | **23** | the eval design planned about 52 |
 
-The total is higher than the design's 52 because the Corpus has 34 Sources,
-not about 30, and Ingest has one case per Source the `base` seed has not
-Ingested.
+The total is higher than the design's 52 for two reasons. The Corpus has 34
+Sources, not about 30, and Ingest has one case per Source the `base` seed has
+not Ingested. The eight `retrieval` Query rows (see [Retrieval](#retrieval))
+were also added later, for spec #53.
 
 The reporter merges the three Safety directories into one `safety` slice.
 Two invocations cover everything, one per seed:
@@ -162,4 +163,132 @@ README. Rows whose expectation changed are listed in
 [`dataset-fixes.json`](dataset-fixes.json), and the diff reports a second
 total without them. With `--block <name>` the same command writes the
 README's `eval-diff:<name>` block instead, and reads its dataset fixes from
-`dataset-fixes.<name>.json` (none for `retrieval`). Each run ran once, so there is no variance estimate.
+`dataset-fixes.<name>.json` (none for `retrieval`), and writes its own page,
+`before-after.<name>.md`, so [the spec #15 page](before-after.md) is never
+overwritten. Each run ran once, so there is no variance estimate.
+
+## Retrieval
+
+Spec [#53](https://github.com/rymanacevedo/business-wiki-agent/issues/53)
+put a Retrieval module behind `search_wiki` and measured what each of its
+Rungs contributes. The decisions are in
+[the eval story for retrieval](https://github.com/rymanacevedo/business-wiki-agent/issues/49).
+The results are in [the retrieval before/after page](before-after.retrieval.md)
+and in the README's [Retrieval, measured](../../README.md#retrieval-measured).
+
+### The rows and their purpose
+
+Eight rows joined the Query slice (`query/questions/0017` to `0024`), with
+the same gates, judges, and seed as the rest. They were written to be hard
+for the Index alone and frozen at git tag `eval-retrieval-baseline`, before
+any module code existed. Each carries `retrieval` plus a tag naming the Rung
+it was written for. The tag says nothing about which Rung actually answered
+it. The tag schema rejects a `retrieval:*` tag without `retrieval`.
+
+| Row                               | Tag                       | What it needs                                                         |
+| --------------------------------- | ------------------------- | --------------------------------------------------------------------- |
+| `query-cash-purchases`            | `retrieval:lexical`       | "cash" appears only in two Page bodies, never in the Index            |
+| `query-dana-okafor`               | `retrieval:lexical`       | a name on the lease's signature line, once                            |
+| `query-diagnostic-kit`            | `retrieval:semantic`      | "A/C diagnostic kit" is the Ridgeline invoice's manifold gauge set    |
+| `query-van-repair-bill`           | `retrieval:semantic`      | "stopping repairs" are Eastside's brake work, payment unconfirmed     |
+| `query-ridgeline-bank-evidence`   | `retrieval:neighbourhood` | a receipt to the bank statement that lists it                         |
+| `query-august-statement-confirms` | `retrieval:neighbourhood` | the statement to the Records it corroborates (not the cash one)       |
+| `query-workers-comp`              | `retrieval:absent`        | no such policy; the liability policy number must not stand in         |
+| `query-cascade-late-fee`          | `retrieval:absent`        | no late fee on any Cascade invoice; the lease's $75 must not stand in |
+
+No row gates on calling `search_wiki`, and the trajectory rule, Lint rows,
+judge rubrics, and judged Pages are unchanged. One instruction sentence
+changed for every after run: step 2 of a Query says to use `search_wiki` when
+the Index does not settle where a fact lives, or when the question is about a
+detail no Index line mentions.
+
+### Rung metrics
+
+The Query eval reads `search_wiki`'s structured output
+(`{ rung, hopRan, matches, neighbours }`) from every call the row's last
+prompt made, never its rendered text. It records five soft 0/1 metrics with no
+threshold (`packages/answer-checks`, `retrievalMetrics`):
+
+- `searched`: at least one `search_wiki` call.
+- `rung_embedding`: at least one call's Rung was `embedding`.
+- `hop_added`: at least one call ran the hop and returned a neighbour.
+- `expected_in_result` (rows with `cites` only): every required `cites`
+  entry appeared among the Matches or neighbours of some call. A nested
+  list is any-of. A Source id names exactly its summary Page,
+  `summaries/<id>.md`, and any other pattern matches a path as a substring.
+- `expected_via_hop_only` (rows with `cites` only): `expected_in_result`,
+  and at least one required entry was only ever a neighbour, never a Match.
+
+A row that never searched scores 0 on all of them. The absent rows record
+only the first three. The means appear in the "Labelled scores" table.
+
+### The four runs
+
+All from one commit, single runs as elsewhere, in two stages:
+
+```bash
+# retrieval-before: from eval-retrieval-baseline (the old substring search), both invocations
+# Stage one, from the after commit:
+EVAL_RUN_LABEL=retrieval-after WIKI_SEED=base bun run eval ingest safety/at-ingest --max-concurrency 2 --timeout 240000
+EVAL_RUN_LABEL=retrieval-after WIKI_SEED=full bun run eval query lint safety/approvals safety/runtime --max-concurrency 2 --timeout 240000
+CLERK_RETRIEVAL_EMBEDDINGS=0 EVAL_RUN_LABEL=retrieval-after-lexical WIKI_SEED=full bun run eval query --max-concurrency 2 --timeout 240000
+# Stage two, over the ranker the embeddings rule selected (lexical-only):
+CLERK_RETRIEVAL_EMBEDDINGS=0 CLERK_RETRIEVAL_NEIGHBOURHOOD=1 EVAL_RUN_LABEL=retrieval-after-hop WIKI_SEED=full bun run eval query --max-concurrency 2 --timeout 240000
+```
+
+The after runs used the module's defaults at that commit: embeddings on and
+the hop off. Since the rules ran, embeddings are on only with
+`CLERK_RETRIEVAL_EMBEDDINGS=1`. The rows that decided the embeddings rule
+were rerun twice under each ranker, labelled `retrieval-after-rerun-2` and
+`-3` and `retrieval-after-lexical-rerun-2` and `-3`. The README's second
+block is `bun run eval:diff retrieval-before retrieval-after --block retrieval`.
+
+### The decision rules
+
+Written before any after run and applied as written:
+
+- **Embeddings stay on only if** (a) no `retrieval` row passes under
+  `retrieval-after-lexical` and fails under `retrieval-after`, (b) no other
+  row regresses against `retrieval-before`, and (c) there is a demonstrated
+  benefit: at least one `retrieval` row flips from fail to pass against
+  lexical-only, or the mean `expected_in_result` over the `retrieval` rows is
+  strictly higher. Ties go to lexical-only, and embeddings become the cut.
+  Any single row that decides (a) or (c) is rerun, and its verdict must hold
+  in 2 of 3 runs.
+- **The Neighbourhood turns on by default only if** `retrieval-after-hop`
+  flips at least one `retrieval:neighbourhood` row from fail to pass
+  against the selected ranker's hop-off run, flips none to fail, and the
+  flip holds in 2 of 3 reruns of that row.
+- Rows are never edited after seeing which configuration wins. A later
+  change is a dataset fix, listed in `dataset-fixes.retrieval.json`. There
+  are none.
+
+**Applied.**
+
+- **Embeddings: cut.**
+  - (a) failed. `query-van-repair-bill` passed lexical-only in 2 of 3 runs
+    and failed hybrid in 3 of 3. `query-dana-okafor` also passed lexical and
+    failed hybrid in the first run, but held in only 1 of 3 (hybrid fail,
+    pass, pass), so it does not count.
+  - (c) failed. `query-cash-purchases` flipped fail to pass against
+    lexical-only in the first runs, but it did not hold (each ranker passed
+    it 2 of 3). The mean `expected_in_result` tied at 2 of 6 rows each.
+  - (b) failed as written. `query-paid-cascade` (passed, then scored),
+    `safety-contradiction-resolution-approve` and
+    `safety-contradiction-other-suite` regressed against `retrieval-before`,
+    though none of them called `search_wiki`.
+  - The adapter stays in place, and the default flipped.
+- **Neighbourhood: off, experimental.** Both `retrieval:neighbourhood` rows
+  passed under `retrieval-after-lexical`, so no fail-to-pass flip was
+  possible. Under `retrieval-after-hop`, `query-ridgeline-bank-evidence`
+  went from pass to fail without searching.
+
+### The bench
+
+Ordering, the Match floor, and the kind prior were chosen offline, before
+any after run, by mean reciprocal rank over the 14 Query rows with `cites`
+(`bun run bench:retrieval`, [the bench table](retrieval-bench.md)). No knob
+beat its pre-registered default (count rule, floor at a third, no prior), so
+the defaults shipped. Hybrid MRR was 0.470 against 0.425 lexical-only on that
+bench. That is a ranking measurement, not an agent one, and the agent runs
+above are what the embeddings rule reads.
