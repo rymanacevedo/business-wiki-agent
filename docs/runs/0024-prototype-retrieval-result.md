@@ -1,12 +1,12 @@
 # 0024: Prototype the retrieval result as the model sees it
 
-- **When**: 2026-10-21
+- **When**: 2026-10-21 to 2026-10-23
 - **Agent**: Claude Code (Claude Fable 5.1)
 - **Driving**: [Wayfinder map: agentic GraphRAG retrieval for Clerk](https://github.com/rymanacevedo/business-wiki-agent/issues/42), ticket [Prototype: the retrieval result as the model sees it](https://github.com/rymanacevedo/business-wiki-agent/issues/47)
 
 ## Goal
 
-Work the map's next frontier ticket: build the throwaway script the ticket asks for, run lexical entry plus Link expansion over `fixtures/full`, and put a concrete result in front of the human to react to. The ticket is human-in-the-loop, so this session builds and reports; it does not resolve.
+Work the map's next frontier ticket: build the throwaway script the ticket asks for, run lexical entry plus Link expansion over `fixtures/full`, put a concrete result in front of the human, and record their reaction as the ticket's resolution.
 
 ## What happened
 
@@ -16,7 +16,9 @@ Work the map's next frontier ticket: build the throwaway script the ticket asks 
 4. First run exposed three defects and one finding. Defects: `via` listed the same Match twice when two Pages link each other both ways; `title:` and `sources:` frontmatter lines won the excerpt slots; the Profile and the Ledgers flooded the Neighbourhood through their forward Citations. Finding: the decided Neighbourhood ordering never discriminated, because almost every neighbour is reached by exactly one Match.
 5. Added flags rather than silently changing the rules, so every behaviour stays reproducible: excerpt candidates (all lines versus fact lines), Link scope (Page versus matched section), padding, Neighbourhood rule (decided count versus degree-weighted), a neighbour floor, a Match floor, and a `--matrix` mode that prints the Neighbourhood under five configurations side by side.
 6. Ran eight Queries (the ticket's two, three from `questions.yaml`, three added to probe the hop). Captured four runs and committed the script with them to the throwaway branch `prototype/retrieval-result`, pushed, no PR.
-7. Posted the findings and six reaction questions on the ticket. Left it open and claimed. No map edit: nothing is decided yet.
+7. Posted the findings and six reaction questions on the ticket and stopped for the human.
+8. The human answered in one line: Variant A, and keep it experimental until the evals show benefit. Recorded that as the resolution: Variant A is the rendering; the Neighbourhood hop ships behind a module switch and earns its place only through the before-and-after evals. Made one routine call from the prototype's own evidence (frontmatter title and sources lines are never excerpt lines; pad to three) and sent the rest where the map already puts tuning: ordering, Match floor and kind prior to the eval ticket, the switch and its wording to the seam ticket.
+9. Closed the ticket, appended the gist to the map, and added an "Inputs from the prototype" paragraph to the seam and eval tickets so the next sessions start with the evidence. No fog graduated and no new ticket: the open questions all belong to tickets that already exist. Deleted the untracked copy of the script; the prototype branch keeps it.
 
 ## Findings worth remembering
 
@@ -31,15 +33,18 @@ Work the map's next frontier ticket: build the throwaway script the ticket asks 
 
 ## What the human checked
 
-Nothing yet: the session ran autonomously. Every observation above is the agent's reading of the prototype output; the human's reaction is the ticket's next step.
+The human read the ticket comment and chose the rendering (Variant A) and the hop's status (experimental until evals show benefit). The excerpt rule, the routing of ordering and floors to the eval ticket, and the switch to the seam ticket are the agent's calls, made from the prototype output and the map's existing ownership of tuning questions.
 
 ## Open questions
 
-The six questions on the ticket: rendering variant, excerpt rule, Neighbourhood ordering, Match floor and which ticket owns it, label wording, and whether the hop's low yield changes its place in the design.
+- Which Neighbourhood ordering wins, and whether a Match floor helps: the eval ticket measures it.
+- The name and default of the hop switch: the seam ticket.
+- A better word than "names party" for the backward `party` label.
 
 ## Artifacts
 
 - Prototype branch: https://github.com/rymanacevedo/business-wiki-agent/tree/prototype/retrieval-result (script plus `docs/prototypes/retrieval-result/` captured runs and README)
 - Ticket comment: https://github.com/rymanacevedo/business-wiki-agent/issues/47
 - Branch `wayfinder/47-retrieval-result` (this entry)
-- The script is also left untracked at `scripts/prototype-retrieval-result.ts` in the working tree so it can be run without switching branches; delete it or leave it, it is not committed on main.
+- Ticket resolution and close: https://github.com/rymanacevedo/business-wiki-agent/issues/47
+- Map update: https://github.com/rymanacevedo/business-wiki-agent/issues/42; inputs added to https://github.com/rymanacevedo/business-wiki-agent/issues/48 and https://github.com/rymanacevedo/business-wiki-agent/issues/49
