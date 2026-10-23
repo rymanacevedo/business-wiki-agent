@@ -156,8 +156,10 @@ The custom reporter (`packages/eval-report`) writes
 `runs/<label>/<slice>.json` from Eve's results, and the run's
 `results.jsonl` is committed beside it. `bun run eval:diff before after`
 joins the two runs by eval id into [the before/after page](before-after.md)
-(per slice, per class, mean labelled scores, mean tool calls, cost, failed
-gates per case). The same command rewrites the table block in the root
+(per slice, per class, per tag, mean labelled scores, mean tool calls, cost,
+failed gates per case). The same command rewrites the table block in the root
 README. Rows whose expectation changed are listed in
 [`dataset-fixes.json`](dataset-fixes.json), and the diff reports a second
-total without them. Each run ran once, so there is no variance estimate.
+total without them. With `--block <name>` the same command writes the
+README's `eval-diff:<name>` block instead, and reads its dataset fixes from
+`dataset-fixes.<name>.json` (none for `retrieval`). Each run ran once, so there is no variance estimate.
