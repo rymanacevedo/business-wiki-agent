@@ -4,7 +4,8 @@ import { namespacedStore, type WikiStore } from "./lib/store";
 
 export type { Entry } from "./lib/backend";
 export type { BlobClient } from "./lib/blob";
-export type { WikiStore } from "./lib/store";
+export type { ManifestEntry, WikiStore } from "./lib/store";
+export { CACHE_PREFIX, isCache } from "./lib/paths";
 export {
   WikiConflictError,
   WikiPathError,
@@ -32,7 +33,10 @@ export type WikiStoreOptions = {
  * The Wiki and its read-only Sources for one namespace. `read` returns null
  * for a missing path; `write` takes the etag from the last read (null to
  * create) and throws WikiConflictError if it is stale, WikiReadOnlyError
- * under `sources/`; `list` returns the paths under a prefix, sorted.
+ * under `sources/`; `list` returns the paths under a prefix, sorted;
+ * `manifest` returns the same paths with the etag `read` would return (on
+ * Blob from the listing alone, locally by hashing each file). Both hide the
+ * retrieval cache under `cache/`, which `read` and `write` reach normally.
  */
 export function createWikiStore({
   namespace,

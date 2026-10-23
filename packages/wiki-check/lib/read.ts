@@ -1,7 +1,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
+import { isCache } from "../../wiki-store";
 
-/** Every Page under `dir` (Sources skipped), keyed by its path relative to `dir`. */
+/** Every Page under `dir` (Sources and the retrieval cache skipped), keyed by its path relative to `dir`. */
 export async function readWikiDir(dir: string): Promise<Map<string, string>> {
   const entries = await readdir(dir, { recursive: true, withFileTypes: true });
   const pages = new Map<string, string>();
@@ -9,7 +10,7 @@ export async function readWikiDir(dir: string): Promise<Map<string, string>> {
     if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
     const file = join(entry.parentPath, entry.name);
     const path = relative(dir, file).replaceAll("\\", "/");
-    if (path.startsWith("sources/")) continue;
+    if (path.startsWith("sources/") || isCache(path)) continue;
     pages.set(path, await readFile(file, "utf8"));
   }
   return new Map([...pages].sort(([a], [b]) => a.localeCompare(b)));

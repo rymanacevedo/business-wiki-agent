@@ -56,7 +56,10 @@ export function fakeBlob(pageSize = 2) {
       const page = keys.slice(start, start + Math.min(limit, pageSize));
       const next = start + page.length;
       return {
-        blobs: page.map((pathname) => ({ pathname })),
+        blobs: page.map((pathname) => ({
+          pathname,
+          etag: blobs.get(pathname)!.etag,
+        })),
         hasMore: next < keys.length,
         cursor: next < keys.length ? String(next) : undefined,
       };
