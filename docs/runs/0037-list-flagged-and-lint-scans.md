@@ -20,6 +20,9 @@ Move Lint's flag scans from `search_wiki`, which is ranked and capped at five, t
   - Blocker 1: steps 2 and 3 said "one `read_page` call with every Page listed", but `read_page` caps a call at 12 paths, so 13 flagged Pages could not be read as written. Repaired test-first. One `READ_PAGE_MAX` (12) in `agent/lib/config.ts` now feeds both `read_page`'s schema and the skill, whose steps 2 and 3 say "at most 12 paths a call: split a longer list". The test passes 12 paths to `read_page`, rejects 13, and checks that both steps carry the phrase. A mutation of step 3 turned it red. `lint/checks/0000` passed live again (23/23).
   - Blocker 2: the AC's full 5-row Lint slice did not run. The implementer brief caps live checks at 3 rows and gives full slices to #63, so it was left there.
 
+- Merged origin/ticket/56-wiki-retrieval-lexical again, after #58 and #61 had landed on it. The merge was clean, and the check passed with 551 tests.
+- Review round 2 (a133697) exited 1. Standards had 0 findings. Spec's only blocker was the 5-row Lint slice, which is #63's work under the brief. I commented it on the PR and left the PR as a draft.
+
 ## Findings worth remembering
 
 - The full 5-row Lint slice did not run here. #63 runs it. Rows 0001 and 0002 (overdue, next 30 days) do not touch steps 2 and 3, though they load the same skill.
@@ -32,7 +35,7 @@ Nothing yet. The PR is a draft.
 
 ## Open questions
 
-None.
+- The 5-row Lint slice (AC 5) is still to run, in #63 or by the orchestrator, before this PR can pass review.
 
 ## Artifacts
 
