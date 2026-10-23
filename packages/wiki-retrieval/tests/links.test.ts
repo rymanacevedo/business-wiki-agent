@@ -272,6 +272,8 @@ describe("code inside containers on a long Page", () => {
     "indented code holding quote markers": `${many("    > code")}\n    > ${fake}\n\n${real}`,
     "a pre block after a long paragraph in a list item": `- a\n${many("  prose")}\n  <pre>\n${many("  code")}\n  ${fake}\n  </pre>\n\n${real}`,
     "a pre block after a quote and a tab": `>\tprose\n>\t<pre>\n${many(">\tcode")}\n>\t${fake}\n>\t</pre>\n\n${real}`,
+    "an inline comment across a chunk cut": `Prose before <!--\n${many("comment")}\n${fake}\n-->\nmore prose\n\n${real}`,
+    "an inline comment across a piece cut": `${"word ".repeat(300)}<!-- ${"word ".repeat(300)}${fake} -->${" word".repeat(50)}\n\n${many("prose")}\n\n${real}`,
     "an unclosed fence the next item ends": `- \`\`\`\n${many("  code")}\n  ${fake}\n- next\n${many("  prose")}\n  ${real}`,
   };
 
@@ -292,5 +294,53 @@ describe("code inside containers on a long Page", () => {
       assert.equal(result.pages[0].path, NEW);
       assert.equal(via(result, FAKE), undefined, "no Link from code");
       assert.ok(via(result, REAL), "the real Link is kept");
+    });
+});
+
+describe("list items padded past one space, as marked reads them", () => {
+  const A = "summaries/2026-08-31-bank-statement-tidewater.md";
+  const B = "summaries/2026-09-12-invoice-cascade-parts-4472.md";
+  const many = (line: string) =>
+    Array.from({ length: 3000 }, () => `${line} line`).join("\n");
+
+  // `want` is what a whole-body parse links: [A, B] for the link-looking
+  // lines in body order.
+  const CASES: Array<{ name: string; body: string; want: [boolean, boolean] }> =
+    [
+      {
+        // Content starts at column 3, so the two-space lines leave the item
+        // and end its fence; the second fence then holds B.
+        name: "a bullet and two spaces",
+        body: `-  \`\`\`\n${many("  content")}\n  [A](../${A})\n  \`\`\`\n\n[B](../${B})`,
+        want: [true, false],
+      },
+      {
+        name: "an ordered marker and three spaces",
+        body: `1.   \`\`\`\n${many("     content")}\n     [A](../${A})\n     \`\`\`\n\n[B](../${B})`,
+        want: [false, true],
+      },
+      {
+        // Five spaces: the content starts one column in, as indented code.
+        name: "a bullet and five spaces",
+        body: `-     \`\`\`\n  content\n\n${many("      content")}\n      [A](../${A})\n\n[B](../${B})`,
+        want: [false, true],
+      },
+    ];
+
+  for (const { name, body, want } of CASES)
+    test(`${name}: the Links are the ones a whole-body read finds`, async () => {
+      await store.write(
+        NEW,
+        `---\ntitle: Pay invoice zquorblat\nkind: obligation\nstatus: active\nflags: []\n---\n\n${body}\n`,
+        { etag: null }
+      );
+      const result = await createRetrieval({ store }).search({
+        query: "zquorblat",
+        kind: "obligation",
+        limit: 1,
+        neighbourhood: true,
+      });
+      assert.equal(result.pages[0].path, NEW);
+      assert.deepEqual([!!via(result, A), !!via(result, B)], want);
     });
 });

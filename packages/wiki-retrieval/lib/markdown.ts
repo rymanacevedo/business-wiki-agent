@@ -66,26 +66,52 @@ function shallow(line: string): string {
   }
 }
 
-/** The brackets and parentheses open outside code, and the open code span's backtick run. */
-type Open = { square: number; round: number; code: number };
+/**
+ * What is open across a line: brackets and parentheses outside code, the
+ * open code span's backtick run, and an inline HTML comment, which `marked`
+ * reads to its `-->` or the end of the paragraph, links inside it included.
+ */
+type Open = { square: number; round: number; code: number; comment: boolean };
+
+const closed = (): Open => ({ square: 0, round: 0, code: 0, comment: false });
+
+const balanced = (open: Open) =>
+  open.square + open.round + open.code === 0 && !open.comment;
+
+/** Where the token of `text` at `i` ends, with `open` moved past it. */
+function step(text: string, i: number, open: Open): number {
+  if (open.comment) {
+    if (!text.startsWith("-->", i)) return i + 1;
+    open.comment = false;
+    return i + 3;
+  }
+  const c = text[i];
+  if (c === "`") {
+    let run = 1;
+    while (text[i + run] === "`") run++;
+    if (open.code === 0) open.code = run;
+    else if (open.code === run) open.code = 0;
+    return i + run;
+  }
+  if (open.code > 0) return i + 1;
+  if (c === "\\") return i + 2;
+  if (text.startsWith("<!--", i)) {
+    // `<!-->` and `<!--->` close at once.
+    if (text.startsWith(">", i + 4)) return i + 5;
+    if (text.startsWith("->", i + 4)) return i + 6;
+    open.comment = true;
+    return i + 4;
+  }
+  if (c === "[") open.square++;
+  else if (c === "]") open.square = Math.max(0, open.square - 1);
+  else if (c === "(") open.round++;
+  else if (c === ")") open.round = Math.max(0, open.round - 1);
+  return i + 1;
+}
 
 /** `open` moved past `line`. */
 function scan(line: string, open: Open): void {
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === "`") {
-      let run = 1;
-      while (line[i + run] === "`") run++;
-      if (open.code === 0) open.code = run;
-      else if (open.code === run) open.code = 0;
-      i += run - 1;
-    } else if (open.code > 0) continue;
-    else if (c === "\\") i++;
-    else if (c === "[") open.square++;
-    else if (c === "]") open.square = Math.max(0, open.square - 1);
-    else if (c === "(") open.round++;
-    else if (c === ")") open.round = Math.max(0, open.round - 1);
-  }
+  for (let i = 0; i < line.length;) i = step(line, i, open);
 }
 
 /**
@@ -135,10 +161,23 @@ function dedent(text: string, columns: number): string | null {
 
 /**
  * A line that ends a list item even unindented inside its code, as `marked`
- * reads one: a list marker, heading, fence, thematic break or quote.
+ * reads one: a list marker, heading, fence, quote, HTML start or thematic
+ * break.
  */
 const ENDS_ITEM =
-  /^ {0,3}(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|#{1,6}(?:[ \t]|$)|```|~~~|>|(?:(?:- *){3,}|(?:_ *){3,}|(?:\* *){3,})$)/;
+  /^ {0,3}(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|#{1,6}(?:[ \t]|$)|```|~~~|>|<(?:[a-z].*>|!--)|(?:(?:- *){3,}|(?:_ *){3,}|(?:\* *){3,})$)/;
+
+/**
+ * Whether the line after one whose content is `rest` may continue a list
+ * item unindented, as `marked` lets it: not after a blank line, indented
+ * code, a fence opener, a heading or a thematic break.
+ */
+const lazyAfter = (rest: string) =>
+  rest.trim() !== "" &&
+  dedent(rest, 4) === null &&
+  !/^ {0,3}(?:```|~~~|#{1,6}(?:[ \t]|$)|(?:(?:- *){3,}|(?:_ *){3,}|(?:\* *){3,})$)/.test(
+    rest
+  );
 
 /**
  * `line` past the containers of `path` it continues: `rest` is what follows
@@ -146,6 +185,7 @@ const ENDS_ITEM =
  * list item up to the first quote; a quote needs its `>`. With `lazy`, an
  * unindented line continues the list items it falls short of, as `marked`
  * reads code in a list item, unless a quote is inside them or it ends them.
+ * The caller says whether the previous line allows that (`lazyAfter`).
  */
 function enter(
   line: string,
@@ -174,6 +214,27 @@ function enter(
   return { rest, depth: path.length };
 }
 
+/**
+ * Where a list item opened by the marker ending at `end` (past its one
+ * space) puts its content, as `marked` reads it: past the spaces after the
+ * marker when there are one to four and text follows, else one column in.
+ */
+function itemContent(
+  rest: string,
+  end: number
+): { indent: number; rest: string } {
+  // Columns from the end of the marker, a tab reaching the next multiple of 4.
+  const marker = end - 1;
+  let col = marker;
+  let i = marker;
+  for (; rest[i] === " " || rest[i] === "\t"; i++)
+    col = rest[i] === " " ? col + 1 : col + 4 - (col % 4);
+  const spaces = col - marker;
+  if (i === rest.length || spaces > 4)
+    return { indent: end, rest: rest.slice(end) };
+  return { indent: marker + spaces, rest: rest.slice(i) };
+}
+
 /** `path` extended by the container markers `rest` opens, and what follows them. */
 function open(
   rest: string,
@@ -183,12 +244,14 @@ function open(
   if (end < 0) return { rest, path };
   const out = [...path];
   for (; end > 0; end = markerEnd(rest, 0)) {
-    out.push(
-      rest.slice(0, end).includes(">")
-        ? { quote: true }
-        : { quote: false, indent: end }
-    );
-    rest = past(rest, end);
+    if (rest.slice(0, end).includes(">")) {
+      out.push({ quote: true });
+      rest = past(rest, end);
+    } else {
+      const item = itemContent(rest, end);
+      out.push({ quote: false, indent: item.indent });
+      rest = item.rest;
+    }
   }
   return { rest, path: out };
 }
@@ -273,7 +336,7 @@ function chunks(markdown: string): string[] {
   const out: string[] = [];
   let current: string[] = [];
   let size = 0;
-  let spans: Open = { square: 0, round: 0, code: 0 };
+  let spans = closed();
   /** The containers the previous line left open, as far as they are known. */
   let containers: readonly Container[] = [];
   /** The open raw block: the containers it sits in and what closes it. */
@@ -285,14 +348,17 @@ function chunks(markdown: string): string[] {
   /** The previous line past its containers was blank or a heading, or indented code. */
   let codeMayOpen = true;
   let inCode = false;
+  /** Inside a raw block, the next line may continue its list items unindented. */
+  let lazy = false;
   /** The chunk was cut mid-paragraph inside a list item and opened outside it. */
   let detached = false;
   for (const unbounded of markdown.split("\n")) {
     const line = shallow(unbounded);
     const empty = line.trim() === "";
     if (raw !== null) {
-      const { rest, depth } = enter(line, raw.path, !blank);
+      const { rest, depth } = enter(line, raw.path, lazy);
       if (depth === raw.path.length) {
+        lazy = lazyAfter(rest);
         if (raw.closes(rest)) {
           containers = raw.path;
           raw = null;
@@ -316,8 +382,7 @@ function chunks(markdown: string): string[] {
     const code: boolean =
       !empty && (codeMayOpen || inCode) && dedent(opened.rest, 4) !== null;
     const shallowIndent = /^ {0,3}\S/.test(line);
-    const balanced = spans.square + spans.round + spans.code === 0;
-    const at = blank ? shallowIndent : balanced;
+    const at = blank ? shallowIndent : balanced(spans);
     // `marked` reads a list item's lines one at a time, so a paragraph that
     // an HTML block may only interrupt unindented is one outside list items.
     const inParagraph = !codeMayOpen && opened.path.at(-1)?.quote !== false;
@@ -333,29 +398,37 @@ function chunks(markdown: string): string[] {
       !empty &&
       ((at && size + line.length > MAX_CHUNK) ||
         size > MAX_OPEN ||
-        (detached && reopen !== null && block && balanced))
+        (detached && reopen !== null && block && balanced(spans)))
     ) {
       out.push(current.join("\n"));
       // Mid-paragraph in a list item, the chunk opens outside it, where a
       // long paragraph reads in linear time, until the next block in the
       // item, which opens a chunk back inside it.
       detached = reopen !== null && !block;
-      current = code
-        ? []
-        : reopen && block
-          ? [reopen]
-          : shallowIndent && !detached
-            ? []
-            : ["."];
+      // A cut inside an inline comment (forced: it blocks the others)
+      // reopens it, so the rest of it is still no Link.
+      const comment = spans.comment;
+      current = comment
+        ? [`${reopen ?? "."} <!--`]
+        : code
+          ? []
+          : reopen && block
+            ? [reopen]
+            : shallowIndent && !detached
+              ? []
+              : ["."];
       size = 0;
-      spans = { square: 0, round: 0, code: 0 };
+      spans = { ...closed(), comment };
     }
     containers =
       empty && entered.depth === containers.length ? containers : opened.path;
-    if (closes) raw = { path: containers, closes };
-    if (empty) spans = { square: 0, round: 0, code: 0 };
-    else if (!code && !(closes && /^[`~]/.test(unindented(opened.rest)!)))
-      scan(line, spans);
+    if (closes) {
+      raw = { path: containers, closes };
+      lazy = lazyAfter(opened.rest);
+    }
+    if (empty) spans = closed();
+    // A raw block's opener is part of the block: nothing in it stays open.
+    else if (!code && !closes) scan(line, spans);
     inCode = code || (inCode && empty);
     codeMayOpen = code || NOT_PROSE.test(opened.rest);
     current.push(line);
@@ -367,40 +440,41 @@ function chunks(markdown: string): string[] {
 
 /**
  * Where to cut `text` so the first piece is at most `MAX_INLINE` long: the
- * last whitespace outside brackets, parentheses and code spans, so a link or
- * a Citation is never split; failing that, at the limit.
+ * last whitespace outside brackets, parentheses, code spans and comments, so
+ * a link or a Citation is never split; failing that, at the limit. `comment`
+ * says whether an inline comment is open at the cut.
  */
-function cutAt(text: string): number {
+function cutAt(text: string): { cut: number; comment: boolean } {
+  const open = closed();
   let cut = MAX_INLINE;
-  let square = 0;
-  let round = 0;
-  let code = 0;
-  for (let i = 0; i < MAX_INLINE; i++) {
-    const c = text[i];
-    if (c === "`") {
-      let run = 1;
-      while (text[i + run] === "`") run++;
-      if (code === 0) code = run;
-      else if (code === run) code = 0;
-      i += run - 1;
-    } else if (code > 0) continue;
-    else if (c === "\\") i++;
-    else if (c === "[") square++;
-    else if (c === "]") square = Math.max(0, square - 1);
-    else if (c === "(") round++;
-    else if (c === ")") round = Math.max(0, round - 1);
-    else if (/\s/.test(c) && square === 0 && round === 0) cut = i + 1;
+  let comment = true;
+  let i = 0;
+  while (i < MAX_INLINE) {
+    if (/\s/.test(text[i]!) && balanced(open)) {
+      cut = i + 1;
+      comment = false;
+    }
+    i = step(text, i, open);
   }
-  return cut;
+  // No clean cut: the limit, inside whatever is open there.
+  if (cut === MAX_INLINE) {
+    const at = closed();
+    for (let j = 0; j < MAX_INLINE;) j = step(text, j, at);
+    comment = at.comment;
+  }
+  return { cut, comment };
 }
 
-/** `text` in pieces of at most `MAX_INLINE`, cut by `cutAt`. */
+/**
+ * `text` in pieces of at most `MAX_INLINE`, cut by `cutAt`. A piece cut
+ * inside an inline comment opens with `<!--`, so it stays a comment.
+ */
 function pieces(text: string): string[] {
   const out: string[] = [];
   while (text.length > MAX_INLINE) {
-    const cut = cutAt(text);
+    const { cut, comment } = cutAt(text);
     out.push(text.slice(0, cut));
-    text = text.slice(cut);
+    text = (comment ? "<!--" : "") + text.slice(cut);
   }
   return [...out, text];
 }
