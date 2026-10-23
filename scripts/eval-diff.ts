@@ -1,6 +1,8 @@
 // Join two committed eval runs by eval id into docs/evals/before-after.md and
-// the README table between <!-- eval-diff:start --> and <!-- eval-diff:end -->.
-// Usage: bun scripts/eval-diff.ts <before-label> <after-label> [--root <repo>]
+// the README table between <!-- eval-diff:start --> and <!-- eval-diff:end -->,
+// or, with --block <name>, between <!-- eval-diff:<name>:start --> and
+// <!-- eval-diff:<name>:end -->.
+// Usage: bun scripts/eval-diff.ts <before-label> <after-label> [--block <name>] [--root <repo>]
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
@@ -23,12 +25,18 @@ async function exists(path: string): Promise<boolean> {
 async function main(): Promise<number> {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
-    options: { root: { type: "string" } },
+    options: { root: { type: "string" }, block: { type: "string" } },
   });
   const [beforeLabel, afterLabel] = positionals;
   if (!beforeLabel || !afterLabel || positionals.length !== 2) {
     console.error(
-      "Usage: bun scripts/eval-diff.ts <before-label> <after-label> [--root <repo>]"
+      "Usage: bun scripts/eval-diff.ts <before-label> <after-label> [--block <name>] [--root <repo>]"
+    );
+    return 64;
+  }
+  if (values.block !== undefined && !/^[a-z0-9-]+$/.test(values.block)) {
+    console.error(
+      `--block takes a lowercase slug (letters, digits, hyphens), not "${values.block}"`
     );
     return 64;
   }
@@ -39,8 +47,17 @@ async function main(): Promise<number> {
       console.error(`No run docs/evals/runs/${label}/`);
       return 1;
     }
+  const block = values.block;
+  const blockName = block === undefined ? "eval-diff" : `eval-diff:${block}`;
   // Rows corrected between the runs (docs/evals/triage.md, "Applied in #28").
-  const fixesFile = join(root, "docs/evals/dataset-fixes.json");
+  // A named block reads its own list, dataset-fixes.<name>.json, if any: the
+  // default list belongs to the before -> after pair.
+  const fixesFile = join(
+    root,
+    block === undefined
+      ? "docs/evals/dataset-fixes.json"
+      : `docs/evals/dataset-fixes.${block}.json`
+  );
   const datasetFixes = (await exists(fixesFile))
     ? (JSON.parse(await readFile(fixesFile, "utf8")) as DatasetFix[])
     : [];
@@ -58,19 +75,19 @@ async function main(): Promise<number> {
 
   const readme = join(root, "README.md");
   if (!(await exists(readme))) {
-    console.warn("No README.md yet: skipped the eval-diff block");
+    console.warn(`No README.md yet: skipped the ${blockName} block`);
     return 0;
   }
   try {
     await writeFile(
       readme,
-      rewriteReadmeBlock(await readFile(readme, "utf8"), readmeBlock)
+      rewriteReadmeBlock(await readFile(readme, "utf8"), readmeBlock, block)
     );
   } catch (error) {
     console.error((error as Error).message);
     return 1;
   }
-  console.log("Rewrote the README eval-diff block");
+  console.log(`Rewrote the README ${blockName} block`);
   return 0;
 }
 
