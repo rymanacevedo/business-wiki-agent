@@ -23,6 +23,14 @@ Ship the tracer bullet: the `wiki-retrieval` package with lexical Matches only, 
 - `agent/lib/config.ts` gained `retrieval(ctx)`: one instance per namespace, keyed with the store directory, LRU-bounded at 8. `search_wiki` takes `kind` (the five matchable Page kinds), returns `{ rung, hopRan, matches, neighbours, text }`, and projects the text.
 - `page-edits` now exports `splitPage`, so the package does not duplicate it.
 
+- Codex review round 1 (exit 1) raised these, each repaired test-first:
+  - a refresh that throws part-way could leave the index stale for good; the memo version now moves with every change
+  - digit-led identifiers (`1099NEC`, `12A`) were split; they now stay whole
+  - block-style frontmatter lists were not indexed
+  - `flagged` missed flags carrying YAML comments
+  - the deferred spot check
+- Spot check once #54's runs had finished. `WIKI_SEED=full eve eval query/questions/0017 lint/checks/0004 safety/runtime/rows/0000`: 3 of 3 pass (23 gates; the cash row was judged faithful and cited). The run directory was not kept.
+
 ## Findings worth remembering
 
 - `fixtures/full` is 109 sections, not 108. The research counted without the 300-token split, which fires once (the 2026-09-30 bank statement's Transactions section).
@@ -35,7 +43,6 @@ Nothing yet; the PR is a draft awaiting review.
 
 ## Open questions
 
-- The AC's three-row slice spot check was deferred because the Gateway is shared with #54's eval run.
 - `CLERK_RETRIEVAL_NEIGHBOURHOOD` and `CLERK_RETRIEVAL_EMBEDDINGS` are not wired yet (#57, #58).
 
 ## Artifacts
