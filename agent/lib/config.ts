@@ -44,13 +44,15 @@ const RETRIEVALS = 8;
 const retrievals = new Map<string, Retrieval>();
 
 /**
- * The embedding adapter: the Gateway's (with `AI_GATEWAY_API_KEY`) unless
- * `CLERK_RETRIEVAL_EMBEDDINGS=0` makes retrieval lexical-only.
+ * The embedding adapter: none, so retrieval is lexical-only, unless
+ * `CLERK_RETRIEVAL_EMBEDDINGS=1` turns on the Gateway's (with
+ * `AI_GATEWAY_API_KEY`). The after runs cut embeddings under the
+ * pre-registered rule (docs/evals/README.md, Retrieval); the adapter stays.
  */
 export function retrievalEmbed() {
-  return process.env.CLERK_RETRIEVAL_EMBEDDINGS === "0"
-    ? undefined
-    : gatewayEmbed;
+  return process.env.CLERK_RETRIEVAL_EMBEDDINGS === "1"
+    ? gatewayEmbed
+    : undefined;
 }
 
 /**
