@@ -1,4 +1,4 @@
-# 0036: Query eval Rung metrics and the one instruction sentence
+# 0040: Query eval Rung metrics and the one instruction sentence
 
 - **When**: 2026-10-23
 - **Agent**: Claude Code (Claude Opus 5.5), implementer under the spec #53 orchestrator

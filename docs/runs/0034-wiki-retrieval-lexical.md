@@ -42,6 +42,20 @@ Ship the tracer bullet: the `wiki-retrieval` package with lexical Matches only, 
   - Links: `marked` reads at most 16,000 body characters (it is quadratic on unclosed emphasis: 130 s for a 240 KB body). A body it cannot lex (a stack overflow on deep blockquotes) carries no body Links, and its frontmatter Links stay.
   - Embeddings: each input is cut to 8,000 UTF-8 bytes, under the model's 8,191-token limit, so one long one-line section (or Query) can no longer fail its batch and degrade every search. The largest fixture section is 1,692 bytes, so the committed caches are unchanged.
   - 20 tests: self, mutual and flow cycles, aliases in `flags`, 2,000-deep nesting, three fan-outs, deep blockquotes, quadratic emphasis, nested lists, a 200 KB section, an over-long Query, and a corrupt store entry. `bun run check`: exit 0, 592 tests. Still 109 sections; the snapshots are unchanged.
+- The combined review on 78cf852 (56+57+58+61+53, base origin/main) exited 1. Round 4's alias blocker was gone. Round 5 had added a new P2: `links.ts` read only the first 16,000 body characters, so a long ordinary Page lost its late Links and its reference definitions. The P1, Lint on `search_wiki`, belonged to #59.
+- Round 6 (the fifth and last approved repair round) replaced the cutoff with `lib/markdown.ts`, which reads the whole body in bounded pieces. Tests came first: a late inline link, a late reference definition, and a list item with a 500 KB paragraph all failed on the old code. Profiling turned up four superlinear spots in `marked`:
+  - its inline pass, on emphasis runs and escapes
+  - its block pass, on a long paragraph, worst inside a list item: 18 KB took 3.2 s and 36 KB took 30 s, so even the old 16 KB cap was slow
+  - recursion on one line of nested markers
+  - `walkTokens`, which is quadratic in the token count through `concat`
+- The bounds:
+  - chunks of about 4,000 characters, cut before a top-level block that follows a blank line, or inside one long block before a line with no link or code span open. A line indented 4+ spaces gets a leading text line so it is not read as code. No cut falls inside a fence, an HTML comment or a `<pre>` block.
+  - reference definitions shared across chunks
+  - 1,000-character inline pieces cut at whitespace outside brackets, parentheses and code spans
+  - at most 32 container markers on a line
+  - an iterative token walk
+- The fix was attacked with 56 shapes (late links in long lists, after and inside huge code blocks, unclosed fences, HTML comments, tables, 240 KB emphasis, escapes, backticks, links and brackets, 60,000-line paragraphs, list items, one-line nested markers). All were correct and the slowest took 750 ms, except one: 5,000 nested `[` around one link loses that link. Link and Citation sets match a whole-body `marked` parse on 170 fixture, corpus and docs Pages, on 40 concatenations of them, and on 300 random 50 to 70 KB bodies.
+- PRs #70 (#59) and #73 (#60) were then merged into ticket/56 through GitHub, so PR #67 now ships 56+57+58+59+60+61. Run entry 0036-query-rung-metrics was renumbered to 0040. `bun run check`: exit 0, 629 tests.
 - Spot check once #54's runs had finished. `WIKI_SEED=full eve eval query/questions/0017 lint/checks/0004 safety/runtime/rows/0000`: 3 of 3 pass (23 gates; the cash row was judged faithful and cited). The run directory was not kept.
 
 ## Findings worth remembering
@@ -52,7 +66,7 @@ Ship the tracer bullet: the `wiki-retrieval` package with lexical Matches only, 
 
 ## What the human checked
 
-Nothing yet: PR #67 is a draft with one unresolved review finding.
+Nothing yet: PR #67 is a draft pending the final combined review.
 
 ## Open questions
 
