@@ -1,7 +1,7 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { MATCH_KINDS, renderResult } from "../../packages/wiki-retrieval";
-import { retrieval } from "../lib/config";
+import { retrieval, retrievalNeighbourhood } from "../lib/config";
 
 export default defineTool({
   description:
@@ -18,7 +18,11 @@ export default defineTool({
   }),
   label: { start: ({ query }) => `Search the Wiki for "${query}"` },
   async execute({ query, kind }, ctx) {
-    const result = await retrieval(ctx).search({ query, kind });
+    const result = await retrieval(ctx).search({
+      query,
+      kind,
+      neighbourhood: retrievalNeighbourhood(),
+    });
     const paths = (role: "match" | "neighbour") =>
       result.pages.filter((p) => p.role === role).map((p) => p.path);
     return {

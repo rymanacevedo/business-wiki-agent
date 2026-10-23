@@ -29,7 +29,7 @@ export type MemoPage = {
   kind: string;
   status: string;
   flags: string[];
-  /** The Page's raw frontmatter lines and body, for the Link table to come. */
+  /** The Page's raw frontmatter lines and body, for the Link table. */
   frontmatter: string[];
   body: string[];
   sections: Section[];
