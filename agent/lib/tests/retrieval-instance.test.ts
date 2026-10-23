@@ -53,11 +53,14 @@ test("only the 8 most recently used instances are kept", () => {
   assert.notEqual(retrieval(session("s1")), second);
 });
 
-test("embeddings come from the Gateway unless CLERK_RETRIEVAL_EMBEDDINGS=0", () => {
+test("retrieval is lexical-only unless CLERK_RETRIEVAL_EMBEDDINGS=1 (the after runs cut embeddings)", () => {
   delete process.env.CLERK_RETRIEVAL_EMBEDDINGS;
-  assert.equal(retrievalEmbed(), gatewayEmbed);
-  process.env.CLERK_RETRIEVAL_EMBEDDINGS = "1";
-  assert.equal(retrievalEmbed(), gatewayEmbed);
+  assert.equal(retrievalEmbed(), undefined);
   process.env.CLERK_RETRIEVAL_EMBEDDINGS = "0";
   assert.equal(retrievalEmbed(), undefined);
+  process.env.CLERK_RETRIEVAL_EMBEDDINGS = "true";
+  assert.equal(retrievalEmbed(), undefined);
+  process.env.CLERK_RETRIEVAL_EMBEDDINGS = "1";
+  assert.equal(retrievalEmbed(), gatewayEmbed);
+  delete process.env.CLERK_RETRIEVAL_EMBEDDINGS;
 });

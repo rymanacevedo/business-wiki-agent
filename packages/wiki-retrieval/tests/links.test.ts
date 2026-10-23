@@ -237,3 +237,122 @@ ${filler}
     );
   });
 });
+
+describe("code inside containers on a long Page", () => {
+  const FAKE = "summaries/2026-08-31-bank-statement-tidewater.md";
+  const REAL = "summaries/2026-09-12-invoice-cascade-parts-4472.md";
+  const fake = `[Bank](../${FAKE})`;
+  const real = `[Invoice 4472](../${REAL})`;
+  /** 3,000 copies of `line`: past the cut a chunk is forced at. */
+  const many = (line: string) =>
+    Array.from({ length: 3000 }, () => `${line} line`).join("\n");
+
+  // Each body holds a code block longer than the forced cut, a link-looking
+  // line at its end, and a real Link after it. A whole-body Markdown parse
+  // reads only the real one.
+  const BODIES: Record<string, string> = {
+    "a fence in a blockquote": `> \`\`\`\n${many("> code")}\n> ${fake}\n> \`\`\`\n\n${real}`,
+    "a tilde fence in a blockquote": `> ~~~\n${many("> code")}\n> ${fake}\n> ~~~\n\n${real}`,
+    "a fence two quotes deep": `> > \`\`\`\n${many("> > code")}\n> > ${fake}\n> > \`\`\`\n\n${real}`,
+    "a fence in a list item in a quote": `> - \`\`\`\n${many(">   code")}\n>   ${fake}\n>   \`\`\`\n\n${real}`,
+    "a fence in a quote in a list item": `- > \`\`\`\n${many("  > code")}\n  > ${fake}\n  > \`\`\`\n\n${real}`,
+    "a fence opening a list item": `- \`\`\`\n${many("  code")}\n  ${fake}\n  \`\`\`\n\n${real}`,
+    "a fence in an ordered item": `1.  \`\`\`\n${many("    code")}\n    ${fake}\n    \`\`\`\n\n${real}`,
+    "a fence in a nested list item": `- a\n  - \`\`\`\n${many("    code")}\n    ${fake}\n    \`\`\`\n\n${real}`,
+    "a fence on an item's continuation line": `- a\n\n    - b\n\n      \`\`\`\n${many("      code")}\n      ${fake}\n      \`\`\`\n\n${real}`,
+    "a longer fence holding a shorter one": `> \`\`\`\`\n> \`\`\`\n${many("> code")}\n> ${fake}\n> \`\`\`\`\n\n${real}`,
+    "a fence with quoted blank lines": `> \`\`\`\n${many("> code\n>")}\n> ${fake}\n> \`\`\`\n\n${real}`,
+    "an indented fence in a quote": `>    \`\`\`\n${many(">    code")}\n>    ${fake}\n>    \`\`\`\n\n${real}`,
+    "a raw pre block in a quote": `> <pre>\n${many("> code")}\n> ${fake}\n> </pre>\n\n${real}`,
+    "a comment in a quote": `> <!--\n${many("> code")}\n> ${fake}\n> -->\n\n${real}`,
+    "an unclosed fence the quote ends": `> \`\`\`\n${many("> code")}\n> ${fake}\n\n${many("prose")}\n${real}`,
+    "a fence after a quote and a tab": `>\t\`\`\`\n${many(">\tcode")}\n>\t${fake}\n>\t\`\`\`\n\n${real}`,
+    "an item's fence holding an unindented line": `- a\n\n  \`\`\`\n${many("  code")}\n${fake}\n  \`\`\`\n\n${real}`,
+    "indented code": `Prose.\n\n${many("    code")}\n    ${fake}\n\n${real}`,
+    "indented code holding quote markers": `${many("    > code")}\n    > ${fake}\n\n${real}`,
+    "a pre block after a long paragraph in a list item": `- a\n${many("  prose")}\n  <pre>\n${many("  code")}\n  ${fake}\n  </pre>\n\n${real}`,
+    "a pre block after a quote and a tab": `>\tprose\n>\t<pre>\n${many(">\tcode")}\n>\t${fake}\n>\t</pre>\n\n${real}`,
+    "an inline comment across a chunk cut": `Prose before <!--\n${many("comment")}\n${fake}\n-->\nmore prose\n\n${real}`,
+    "an inline comment across a piece cut": `${"word ".repeat(300)}<!-- ${"word ".repeat(300)}${fake} -->${" word".repeat(50)}\n\n${many("prose")}\n\n${real}`,
+    "an unclosed fence the next item ends": `- \`\`\`\n${many("  code")}\n  ${fake}\n- next\n${many("  prose")}\n  ${real}`,
+  };
+
+  for (const [name, body] of Object.entries(BODIES))
+    test(`${name}: the code carries no Link, the Link after it does`, async () => {
+      await store.write(
+        NEW,
+        `---\ntitle: Pay invoice zquorblat\nkind: obligation\nstatus: active\nflags: []\n---\n\n${body}\n`,
+        { etag: null }
+      );
+      assert.ok((await store.read(NEW))!.body.length > 16_000);
+      const result = await createRetrieval({ store }).search({
+        query: "zquorblat",
+        kind: "obligation",
+        limit: 1,
+        neighbourhood: true,
+      });
+      assert.equal(result.pages[0].path, NEW);
+      assert.equal(via(result, FAKE), undefined, "no Link from code");
+      assert.ok(via(result, REAL), "the real Link is kept");
+    });
+});
+
+describe("list items as marked reads them: padding and lazy lines", () => {
+  const A = "summaries/2026-08-31-bank-statement-tidewater.md";
+  const B = "summaries/2026-09-12-invoice-cascade-parts-4472.md";
+  const many = (line: string) =>
+    Array.from({ length: 3000 }, () => `${line} line`).join("\n");
+
+  // `want` is what a whole-body parse links: [A, B] for the link-looking
+  // lines in body order.
+  const CASES: Array<{ name: string; body: string; want: [boolean, boolean] }> =
+    [
+      {
+        // Content starts at column 3, so the two-space lines leave the item
+        // and end its fence; the second fence then holds B.
+        name: "a bullet and two spaces",
+        body: `-  \`\`\`\n${many("  content")}\n  [A](../${A})\n  \`\`\`\n\n[B](../${B})`,
+        want: [true, false],
+      },
+      {
+        name: "an ordered marker and three spaces",
+        body: `1.   \`\`\`\n${many("     content")}\n     [A](../${A})\n     \`\`\`\n\n[B](../${B})`,
+        want: [false, true],
+      },
+      {
+        // Five spaces: the content starts one column in, as indented code.
+        name: "a bullet and five spaces",
+        body: `-     \`\`\`\n  content\n\n${many("      content")}\n      [A](../${A})\n\n[B](../${B})`,
+        want: [false, true],
+      },
+      {
+        // The quote's lines without `>` still continue its list item, so
+        // A is code; the dedented fence leaves the quote and holds B.
+        name: "a list item's fence in a quote, continued without `>`",
+        body: `> - \`\`\`\n${many("  code")}\n  [A](../${A})\n  \`\`\`\n\n[B](../${B})`,
+        want: [false, false],
+      },
+      {
+        name: "an ordered item's fence in a quote, closed back inside it",
+        body: `> 1. \`\`\`\n${many("   code")}\n   [A](../${A})\n>    \`\`\`\n\n[B](../${B})`,
+        want: [false, true],
+      },
+    ];
+
+  for (const { name, body, want } of CASES)
+    test(`${name}: the Links are the ones a whole-body read finds`, async () => {
+      await store.write(
+        NEW,
+        `---\ntitle: Pay invoice zquorblat\nkind: obligation\nstatus: active\nflags: []\n---\n\n${body}\n`,
+        { etag: null }
+      );
+      const result = await createRetrieval({ store }).search({
+        query: "zquorblat",
+        kind: "obligation",
+        limit: 1,
+        neighbourhood: true,
+      });
+      assert.equal(result.pages[0].path, NEW);
+      assert.deepEqual([!!via(result, A), !!via(result, B)], want);
+    });
+});

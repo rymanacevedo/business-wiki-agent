@@ -1,7 +1,7 @@
 // The retrieval bench (spec #53, eval story; decision #49 item 11): the
 // module run directly over a Wiki for every Query row with `cites`, no agent
 // and no judge, scored by mean reciprocal rank, one knob at a time.
-import { matches, type Pattern } from "../../packages/answer-checks";
+import { citesPath, type Pattern } from "../../packages/answer-checks";
 import {
   createRetrieval,
   type Embed,
@@ -27,23 +27,6 @@ export function benchRows(
       query: c.prompts.at(-1)!,
       cites: [...c.cites],
     }));
-}
-
-/**
- * A `cites` alternative that is a Source id: the Corpus's date-prefixed
- * file stem (`2026-09-12-invoice-cascade-parts-4471`), no folder, no `.md`
- * in any case. Anything else is a path pattern, a case-insensitive substring.
- */
-const SOURCE_ID = /^\d{4}-\d{2}-\d{2}-[a-z0-9.-]+$/i;
-const isSourceId = (p: string) => SOURCE_ID.test(p) && !/\.md$/i.test(p);
-
-/** One `cites` entry against one path: a Source id names its summary Page exactly. */
-function entryMatches(pattern: Pattern, path: string): boolean {
-  if (typeof pattern !== "string")
-    return pattern.some((p) => entryMatches(p, path));
-  return isSourceId(pattern)
-    ? path.toLowerCase() === `summaries/${pattern.toLowerCase()}.md`
-    : matches(pattern, path);
 }
 
 export type EntryRung = "lexical" | "embedding" | "hop";
@@ -75,7 +58,7 @@ export function rankRow(
   }: { rung?: "lexical" | "embedding"; lexicalMatches?: readonly string[] } = {}
 ): RankedRow {
   const entries = cites.map((pattern) => {
-    const i = pages.findIndex((p) => entryMatches(pattern, p.path));
+    const i = pages.findIndex((p) => citesPath(pattern, p.path));
     if (i === -1) return { pattern, position: null, rung: null };
     const page = pages[i]!;
     const reached: EntryRung =

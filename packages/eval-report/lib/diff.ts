@@ -64,11 +64,13 @@ const failedGates = (c: CaseReport | undefined) =>
         .map((g) => g.name)
         .join("; ") || "none";
 
+/** A Markdown table; a pipe inside a cell (a gate's any-of pattern) is escaped. */
 function table(head: string[], rows: string[][]): string {
+  const cell = (text: string) => text.replaceAll("|", "\\|");
   return [
-    `| ${head.join(" | ")} |`,
+    `| ${head.map(cell).join(" | ")} |`,
     `| ${head.map(() => "---").join(" | ")} |`,
-    ...rows.map((r) => `| ${r.join(" | ")} |`),
+    ...rows.map((r) => `| ${r.map(cell).join(" | ")} |`),
   ].join("\n");
 }
 

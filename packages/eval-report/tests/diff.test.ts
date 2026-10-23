@@ -329,3 +329,32 @@ test("a self-diff of the committed retrieval-before run reads the retrieval rows
     assert.ok(markdown.includes(line), line);
   assert.ok(markdown.includes("| **total** | 73 |"), "73 cases in all");
 });
+
+test("a gate name holding a pipe stays in its cell", () => {
+  const piped: Run = {
+    label: "after",
+    slices: [
+      ...after.slices,
+      {
+        label: "after",
+        slice: "lint",
+        cases: [
+          row("lint/0000", {
+            verdict: "failed",
+            gates: [
+              { name: "score [includes unpaid | unconfirmed]", passed: false },
+            ],
+          }),
+        ],
+      },
+    ],
+  };
+  const { markdown } = diffRuns(before, piped);
+
+  assert.ok(
+    markdown.includes(
+      "| lint/0000 | (not run) | score [includes unpaid \\| unconfirmed] |"
+    ),
+    markdown
+  );
+});

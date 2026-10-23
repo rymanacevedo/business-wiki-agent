@@ -1,7 +1,7 @@
 // Join two committed eval runs by eval id into docs/evals/before-after.md and
 // the README table between <!-- eval-diff:start --> and <!-- eval-diff:end -->,
-// or, with --block <name>, between <!-- eval-diff:<name>:start --> and
-// <!-- eval-diff:<name>:end -->.
+// or, with --block <name>, into docs/evals/before-after.<name>.md and between
+// <!-- eval-diff:<name>:start --> and <!-- eval-diff:<name>:end -->.
 // Usage: bun scripts/eval-diff.ts <before-label> <after-label> [--block <name>] [--root <repo>]
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -66,12 +66,13 @@ async function main(): Promise<number> {
     await readRun(runs, afterLabel),
     datasetFixes
   );
-  const page = join(root, "docs/evals/before-after.md");
+  // A named block has its own page, so the default pair's record stays.
+  const pageName =
+    block === undefined ? "before-after.md" : `before-after.${block}.md`;
+  const page = join(root, "docs/evals", pageName);
   await mkdir(dirname(page), { recursive: true });
   await writeFile(page, markdown);
-  console.log(
-    `Wrote docs/evals/before-after.md (${beforeLabel} -> ${afterLabel})`
-  );
+  console.log(`Wrote docs/evals/${pageName} (${beforeLabel} -> ${afterLabel})`);
 
   const readme = join(root, "README.md");
   if (!(await exists(readme))) {

@@ -31,6 +31,7 @@ established, and shows its evals, traces, and the failures they caught.
   them needs no account: the per-slice JSON and each run's `results.jsonl`
   under [`docs/evals/runs/`](docs/evals/runs/), the
   [before/after page](docs/evals/before-after.md), the
+  [retrieval before/after page](docs/evals/before-after.retrieval.md), the
   [calibration page](docs/evals/calibration.md), and the
   [triage page](docs/evals/triage.md).
 
@@ -90,6 +91,20 @@ it writes and maintains itself (Karpathy's "LLM wiki" pattern):
   Obligations, Obligations due within 30 days of the Demo Date, and orphan
   Pages. It writes one LINT line to the Log and changes nothing else.
 
+**Retrieval.** The brief asks for "a retrieval step (RAG)". `search_wiki` is
+that step: when the Index does not settle where a fact lives, Clerk searches
+the Wiki's Page sections and gets up to five Matches, each with three
+excerpt lines and their Citations, so its next move is one `read_page`.
+Sections are ranked by keyword (BM25). Two more Rungs are built behind
+switches: semantic Matches (section embeddings through the AI Gateway, fused
+with the keyword ranking by Reciprocal Rank Fusion), and a one-Link hop that
+lists the Neighbourhood, the Pages one Link away from a Match. The
+pre-registered eval rules left both off: embeddings were cut and the hop
+never earned its place ([Retrieval, measured](#retrieval-measured)). Sources
+are never searched or embedded, so `read_source` with Masking stays the only
+way to a Source's text. Lint's flag scans use `list_flagged`, which is
+exhaustive where a ranked search is capped at five.
+
 Trust comes from the shape of the tools, not from promises in the prompt:
 
 - Sources are immutable. The store has no write path under `sources/`.
@@ -118,7 +133,7 @@ flowchart LR
   subgraph Read["Read tools"]
     read_index
     read_page
-    search_wiki
+    search_wiki["search_wiki: the retrieval step<br/>keyword (BM25) Matches, plus semantic<br/>Matches fused by rank (switch, cut by the evals),<br/>one Link hop to the Neighbourhood<br/>(switch, off), Sources excluded"]
     list_flagged
     list_sources
     read_source["read_source<br/>(Masking: SSNs and account<br/>numbers masked before Clerk reads)"]
@@ -144,7 +159,7 @@ flowchart LR
     end
   end
 
-  Clerk -->|"Query: Index first, then Pages"| Read
+  Clerk -->|"Query: Index first, then retrieval, then Pages"| Read
   Clerk -->|"Ingest: one Source at a time"| Read
   Clerk -->|"Ingest: write Pages, Index, Log"| Write
   Clerk -->|"Lint: read everything, one LINT line"| Read
@@ -208,8 +223,9 @@ curl -sN https://business-wiki-agent.vercel.app/eve/v1/session/<sessionId>/strea
 
 [Datasets and evaluators](docs/evals/README.md) has the detail. In short:
 
-- **65 cases in four slices**, each case tagged `normal`, `edge`, or `trap`:
-  Ingest (30, one per Source the `base` seed has not Ingested), Query (17),
+- **73 cases in four slices**, each case tagged `normal`, `edge`, or `trap`:
+  Ingest (30, one per Source the `base` seed has not Ingested), Query (25,
+  eight of them the `retrieval` rows),
   Lint (5), and Safety (13: a Contradiction, PII, Suspicious Content, isolation,
   Supersession and payment Approvals both approved and denied, a
   Contradiction resolved, an Owner-asserted payment, the Inbox, and "ingest
@@ -230,12 +246,98 @@ curl -sN https://business-wiki-agent.vercel.app/eve/v1/session/<sessionId>/strea
   namespace, seeded from `base` (Ingest and Safety at-ingest) or `full`
   (everything else).
 
-The retrieval table below is written by
-`bun run eval:diff retrieval-before retrieval-after --block retrieval`; it is
-empty until the after run lands.
+### Retrieval, measured
+
+Spec #53 added eight Query rows written to be hard for the Index alone: two
+facts that live only in Page bodies, two phrased in words the answer Page
+never uses, two that need a Link from one Page to another, and two
+near-misses that must stay "That isn't in the wiki." The rows were frozen at
+git tag `eval-retrieval-baseline` before any retrieval code existed.
+**The baseline already passed 7 of the 8** with the old substring search:
+every row except the van repair bill (`query-van-repair-bill`), and that one
+found the right Page and left out "unconfirmed". So pass counts could barely
+move. The measurement is in the Rung metrics each Query row records from
+`search_wiki`'s structured output: `searched`, `rung_embedding`,
+`hop_added`, `expected_in_result` and `expected_via_hop_only`
+([the evals page](docs/evals/README.md#retrieval)).
+
+The table is written by
+`bun run eval:diff retrieval-before retrieval-after --block retrieval`.
+`retrieval-before` is the old tool. `retrieval-after` is the new module
+with keyword and semantic Matches fused and the hop off, both invocations,
+all from one commit. Per-row verdicts and the Rung means are on
+[the retrieval before/after page](docs/evals/before-after.retrieval.md),
+under "By tag" and "Labelled scores".
 
 <!-- eval-diff:retrieval:start -->
+
+| Slice     | Cases | Pass rate before | Pass rate after | Mean tool calls | Cost              |
+| --------- | ----- | ---------------- | --------------- | --------------- | ----------------- |
+| ingest    | 30    | 28/30 (93%)      | 29/30 (97%)     | 8.3 → 8.3       | $0.4527 → $0.4510 |
+| lint      | 5     | 5/5 (100%)       | 5/5 (100%)      | 3.6 → 3.8       | $0.0402 → $0.0405 |
+| query     | 25    | 24/25 (96%)      | 21/25 (84%)     | 2.3 → 2.2       | $0.1335 → $0.1329 |
+| safety    | 13    | 12/13 (92%)      | 10/13 (77%)     | 9.5 → 8.7       | $0.2841 → $0.2539 |
+| **total** | 73    | 69/73 (95%)      | 65/73 (89%)     | 6.1 → 6.0       | $0.9106 → $0.8782 |
+
 <!-- eval-diff:retrieval:end -->
+
+What the eight rows did. Each cell gives the verdict, then (where the row
+searched) whether its expected Page was in a result:
+
+| Row                               | Rung tag      | before | after (hybrid)  | lexical-only    | hop on (lexical) |
+| --------------------------------- | ------------- | ------ | --------------- | --------------- | ---------------- |
+| `query-cash-purchases`            | lexical       | pass   | pass, found     | fail, found     | pass, found      |
+| `query-dana-okafor`               | lexical       | pass   | fail, not found | pass, found     | pass, found      |
+| `query-diagnostic-kit`            | semantic      | pass   | pass, found     | pass, not found | pass, not found  |
+| `query-van-repair-bill`           | semantic      | fail   | fail, no search | pass, not found | fail, not found  |
+| `query-ridgeline-bank-evidence`   | neighbourhood | pass   | pass, no search | pass, no search | fail, no search  |
+| `query-august-statement-confirms` | neighbourhood | pass   | pass, no search | pass, no search | pass, no search  |
+| `query-workers-comp`              | absent        | pass   | pass, no search | pass, searched  | pass, no search  |
+| `query-cascade-late-fee`          | absent        | pass   | fail, no search | fail, no search | pass, no search  |
+
+Read it as which Rung answered what, not as retrieval winning:
+
+- **Clerk often answers from the Index and skips `search_wiki`.** It
+  searched in 4 of the 25 Query rows in `retrieval-after` and 6 in
+  `retrieval-after-lexical`. The two Neighbourhood rows were answered without
+  any search in every run: the August statement's summary already names the
+  vendors it lists, so the Index and one `read_page` were enough.
+- **Every verdict flip on these rows is answer wording, not retrieval.** The
+  van repair bill left out "unconfirmed" whichever Page it read. The cash row
+  failed once by giving the right two Pages without their amounts. Ridgeline
+  failed once by saying the statement "shows" the payment instead of
+  confirming it. The late fee row failed once by omitting the exact refusal
+  sentence. Dana Okafor's one hybrid failure was the search itself: Clerk
+  passed `kind: profile`, which kept the lease out of the Matches.
+- **The semantic Rung reached the two semantic rows' Pages; keywords did
+  not.** With embeddings, the diagnostic kit and (in both reruns) the van
+  repair bill searches put the right invoice in the Matches. The lexical-only searches in the main runs did not (one lexical rerun of the van row did). The Index got Clerk there anyway.
+
+**The variant runs.** `retrieval-after-lexical` (`CLERK_RETRIEVAL_EMBEDDINGS=0`,
+Query only) passed 23 of 25, against 21 of 25 for the hybrid
+`retrieval-after` Query slice. `retrieval-after-hop` (lexical-only plus
+`CLERK_RETRIEVAL_NEIGHBOURHOOD=1`, Query only) passed 21 of 25. The hop added a neighbour in all 5 rows that searched, but never supplied a row's expected Page (`expected_via_hop_only` 0 everywhere). Results are in
+[`docs/evals/runs/`](docs/evals/runs/) under those labels, plus the reruns.
+
+**What the pre-registered rules decided** (written before any after run;
+[the rules](docs/evals/README.md#the-decision-rules)):
+
+- **Embeddings are cut.** The rule keeps them only if no `retrieval` row
+  passes lexical-only and fails hybrid. `query-van-repair-bill` did exactly
+  that in 2 of 3 runs of each (lexical pass, pass, fail; hybrid fail, fail,
+  fail). There was also no demonstrated benefit. The cash row's
+  fail-to-pass against lexical-only did not hold (hybrid passed 2 of 3,
+  lexical-only 2 of 3), and the mean `expected_in_result` over the
+  `retrieval` rows tied at 0.33. Three non-retrieval rows also regressed
+  against `retrieval-before` without calling `search_wiki`: the Bayview
+  Contradiction proposed as a change, a Contradiction-resolution row, and a
+  soft judge score on `query-paid-cascade`. That fails the rule's other
+  condition too, as written. The adapter stays: `CLERK_RETRIEVAL_EMBEDDINGS=1`
+  turns it back on, and the default is now lexical-only.
+- **The Neighbourhood stays off and experimental.** It could turn on only by
+  flipping a `retrieval:neighbourhood` row from fail to pass, and both rows
+  already passed lexical-only. With the hop on, the Ridgeline row went from
+  pass to fail without searching.
 
 ## What broke and what changed
 
@@ -589,7 +691,23 @@ run. None of them is trimmed. Each one still open has a follow-up issue.
 - The cost cap is covered by a unit test only.
 - Lint is model-driven.
 - Text-only Sources, with receipts as rough OCR text.
-- No embeddings: Clerk navigates by the Index and a substring search.
+- **Retrieval ships keyword-only.** Embeddings and the Neighbourhood hop
+  are built, tested, and off by default, because the after runs did not earn
+  them (see [Retrieval, measured](#retrieval-measured)).
+- **The judges cannot see bare Source-id Citations.** A judge reads the
+  row's expected Pages, the Index, and the Pages the answer links. A fact
+  cited only as `(src: <id>)` is checked against those, not against the Page
+  that Source id names, so Clerk's choice of Page cannot change what the
+  judge sees. This is deliberate: grading must not depend on the thing
+  under test.
+- **Retrieval runs are single runs** apart from the three reruns of each
+  deciding row. One rerun can move a verdict, as the table shows.
+- **The fixture's Links mostly duplicate its text.** The August statement's
+  summary already names every vendor it corroborates, so the Neighbourhood
+  rows are answerable without the hop.
+- **The Index is small enough to read whole.** At 70 Pages it fits in one
+  `read_index`, so Clerk can often skip `search_wiki`. A larger Wiki is where
+  retrieval would have to earn its place.
 - The Business and Corpus are fictional.
 - LangSmith keeps traces for 14 days.
 - Evals run only against the local store; the deployed Wiki lives in a
