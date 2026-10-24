@@ -33,7 +33,7 @@ the links. Each slot the README leaves for the day is marked
 
 ## On the day, in order
 
-1. [ ] **Extend retention on the three failure traces by 2026-11-01.**
+1. [x] **Extend retention on the three failure traces by 2026-11-01.**
        Follow
        [Extend retention on the three narrated-failure traces by 2026-11-01](https://github.com/rymanacevedo/business-wiki-agent/issues/88):
        post one feedback item to each root run through the API with
@@ -42,7 +42,7 @@ the links. Each slot the README leaves for the day is marked
        few cents, take that issue's fallback: in step 5, link the **after** traces
        for deny and ingest-everything, reword those two lines to "the fix", and
        put the expiry date next to the links.
-2. [ ] **Reseed `demo`** so the Inbox holds the three Sources again:
+2. [x] **Reseed `demo`** so the Inbox holds the three Sources again:
        `VERCEL=1 bun run wiki:seed --ns demo --fixture full --force` (set
        `VERCEL` inline only, never export it).
 3. [ ] **Record the screen capture**, after the submission README is merged on
@@ -71,7 +71,7 @@ the links. Each slot the README leaves for the day is marked
        turn from step 3 (Ingest, then Approve). Put it in the README Traces
        section's happy-path link definition, `[trace-happy]:`, in place of its
        `<!-- submission-day -->` placeholder.
-5. [ ] **Make the three failure share links** in LangSmith project
+5. [x] **Make the three failure share links** in LangSmith project
        `business-wiki-agent-evals`, and put each in its link definition under
        the README Traces list, in place of its `<!-- submission-day -->`
        placeholder. The narrated failures use the same definitions, so each

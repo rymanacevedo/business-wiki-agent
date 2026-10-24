@@ -86,7 +86,7 @@ flowchart LR
 
 Clerk exports OpenTelemetry spans to LangSmith: the run tree, and every chat
 and tool call with its inputs and outputs, over masked Source text only.
-Public links, generated on <!-- submission-day -->:
+Public links, generated on 2026-10-23:
 
 - [Happy path: an Ingest with an approved Supersession][trace-happy], the recording's own turn, in project `business-wiki-agent-production`.
 - [Supersession deny, before the improve step][trace-deny], in project `business-wiki-agent-evals`, like the next two.
@@ -94,9 +94,9 @@ Public links, generated on <!-- submission-day -->:
 - ["Ingest everything new", before the integration review][trace-all].
 
 [trace-happy]: <!-- submission-day -->
-[trace-deny]: <!-- submission-day -->
-[trace-eastside]: <!-- submission-day -->
-[trace-all]: <!-- submission-day -->
+[trace-deny]: https://smith.langchain.com/public/e01ad1a4-a9f3-4434-93e4-8adf228acd7e/r
+[trace-eastside]: https://smith.langchain.com/public/7f5d6b59-e0ee-4032-a4ad-aa176c48f2fa/r
+[trace-all]: https://smith.langchain.com/public/df3cbb7b-0b43-4f0c-9abc-402ef208cd4f/r
 
 LangSmith keeps traces for 14 days; the three failure traces are on extended retention ([#88](https://github.com/rymanacevedo/business-wiki-agent/issues/88)).
 Eval traces carry `eval_run_label` and `eval_case_id` ([the filter](docs/evals/triage.md#after-run-29)).
