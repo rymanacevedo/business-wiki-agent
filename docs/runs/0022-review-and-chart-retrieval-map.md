@@ -31,9 +31,8 @@ The human chose the destination shape (spec plus ticket graph), redirected the r
 
 ## Open questions
 
-- Whether the Gateway offers an embedding model and whether the Blob cap allows a cached index: both open until the research lands; the map records the lexical-only degrade path as the fallback.
+- All three research tickets landed within the session (gists on the map): embeddings are feasible through the Gateway for fractions of a cent, the Blob cap is spent by reseeds rather than traffic, and a hand-rolled section-level BM25 beats the libraries. Still open from them: the Gateway tier of this key, hidden cache prefix versus sibling namespace, and `b` tuning in the eval loop.
 - Whether a long Index should ever be skipped on a Query stays in the map's fog.
-- The GLOSSARY change and this run entry are uncommitted on `main` at the end of the session.
 
 ## Artifacts
 
