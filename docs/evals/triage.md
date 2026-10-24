@@ -455,7 +455,7 @@ Five more review rounds followed. The first four were each fixed test-first in i
 - **What did not change.** No fix was chosen. More wording is unlikely to beat
   variance, a reliable fix (the INGEST result naming the Sources left) has to
   be weighed against the session cap, and a single after run could not show
-  it worked. Listed under "Failures we saw".
+  it worked. Listed among the README's known failures at the time.
 - **After run: still open** ([after trace][a-all]). It failed again, and
   worse. Clerk took the PAID duplicate first, wrote its summary, noted it on
   the 4471 Record as "payment evidence, pending Approval", and logged

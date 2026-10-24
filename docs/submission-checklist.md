@@ -69,17 +69,20 @@ the links. Each slot the README leaves for the day is marked
 4. [ ] **Share the recording's own trace as the happy path.** In LangSmith
        project `business-wiki-agent-production`, make a public share link for the
        turn from step 3 (Ingest, then Approve). Put it in the README Traces
-       section's happy-path item, in place of its `<!-- submission-day -->`
-       placeholder.
+       section's happy-path link definition, `[trace-happy]:`, in place of its
+       `<!-- submission-day -->` placeholder.
 5. [ ] **Make the three failure share links** in LangSmith project
-       `business-wiki-agent-evals`, and put each in its README Traces item, in
-       place of its `<!-- submission-day -->` placeholder:
+       `business-wiki-agent-evals`, and put each in its link definition under
+       the README Traces list, in place of its `<!-- submission-day -->`
+       placeholder. The narrated failures use the same definitions, so each
+       link goes in once:
 
-   - Supersession deny: the **before** trace
+   - Supersession deny (`[trace-deny]:`): the **before** trace
      `00000000-0000-0000-dc7d-5c056b113c6b`.
-   - Eastside, "judge right, checks blind": `query-van-repair-bill` in
-     **`retrieval-after`**, the run ending `…-edab-35165e29179c`.
-   - "Ingest everything new": the **before** trace
+   - Eastside, "judge right, checks blind" (`[trace-eastside]:`):
+     `query-van-repair-bill` in **`retrieval-after`**, the run ending
+     `…-edab-35165e29179c`.
+   - "Ingest everything new" (`[trace-all]:`): the **before** trace
      `00000000-0000-0000-1da5-33d341312aa4`.
 
    Then stamp today's date as the "generated on" date in the README Traces
