@@ -174,7 +174,7 @@ put a Retrieval module behind `search_wiki` and measured what each of its
 Rungs contributes. The decisions are in
 [the eval story for retrieval](https://github.com/rymanacevedo/business-wiki-agent/issues/49).
 The results are in [the retrieval before/after page](before-after.retrieval.md)
-and in the README's [Retrieval, measured](../../README.md#retrieval-measured).
+and in [The four runs](#the-four-runs).
 
 ### The rows and their purpose
 
@@ -243,6 +243,44 @@ were rerun twice under each ranker, labelled `retrieval-after-rerun-2` and
 `-3` and `retrieval-after-lexical-rerun-2` and `-3`. The README's second
 block is `bun run eval:diff retrieval-before retrieval-after --block retrieval`.
 
+What the eight rows did. Each cell gives the verdict, then (where the row
+searched) whether its expected Page was in a result:
+
+| Row                               | Rung tag      | before | after (hybrid)  | lexical-only    | hop on (lexical) |
+| --------------------------------- | ------------- | ------ | --------------- | --------------- | ---------------- |
+| `query-cash-purchases`            | lexical       | pass   | pass, found     | fail, found     | pass, found      |
+| `query-dana-okafor`               | lexical       | pass   | fail, not found | pass, found     | pass, found      |
+| `query-diagnostic-kit`            | semantic      | pass   | pass, found     | pass, not found | pass, not found  |
+| `query-van-repair-bill`           | semantic      | fail   | fail, no search | pass, not found | fail, not found  |
+| `query-ridgeline-bank-evidence`   | neighbourhood | pass   | pass, no search | pass, no search | fail, no search  |
+| `query-august-statement-confirms` | neighbourhood | pass   | pass, no search | pass, no search | pass, no search  |
+| `query-workers-comp`              | absent        | pass   | pass, no search | pass, searched  | pass, no search  |
+| `query-cascade-late-fee`          | absent        | pass   | fail, no search | fail, no search | pass, no search  |
+
+Read it as which Rung answered what, not as retrieval winning:
+
+- **Clerk often answers from the Index and skips `search_wiki`.** It
+  searched in 4 of the 25 Query rows in `retrieval-after` and 6 in
+  `retrieval-after-lexical`. The two Neighbourhood rows were answered without
+  any search in every run: the August statement's summary already names the
+  vendors it lists, so the Index and one `read_page` were enough.
+- **Every verdict flip on these rows is answer wording, not retrieval.** The
+  van repair bill left out "unconfirmed" whichever Page it read. The cash row
+  failed once by giving the right two Pages without their amounts. Ridgeline
+  failed once by saying the statement "shows" the payment instead of
+  confirming it. The late fee row failed once by omitting the exact refusal
+  sentence. Dana Okafor's one hybrid failure was the search itself: Clerk
+  passed `kind: profile`, which kept the lease out of the Matches.
+- **The semantic Rung reached the two semantic rows' Pages; keywords did
+  not.** With embeddings, the diagnostic kit and (in both reruns) the van
+  repair bill searches put the right invoice in the Matches. The lexical-only searches in the main runs did not (one lexical rerun of the van row did). The Index got Clerk there anyway.
+
+**The variant runs.** `retrieval-after-lexical` (`CLERK_RETRIEVAL_EMBEDDINGS=0`,
+Query only) passed 23 of 25, against 21 of 25 for the hybrid
+`retrieval-after` Query slice. `retrieval-after-hop` (lexical-only plus
+`CLERK_RETRIEVAL_NEIGHBOURHOOD=1`, Query only) passed 21 of 25. The hop added a neighbour in all 5 rows that searched, but never supplied a row's expected Page (`expected_via_hop_only` 0 everywhere). Results are in
+[`docs/evals/runs/`](runs/) under those labels, plus the reruns.
+
 ### The decision rules
 
 Written before any after run and applied as written:
@@ -292,3 +330,26 @@ beat its pre-registered default (count rule, floor at a third, no prior), so
 the defaults shipped. Hybrid MRR was 0.470 against 0.425 lexical-only on that
 bench. That is a ranking measurement, not an agent one, and the agent runs
 above are what the embeddings rule reads.
+
+## Limits of these evals
+
+- Single eval runs, so no variance estimate.
+- **Retrieval runs are single runs** apart from the three reruns of each
+  deciding row. One rerun can move a verdict, as [the table](#the-four-runs) shows.
+- The judge's boolean probability is reported by the judge model itself;
+  it is not computed from token probabilities.
+- **The judges cannot see bare Source-id Citations.** A judge reads the
+  row's expected Pages, the Index, and the Pages the answer links. A fact
+  cited only as `(src: <id>)` is checked against those, not against the Page
+  that Source id names, so Clerk's choice of Page cannot change what the
+  judge sees. This is deliberate: grading must not depend on the thing
+  under test.
+- **The fixture's Links mostly duplicate its text.** The August statement's
+  summary already names every vendor it corroborates, so the Neighbourhood
+  rows are answerable without the hop.
+- **The Index is small enough to read whole.** At 70 Pages it fits in one
+  `read_index`, so Clerk can often skip `search_wiki`. A larger Wiki is where
+  retrieval would have to earn its place.
+- Evals run only against the local store; the deployed Wiki lives in a
+  private Vercel Blob store whose Hobby quota (2,000 advanced operations a
+  month) covers seeding and demo sessions, not eval runs.
