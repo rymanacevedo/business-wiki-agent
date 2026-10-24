@@ -1,4 +1,4 @@
-# 0043: Prototype the submission README skeleton
+# 0047: Prototype the submission README skeleton
 
 - **When**: 2026-10-23
 - **Agent**: Claude Code, Claude Opus 5.5
@@ -19,7 +19,7 @@ Work the map's next frontier ticket: show the Owner what the README looks like a
 ## Findings worth remembering
 
 - `bun run eval:diff` writes the docs page first, then exits 1 if the README lacks its marker blocks. The "one before/after table" decision therefore has to keep the markers; A1 folds them into `<details>`.
-- `0042` is used on the unpushed `wayfinder/49-eval-story` branch, so this entry took `0043` to avoid a known collision.
+- First committed as 0043 on a local `main`, then landed as 0047, after the five entries that reached `main` first (0042–0046). The `wayfinder/49-eval-story` entries 0031 and 0042 still need new numbers when they land.
 
 ## What the human checked
 
