@@ -4,7 +4,7 @@
 - **Agent**: Claude Code (Opus 5.5) orchestrating implementer subagents in worktrees
 - **Driving**: `/implement-spec` on [Spec: Retrieval for Clerk](https://github.com/rymanacevedo/business-wiki-agent/issues/53)
 
-Originally 0042 on `wayfinder/49-eval-story`.
+Originally 0042 on `wayfinder/49-eval-story`. Spec #53's spend, $3.77, is the difference between the two credit figures below.
 
 ## Goal
 
@@ -19,7 +19,7 @@ Implement every ticket of spec #53 with the new per-ticket PR flow (`docs/agents
 - **#67's review never passed.** The human approved rounds 3, 4 and 5, and each round's narrow fix produced the next variant: the YAML frontmatter parser, then alias cycles, then a 16,000-character parse cap, then fences inside blockquotes. The human chose to mark #67 ready on their decision. The two code blockers moved to #63, and #63's own spec work was the third.
 - **#63 (PR #74)** fixed both moved blockers test-first, then ran the labelled after-runs. Query went from 24/25 before to 21/25 hybrid, 23/25 lexical-only and 21/25 with the hop on; all cases went from 69/73 to 65/73. The spec's decision rules, applied as written, turned embeddings off by default (`CLERK_RETRIEVAL_EMBEDDINGS=1` turns them on) and kept the Neighbourhood off. The README says retrieval did not help on this corpus.
 - #74's review failed three rounds on narrower marked list and tab variants in the Link chunker. The human chose to mark it ready with the last one filed as #75.
-- Gateway credit went from $16.43 at the start to $12.66, so spec #53 used $3.77; #74's live runs cost $2.27.
+- Gateway credit went from $16.43 at the start to $12.66; #74's live runs cost $2.27.
 
 ## Findings worth remembering
 
