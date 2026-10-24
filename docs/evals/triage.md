@@ -426,7 +426,8 @@ Five more review rounds followed. The first four were each fixed test-first in i
   Pages, and arithmetic on Page figures counts. The row failed only on its
   "unconfirmed" gate. So no check catches a wrong dollar amount that came
   from a fixture Clerk wrote. `fixtures/prototype` and `fixtures/base` are
-  clean, so the `demo` Wiki is unaffected. The fixture is not fixed:
+  clean, but `demo` is seeded from `fixtures/full`, so the deployed Wiki
+  carries the misstatement too. The fixture is not fixed:
   [The full fixture's Eastside summary misstates the rotor line as 2 × 149.00](https://github.com/rymanacevedo/business-wiki-agent/issues/86).
 - **What changed or did not.** Nothing in the agent, judge, or rubric.
 - **After run: unexplained** ([after trace][a-east]). This time the summary

@@ -18,6 +18,8 @@ The Owner ran `implement-spec` on spec #90 under the flow on `main`: one integra
 - **#93:** every one of the 53 run files has exactly one line. Where an entry landed twice (0042–0045 copy 0025, 0028 and the two reviews; 0047 copies the 0043 skeleton), the first-committed file gets the full line and the copy is marked _Thin_.
 - **#94:** 207 lines outside `<details>`, and seven placeholders. The four trace URLs are reference definitions under Traces, so the narrations share them and the count stays at seven rather than ten. The generated blocks sit inside `<!-- prettier-ignore-start/end -->`, because the pre-commit Prettier pass reformats `eval:diff`'s tables. Without the wrapper, even the old README failed the byte-identity check. `scripts/eval-diff.ts` didn't change.
 
+- **The final Codex review** passed both axes with no blockers. Its one advisory was right: triage's Eastside narration said the `demo` Wiki was unaffected by the rotor error, but the checklist and the Quickstart seed `demo` from `fixtures/full`, which carries it. The sentence now says so, and the review was rerun on the fix.
+
 ## Findings worth remembering
 
 - `eval:diff` also rewrites `docs/evals/before-after.md` and `docs/evals/before-after.retrieval.md`, which were already out of sync with what it writes. The retrieval page isn't in `.prettierignore`. Each check run here restored both files afterwards.
