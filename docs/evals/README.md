@@ -233,7 +233,7 @@ EVAL_RUN_LABEL=retrieval-after WIKI_SEED=base bun run eval ingest safety/at-inge
 EVAL_RUN_LABEL=retrieval-after WIKI_SEED=full bun run eval query lint safety/approvals safety/runtime --max-concurrency 2 --timeout 240000
 CLERK_RETRIEVAL_EMBEDDINGS=0 EVAL_RUN_LABEL=retrieval-after-lexical WIKI_SEED=full bun run eval query --max-concurrency 2 --timeout 240000
 # Stage two, over the ranker the embeddings rule selected (lexical-only):
-CLERK_RETRIEVAL_EMBEDDINGS=0 CLERK_RETRIEVAL_NEIGHBOURHOOD=1 EVAL_RUN_LABEL=retrieval-after-hop WIKI_SEED=full bun run eval query --max-concurrency 2 --timeout 240000
+CLERK_RETRIEVAL_EMBEDDINGS=0 CLERK_RETRIEVAL_GRAPH_RAG=1 EVAL_RUN_LABEL=retrieval-after-hop WIKI_SEED=full bun run eval query --max-concurrency 2 --timeout 240000
 ```
 
 The after runs used the module's defaults at that commit: embeddings on and
@@ -278,7 +278,7 @@ Read it as which Rung answered what, not as retrieval winning:
 **The variant runs.** `retrieval-after-lexical` (`CLERK_RETRIEVAL_EMBEDDINGS=0`,
 Query only) passed 23 of 25, against 21 of 25 for the hybrid
 `retrieval-after` Query slice. `retrieval-after-hop` (lexical-only plus
-`CLERK_RETRIEVAL_NEIGHBOURHOOD=1`, Query only) passed 21 of 25. The hop added a neighbour in all 5 rows that searched, but never supplied a row's expected Page (`expected_via_hop_only` 0 everywhere). Results are in
+`CLERK_RETRIEVAL_GRAPH_RAG=1`, Query only) passed 21 of 25. The hop added a neighbour in all 5 rows that searched, but never supplied a row's expected Page (`expected_via_hop_only` 0 everywhere). Results are in
 [`docs/evals/runs/`](runs/) under those labels, plus the reruns.
 
 ### The decision rules

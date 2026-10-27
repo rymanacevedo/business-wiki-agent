@@ -136,6 +136,16 @@ One line per run entry: the decision, then the alternative, then the trade-off. 
 - [0054 Implement spec #90 (the submission README)](0054-implement-submission-readme-spec.md): five tickets on one integration branch; the four trace URLs as shared reference definitions, so the README holds seven placeholders; the generated blocks wrapped in `prettier-ignore` so `eval:diff` stays byte-identical; landed run entries copied word for word, with derived figures kept in their notes. Alternative: inline trace placeholders (ten, not seven); changing `scripts/eval-diff.ts`, which the spec put out of scope. Trade-off: the checklist names README link labels and headings, so renaming one means editing both files.
 - [0055 Submission day, the agent's steps of the checklist](0055-submission-day-links.md): retention extended on the three narrated-failure traces through API feedback, `demo` reseeded, and three public share links plus the date filled in the README. Alternative: the issue #88 fallback (after traces with an expiry date), which wasn't needed. Trade-off: the recording-dependent slots stay open for the Owner.
 
+### Interview preparation
+
+- [0056 Prepare the interview script and repeatable happy path](0056-interview-script-and-happy-path.md): use a separate local namespace and the existing approval eval for rehearsals. Alternative: repeat against the shared deployed demo. Trade-off: a controlled local fixture avoids other visitors' changes, but live model output and approval completion still need rehearsal.
+
+- [0058 Explain the graph implementation](0058-explain-graph-implementation.md): explicitly describe the Neighbourhood as a Page graph and add interview narration. Alternative: retain only the Neighbourhood name. Trade-off: distinguish the implemented capability from its disabled default and the standard demo.
+
+- [0059 Use Graph RAG terminology](0059-use-graph-rag-terminology.md): use the Owner's preferred name in the README and interview script. Alternative: Neighbourhood. Trade-off: configuration identifiers retain their existing names so commands remain valid.
+
+- [0060 Rename the Graph RAG configuration switch](0060-rename-graph-rag-switch.md): use `CLERK_RETRIEVAL_GRAPH_RAG` in code and usage docs. Alternative: retain the old environment name. Trade-off: existing external settings must adopt the new name; runtime defaults remain unchanged.
+
 ### ADRs
 
 - [ADR 0001 The Wiki lives in an app-runtime store, not the Eve sandbox](../adr/0001-wiki-in-app-runtime-store-not-sandbox.md): one `WikiStore`, with a local directory for dev and evals and private Blob when deployed. Alternative: the Eve sandbox, file tools, `defineState`, or the memory provider (all per-session or capped); Neon as the fallback. Trade-off: evals run only locally (the Hobby cap is 2,000 operations a month); no upload through chat.

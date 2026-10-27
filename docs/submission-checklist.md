@@ -45,7 +45,7 @@ the links. Each slot the README leaves for the day is marked
 2. [x] **Reseed `demo`** so the Inbox holds the three Sources again:
        `VERCEL=1 bun run wiki:seed --ns demo --fixture full --force` (set
        `VERCEL` inline only, never export it).
-3. [ ] **Record the screen capture**, after the submission README is merged on
+3. [x] **Record the screen capture**, after the submission README is merged on
        `main`, so the before/after table on screen is the final one. About 2:30,
        voice-over without a script read aloud, uploaded to YouTube as an unlisted
        video. Five beats:
@@ -66,7 +66,7 @@ the links. Each slot the README leaves for the day is marked
    Put the unlisted YouTube URL in the README's Screen recording row, in place
    of its `<!-- submission-day -->` placeholder.
 
-4. [ ] **Share the recording's own trace as the happy path.** In LangSmith
+4. [x] **Share the recording's own trace as the happy path.** In LangSmith
        project `business-wiki-agent-production`, make a public share link for the
        turn from step 3 (Ingest, then Approve). Put it in the README Traces
        section's happy-path link definition, `[trace-happy]:`, in place of its
@@ -88,13 +88,13 @@ the links. Each slot the README leaves for the day is marked
    Then stamp today's date as the "generated on" date in the README Traces
    section, in place of its `<!-- submission-day -->` placeholder.
 
-6. [ ] **Reseed `demo` again** so the Inbox holds the three Sources for the
+6. [x] **Reseed `demo` again** so the Inbox holds the three Sources for the
        Reviewer: `VERCEL=1 bun run wiki:seed --ns demo --fixture full --force`.
        Traces don't depend on the Wiki, so the share links stay valid.
 7. [ ] **Edit "What I checked myself"** in the README to match what you
        actually did, and remove its `<!-- submission-day -->` marker.
 8. [ ] **Check no placeholder is left:** run
        `grep -n 'submission-day' README.md`. It must print nothing.
-9. [ ] **Flip the repository public** on GitHub.
-10. [ ] **Send the links**: the repository, the deployed URL, and the
+9. [x] **Flip the repository public** on GitHub.
+10. [x] **Send the links**: the repository, the deployed URL, and the
         recording.
