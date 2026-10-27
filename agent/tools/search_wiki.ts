@@ -1,7 +1,7 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { MATCH_KINDS, renderResult } from "../../packages/wiki-retrieval";
-import { retrieval, retrievalNeighbourhood } from "../lib/config";
+import { retrieval, retrievalGraphRag } from "../lib/config";
 
 export default defineTool({
   description:
@@ -21,7 +21,7 @@ export default defineTool({
     const result = await retrieval(ctx).search({
       query,
       kind,
-      neighbourhood: retrievalNeighbourhood(),
+      neighbourhood: retrievalGraphRag(),
     });
     const paths = (role: "match" | "neighbour") =>
       result.pages.filter((p) => p.role === role).map((p) => p.path);

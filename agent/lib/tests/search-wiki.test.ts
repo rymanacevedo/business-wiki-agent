@@ -99,18 +99,18 @@ test("nothing found says so", async () => {
   assert.equal(output.text, "No Page matches the query.");
 });
 
-test("CLERK_RETRIEVAL_NEIGHBOURHOOD=1, and only 1, turns the hop on", async () => {
+test("CLERK_RETRIEVAL_GRAPH_RAG=1, and only 1, turns the hop on", async () => {
   const query = "Which purchases did the August bank statement confirm?";
   try {
     for (const value of [undefined, "0", "true", ""]) {
-      if (value === undefined) delete process.env.CLERK_RETRIEVAL_NEIGHBOURHOOD;
-      else process.env.CLERK_RETRIEVAL_NEIGHBOURHOOD = value;
+      if (value === undefined) delete process.env.CLERK_RETRIEVAL_GRAPH_RAG;
+      else process.env.CLERK_RETRIEVAL_GRAPH_RAG = value;
       const off = await tool.execute({ query }, {});
       assert.equal(off.hopRan, false, `value ${value}`);
       assert.deepEqual(off.neighbours, []);
       assert.doesNotMatch(off.text, /Also linked/);
     }
-    process.env.CLERK_RETRIEVAL_NEIGHBOURHOOD = "1";
+    process.env.CLERK_RETRIEVAL_GRAPH_RAG = "1";
     const on = await tool.execute({ query }, {});
     assert.equal(on.hopRan, true);
     assert.equal(on.matches.length + on.neighbours.length, 8);
@@ -122,6 +122,6 @@ test("CLERK_RETRIEVAL_NEIGHBOURHOOD=1, and only 1, turns the hop on", async () =
       new RegExp(`\\n## Also linked \\(${on.neighbours.length}\\)\\n- `)
     );
   } finally {
-    delete process.env.CLERK_RETRIEVAL_NEIGHBOURHOOD;
+    delete process.env.CLERK_RETRIEVAL_GRAPH_RAG;
   }
 });

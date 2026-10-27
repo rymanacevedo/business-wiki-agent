@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clerk, the recording script</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #e9efe2;
+        --rule: #c3d0b8;
+        --ink: #1e2924;
+        --ink-soft: #5f6e64;
+        --stamp: #a8322a;
+        --blue: #355c7d;
+        --script-size: clamp(1.5rem, 1rem + 2.2vw, 2.6rem);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        font-family: "Newsreader", "Iowan Old Style", Georgia, serif;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image: repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent calc(var(--script-size) * 1.45 - 1px),
+          var(--rule) calc(var(--script-size) * 1.45 - 1px),
+          var(--rule) calc(var(--script-size) * 1.45)
+        );
+        background-attachment: fixed;
+        overflow: hidden;
+      }
+
+      .deck {
+        position: relative;
+        height: 100vh;
+        height: 100dvh;
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+      }
+
+      /* Progress rule: a single heavier ledger line that fills as you advance. */
+      .progress {
+        height: 6px;
+        background: var(--rule);
+      }
+      .progress > div {
+        height: 100%;
+        background: var(--ink);
+        width: 0;
+        transition: width 200ms ease-out;
+      }
+
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 0.9rem clamp(1.25rem, 5vw, 4rem) 0;
+        font-size: 1.05rem;
+        color: var(--ink-soft);
+        font-variant-numeric: tabular-nums;
+      }
+      .meta time {
+        color: var(--blue);
+      }
+
+      .stage {
+        display: grid;
+        place-items: center;
+        padding: 1rem clamp(1.25rem, 5vw, 4rem);
+        overflow-y: auto;
+        min-height: 0;
+      }
+
+      /* Each beat is a slip of paper laid on the ledger. */
+      .slide {
+        display: none;
+        width: 100%;
+        max-width: 40ch;
+        padding: 0.9em 1.1em 1em;
+        background: var(--paper);
+        box-shadow:
+          0 0 0 1px var(--rule),
+          0 10px 24px -18px rgba(30, 41, 36, 0.45);
+        font-size: var(--script-size);
+        line-height: 1.45;
+        text-align: center;
+      }
+      .slide.is-current {
+        display: block;
+      }
+
+      .slide p {
+        margin: 0 0 0.65em;
+      }
+      .slide p:last-of-type {
+        margin-bottom: 0;
+      }
+
+      .cover h1 {
+        font-size: 1.25em;
+        font-weight: 500;
+        margin: 0 0 0.4em;
+        letter-spacing: -0.01em;
+      }
+      .cover p {
+        font-size: 0.75em;
+        color: var(--ink-soft);
+      }
+
+      /* The stage direction, set like a rubber stamp on the ledger. */
+      .stamp {
+        display: inline-block;
+        margin: 0 0 0.6em;
+        padding: 0.12em 0.45em;
+        border: 3px solid var(--stamp);
+        border-radius: 4px;
+        color: var(--stamp);
+        font-size: 0.72em;
+        font-weight: 500;
+        font-style: italic;
+        letter-spacing: 0.02em;
+        transform: rotate(-2deg);
+        transform-origin: center;
+        background: var(--paper);
+        user-select: none;
+      }
+
+      /* Presenter notes: outside the script, so they read as a margin check. */
+      .note {
+        margin-top: 1.1em;
+        padding-top: 0.6em;
+        border-top: 3px solid var(--blue);
+        font-size: 0.55em;
+        line-height: 1.4;
+        color: var(--blue);
+      }
+      .note::before {
+        content: "Check before recording. ";
+        font-style: italic;
+      }
+      body.notes-hidden .note {
+        display: none;
+      }
+
+      .keys {
+        padding: 0 clamp(1.25rem, 5vw, 4rem) 0.9rem;
+        font-size: 1rem;
+        color: var(--ink-soft);
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      }
+      .keys kbd {
+        font: inherit;
+        color: var(--ink);
+        border-bottom: 1px solid var(--ink-soft);
+      }
+
+      /* Big invisible targets for clicking or tapping on a second screen. */
+      .tap {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 25%;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        color: transparent;
+      }
+      .tap.prev {
+        left: 0;
+      }
+      .tap.next {
+        right: 0;
+      }
+      .tap:focus-visible {
+        outline: 3px solid var(--blue);
+        outline-offset: -6px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .progress > div {
+          transition: none;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+          overflow: visible;
+        }
+        .deck {
+          display: block;
+          height: auto;
+        }
+        .progress,
+        .meta,
+        .keys,
+        .tap {
+          display: none;
+        }
+        .stage {
+          display: block;
+          padding: 0;
+        }
+        .slide {
+          display: block;
+          max-width: 60ch;
+          font-size: 16pt;
+          page-break-after: always;
+          margin: 2rem auto;
+          box-shadow: none;
+          padding: 0;
+        }
+        .stamp {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck">
+      <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+
+      <div class="meta">
+        <span id="count" aria-live="polite">1 of 15</span>
+        <time
+          id="clock"
+          datetime="PT0S"
+          title="Elapsed since the first slide change"
+          >00:00</time
+        >
+      </div>
+
+      <main class="stage" aria-live="polite">
+        <section class="slide cover">
+          <h1>Clerk, the recording script</h1>
+          <p>
+            Fourteen beats. The timer starts when you leave this slide. Press
+            the right arrow to begin.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            I want to get the story of John. He’s a busy business owner of a
+            small repair business. He struggles with what I would say is
+            “received invoices and dated obligations that he has no idea where
+            things are.
+          </p>
+        </section>
+
+        <section class="slide">
+          <span class="stamp">Go to app</span>
+          <p>
+            We want to try the public demo, go this URL. Have a look around.
+            You’ll notice two things. What is the UI is essentially a check box.
+            And the second portion of this is where there’s a wiki with all the
+            citations as well as documents that point resources.
+          </p>
+          <p class="note">
+            “check box” may be a dictation slip for “chat box”, and “point
+            resources” for “point to Sources”.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            What Clerk does is an owner or operator can run a small business
+            and. For example, an owner can ask, “What’s in my inbox?” And the
+            result is documents that are waiting.
+          </p>
+          <p class="note">There is a stray “and.” after “small business”.</p>
+        </section>
+
+        <section class="slide">
+          <p>
+            I also have the ability to run tool calls that read, write, and also
+            find the information.
+          </p>
+          <p>Which brings me to the retrieval implementation aka RAG.</p>
+        </section>
+
+        <section class="slide">
+          <span class="stamp">Go to README.md</span>
+          <p>
+            You look at the diagram in the readme. You’ll see the total
+            architectural decisions along the way. Being the first start of the
+            diagram. This is the front and UI of how to open, ask questions, use
+            sources, and approve answers. Clerk runs on OpenAI’s GPT-5 Mini on
+            Eve.
+          </p>
+          <p class="note">
+            “front and UI” may be a dictation slip for “front-end UI”.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            To the right of the wiki store you’ll find local files and
+            development through a private Vercel blob when deployed. The main
+            sources can’t be edited. However, the references in the Wiki, the
+            index, log, profile, images can be edited and updated.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            GPT-5 has access to 11 tool calls as well as a special tool called
+            change_fact which requires approval from the owner.
+          </p>
+          <p class="note">
+            The README’s tool table lists 11 tools in total, and change_fact is
+            one of the 11.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            Tracing was also implemented. Clerk in this case is reported by
+            LangSmith using OpenTelemetry. There is a masking layer to make sure
+            that PII is not given during the trace.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            There are 73 cases in 4 groups. 30 on ingest 25 inquiry, 5 on lint
+            and 13 for safety. Each case is smart as normal in an edge case or a
+            trap intended to expose a failure. A queries focus on retrieval. The
+            actual architecture for judging the eval is using a highest judge
+            using Mistral, medium thinking model.
+          </p>
+          <p class="note">
+            “smart as normal” may be “marked as normal”, “A queries” may be “The
+            queries”, and “highest judge” may be “LLM-as-judge”. The README
+            calls the group “Query”, not “inquiry”, and names the judge
+            mistral-medium-3.5.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            Eval run showed noticeable improvement as the follows. For the
+            initial spec, 53 out of the 65 tests were passing, how are after
+            when the EVALS were ran and test your development was used 68 out of
+            the 65 improved.
+          </p>
+          <p class="note">
+            The README says 53 to 60 passes out of 65, so “68 out of the 65”
+            cannot be right. “how are after … test your development” may be
+            “however, after … test-driven development”.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            Now, not every system is perfect and there are decisions that trade
+            off the students. For example, Clerk uses OpenAI’s 5 mini model. The
+            plan initially asked for Claude Sonnet 5.5 and due to cost
+            constraints, this could not be met.
+          </p>
+          <p class="note">
+            “trade off the students” looks like a dictation slip. The README’s
+            reason for dropping Sonnet 5.5 is a 403 access error on the free
+            tier, not cost.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            The LLM as judge was Mistral; however this judge is free to use and
+            will need calibration before it can be trusted. Spending was roughly
+            $13.53 and $3.77 for implementing graph rag.
+          </p>
+          <p class="note">
+            The README records $13.57 for the first spec, not $13.53.
+          </p>
+        </section>
+
+        <section class="slide">
+          <p>
+            The coding assistance used was Fable 5.1 for planning and Opus 5.5
+            for implementation. Codex was set up as an adversarial review.
+          </p>
+        </section>
+
+        <section class="slide cover">
+          <h1>End of script.</h1>
+          <p>
+            Press the left arrow to go back, or <kbd>t</kbd> to reset the timer
+            for another take.
+          </p>
+        </section>
+      </main>
+
+      <div class="keys">
+        <span><kbd>→</kbd> or <kbd>space</kbd> next</span>
+        <span><kbd>←</kbd> back</span>
+        <span><kbd>n</kbd> notes</span>
+        <span><kbd>t</kbd> reset timer</span>
+        <span><kbd>f</kbd> fullscreen</span>
+      </div>
+
+      <button class="tap prev" type="button" aria-label="Previous slide">
+        Previous
+      </button>
+      <button class="tap next" type="button" aria-label="Next slide">
+        Next
+      </button>
+    </div>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const bar = document.getElementById("bar");
+      const count = document.getElementById("count");
+      const clock = document.getElementById("clock");
+      let current = 0;
+      let startedAt = null;
+
+      function fromHash() {
+        const n = parseInt(location.hash.slice(1), 10);
+        return Number.isInteger(n) && n >= 1 && n <= slides.length ? n - 1 : 0;
+      }
+
+      function show(index) {
+        index = Math.max(0, Math.min(slides.length - 1, index));
+        if (index !== 0 && startedAt === null) startedAt = Date.now();
+        slides[current].classList.remove("is-current");
+        current = index;
+        slides[current].classList.add("is-current");
+        bar.style.width = (current / (slides.length - 1)) * 100 + "%";
+        count.textContent = current + 1 + " of " + slides.length;
+        history.replaceState(null, "", "#" + (current + 1));
+      }
+
+      function tick() {
+        if (startedAt === null) return;
+        const s = Math.floor((Date.now() - startedAt) / 1000);
+        const mm = String(Math.floor(s / 60)).padStart(2, "0");
+        const ss = String(s % 60).padStart(2, "0");
+        clock.textContent = mm + ":" + ss;
+        clock.setAttribute("datetime", "PT" + s + "S");
+      }
+
+      function resetTimer() {
+        startedAt = null;
+        clock.textContent = "00:00";
+        clock.setAttribute("datetime", "PT0S");
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        switch (e.key) {
+          case "ArrowRight":
+          case " ":
+          case "PageDown":
+          case "j":
+          case "Enter":
+            e.preventDefault();
+            show(current + 1);
+            break;
+          case "ArrowLeft":
+          case "PageUp":
+          case "k":
+          case "Backspace":
+            e.preventDefault();
+            show(current - 1);
+            break;
+          case "Home":
+            e.preventDefault();
+            show(0);
+            break;
+          case "End":
+            e.preventDefault();
+            show(slides.length - 1);
+            break;
+          case "n":
+            document.body.classList.toggle("notes-hidden");
+            break;
+          case "t":
+            resetTimer();
+            break;
+          case "f":
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen?.();
+            break;
+        }
+      });
+
+      document
+        .querySelector(".tap.next")
+        .addEventListener("click", () => show(current + 1));
+      document
+        .querySelector(".tap.prev")
+        .addEventListener("click", () => show(current - 1));
+      window.addEventListener("hashchange", () => show(fromHash()));
+
+      slides[0].classList.add("is-current");
+      show(fromHash());
+      setInterval(tick, 250);
+    </script>
+  </body>
+</html>

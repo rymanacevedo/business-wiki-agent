@@ -84,11 +84,11 @@ export function retrieval(ctx?: SessionCtx): Retrieval {
 export const READ_PAGE_MAX = 12;
 
 /**
- * Whether `search_wiki` runs the one-Link hop to the Neighbourhood:
- * experimental, on only with `CLERK_RETRIEVAL_NEIGHBOURHOOD=1`.
+ * Whether `search_wiki` runs Graph RAG with a one-Link hop:
+ * experimental, on only with `CLERK_RETRIEVAL_GRAPH_RAG=1`.
  */
-export function retrievalNeighbourhood(): boolean {
-  return process.env.CLERK_RETRIEVAL_NEIGHBOURHOOD === "1";
+export function retrievalGraphRag(): boolean {
+  return process.env.CLERK_RETRIEVAL_GRAPH_RAG === "1";
 }
 
 export const SOURCES = "sources/";
